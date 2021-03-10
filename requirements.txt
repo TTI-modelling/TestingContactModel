@@ -3,3 +3,4 @@ setuptools
 matplotlib
 networkx
 scipy
+pytest

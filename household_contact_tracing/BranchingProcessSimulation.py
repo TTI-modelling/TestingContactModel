@@ -1,34 +1,17 @@
 from types import FunctionType
 from typing import List, Optional
+
 import numpy as np
 import numpy.random as npr
-import matplotlib.pyplot as plt
 import networkx as nx
-from matplotlib.lines import Line2D
 
-from household_contact_tracing.disributions import current_hazard_rate, current_rate_infection, \
+from household_contact_tracing import visualisation
+from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, \
     compute_negbin_cdf
 from household_contact_tracing.network import Household, HouseholdCollection, Node, NodeCollection
 
 
 class household_sim_contact_tracing:
-    # We assign each node a recovery period of 14 days, after 14 days the probability of causing a new infections is 0,
-    # due to the generation time distribution
-    effective_infectious_period = 21
-
-    # Working out the parameters of the incubation period
-    ip_mean = 4.83
-    ip_var = 2.78**2
-    ip_scale = ip_var / ip_mean
-    ip_shape = ip_mean ** 2 / ip_var
-
-    # Visual Parameters:
-    contact_traced_edge_colour_within_house = "blue"
-    contact_traced_edge_between_house = "magenta"
-    default_edge_colour = "black"
-    failed_contact_tracing = "red"
-    app_traced_edge = "green"
-
     # Local contact probability:
     local_contact_probs = [0, 0.826, 0.795, 0.803, 0.787, 0.819]
 
@@ -550,9 +533,9 @@ class household_sim_contact_tracing:
         self.G.add_edge(infecting_node.node_id, node_count)
 
         if self.nodes.node(node_count).household().isolated:
-            self.G.edges[infecting_node.node_id, node_count].update({"colour": self.contact_traced_edge_colour_within_house})
+            self.G.edges[infecting_node.node_id, node_count].update({"colour": visualisation.contact_traced_edge_colour_within_house})
         else:
-            self.G.edges[infecting_node.node_id, node_count].update({"colour": self.default_edge_colour})
+            self.G.edges[infecting_node.node_id, node_count].update({"colour": visualisation.default_edge_colour})
 
         # Decrease the number of susceptibles in that house by 1
         infecting_node_household.susceptibles -= 1
@@ -680,7 +663,7 @@ class household_sim_contact_tracing:
 
         # Colour the edges within household
         [
-            self.G.edges[edge[0], edge[1]].update({"colour": self.contact_traced_edge_colour_within_house})
+            self.G.edges[edge[0], edge[1]].update({"colour": visualisation.contact_traced_edge_colour_within_house})
             for edge in household.within_house_edges
         ]
 
@@ -748,11 +731,11 @@ class household_sim_contact_tracing:
 
             # Edge colouring
             if app_traced:
-                self.colour_node_edges_between_houses(house_to, house_from, self.app_traced_edge)
+                self.colour_node_edges_between_houses(house_to, house_from, visualisation.app_traced_edge)
             else:
-                self.colour_node_edges_between_houses(house_to, house_from, self.contact_traced_edge_between_house)
+                self.colour_node_edges_between_houses(house_to, house_from, visualisation.contact_traced_edge_between_house)
         else:
-            self.colour_node_edges_between_houses(house_to, house_from, self.failed_contact_tracing)
+            self.colour_node_edges_between_houses(house_to, house_from, visualisation.failed_contact_tracing)
 
 
     def isolate_household(self, household: Household):
@@ -795,13 +778,13 @@ class household_sim_contact_tracing:
                 
                 # Initially the edge is assigned the contact tracing colour, may be updated if the contact tracing does not succeed
                 if self.is_edge_app_traced(self.get_edge_between_household(household, house_which_contact_traced)):
-                    self.colour_node_edges_between_houses(household, house_which_contact_traced, self.app_traced_edge)
+                    self.colour_node_edges_between_houses(household, house_which_contact_traced, visualisation.app_traced_edge)
                 else:
-                    self.colour_node_edges_between_houses(household, house_which_contact_traced, self.contact_traced_edge_between_house)
+                    self.colour_node_edges_between_houses(household, house_which_contact_traced, visualisation.contact_traced_edge_between_house)
                         
                     # We update the colour of every edge so that we can tell which household have been contact traced when we visualise
             [
-                self.G.edges[edge[0], edge[1]].update({"colour": self.contact_traced_edge_colour_within_house})
+                self.G.edges[edge[0], edge[1]].update({"colour": visualisation.contact_traced_edge_colour_within_house})
                 for edge in household.within_house_edges
             ]
 
@@ -1175,19 +1158,6 @@ class household_sim_contact_tracing:
                 and node.household().being_contact_traced_from is not None
             ]
 
-
-    def make_proxy(self, clr, **kwargs):
-        """Used to draw the lines we use in the draw network legend.
-
-        Arguments:
-            clr {str} -- the colour of the line to be drawn.
-
-        Returns:
-            Line2D -- A Line2D object to be passed to the 
-        """
-        return Line2D([0, 1], [0, 1], color=clr, **kwargs)
-
-
     def node_colour(self, node: Node):
         """Returns a node colour, given the current status of the node.
 
@@ -1208,50 +1178,9 @@ class household_sim_contact_tracing:
             return "green"
         else:
             return"white"
-            
 
     def draw_network(self):
-        """Draws the network generated by the model."""
-
-        node_colour_map = [self.node_colour(node) for node in self.nodes.all_nodes()]
-
-        # The following chunk of code draws the pretty branching processes
-        edge_colour_map = [self.nodes.G.edges[edge]["colour"] for edge in self.nodes.G.edges()]
-
-        # Legend for explaining edge colouring
-        proxies = [
-            self.make_proxy(clr, lw=1) for clr in (
-                self.default_edge_colour,
-                self.contact_traced_edge_colour_within_house,
-                self.contact_traced_edge_between_house,
-                self.app_traced_edge,
-                self.failed_contact_tracing
-            )
-        ]
-        labels = (
-            "Transmission, yet to be traced",
-            "Within household contact tracing",
-            "Between household contact tracing",
-            "App traced edge",
-            "Failed contact trace"
-        )
-
-        node_households = {}
-        for node in self.nodes.all_nodes():
-            node_households.update({node.node_id: node.household_id})
-
-        # self.pos = graphviz_layout(self.G, prog='twopi')
-        plt.figure(figsize=(10, 10))
-
-        nx.draw(
-            self.nodes.G,
-            #self.pos,
-            node_size=150, alpha=0.75, node_color=node_colour_map, edge_color=edge_colour_map,
-            labels=node_households
-        )
-        plt.axis('equal')
-        plt.title("Household Branching Process with Contact Tracing")
-        plt.legend(proxies, labels)
+        visualisation.draw_network(self.nodes, self.node_colour)
 
 
 class uk_model(household_sim_contact_tracing):
@@ -1425,7 +1354,7 @@ class uk_model(household_sim_contact_tracing):
 
         # Colour the edges within household
         [
-            self.G.edges[edge[0], edge[1]].update({"colour": self.contact_traced_edge_colour_within_house})
+            self.G.edges[edge[0], edge[1]].update({"colour": visualisation.contact_traced_edge_colour_within_house})
             for edge in household.within_house_edges
         ]
 
@@ -1513,11 +1442,11 @@ class uk_model(household_sim_contact_tracing):
 
             # Edge colouring
             if app_traced:
-                self.colour_node_edges_between_houses(house_to, house_from, self.app_traced_edge)
+                self.colour_node_edges_between_houses(house_to, house_from, visualisation.app_traced_edge)
             else:
-                self.colour_node_edges_between_houses(house_to, house_from, self.contact_traced_edge_between_house)
+                self.colour_node_edges_between_houses(house_to, house_from, visualisation.contact_traced_edge_between_house)
         else:
-            self.colour_node_edges_between_houses(house_to, house_from, self.failed_contact_tracing)
+            self.colour_node_edges_between_houses(house_to, house_from, visualisation.failed_contact_tracing)
 
 
 class TestingContactModel(uk_model):
@@ -1804,7 +1733,7 @@ class TestingContactModel(uk_model):
 
         # Colour the edges within household
         [
-            self.G.edges[edge[0], edge[1]].update({"colour": self.contact_traced_edge_colour_within_house})
+            self.G.edges[edge[0], edge[1]].update({"colour": visualisation.contact_traced_edge_colour_within_house})
             for edge in household.within_house_edges
         ]
 

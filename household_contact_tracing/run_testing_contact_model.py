@@ -1,3 +1,4 @@
+from household_contact_tracing import visualisation
 from household_contact_tracing.BranchingProcessSimulation import TestingContactModel
 import matplotlib.pyplot as plt
 
