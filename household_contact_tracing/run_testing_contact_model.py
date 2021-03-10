@@ -48,10 +48,8 @@ def main():
         policy_for_household_contacts_of_a_positive_case='no lfa testing only quarantine'
     )
 
-    model.run_simulation(10)
+    model.run_simulation(20)
 
-    for i in range(10):
-        model.simulate_one_day()
     model.draw_network()
     plt.show()
 

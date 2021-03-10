@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from types import FunctionType
 from typing import List, Optional
 
@@ -9,6 +10,15 @@ from household_contact_tracing import visualisation
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, \
     compute_negbin_cdf
 from household_contact_tracing.network import Household, HouseholdCollection, Node, NodeCollection
+
+
+@dataclass
+class SimulationResult:
+    """The result of a simulation."""
+    end_reason: str         # The reason for the simulation ending
+    died_out: bool = None         # Whether the infection died out when the simulation ended
+    extinction_day: int = None    # The day number on which the infection died out
+    inf_counts: int = None        # The number of people infected over the course of the simulation
 
 
 class household_sim_contact_tracing:
@@ -247,7 +257,7 @@ class household_sim_contact_tracing:
         generation: int, 
         household_id: int, 
         serial_interval=None,
-        infecting_node: Optional[Node]=None,
+        infecting_node: Optional[Node] = None,
         additional_attributes: Optional[dict] = None):
         """
         Adds a new infection to the graph along with the following attributes:
@@ -269,9 +279,8 @@ class household_sim_contact_tracing:
             pseudo_symptom_onset_time = self.incubation_period(asymptomatic=False)
         else:
             pseudo_symptom_onset_time = symptom_onset_time
-            
 
-        # When a node reports it's infection
+        # When a node reports its infection
         if not asymptomatic and npr.binomial(1, self.infection_reporting_prob) == 1:
             will_report_infection = True
             time_of_reporting = symptom_onset_time + self.reporting_delay(asymptomatic)
@@ -279,13 +288,14 @@ class household_sim_contact_tracing:
             will_report_infection = False
             time_of_reporting = float('Inf')
 
-        # We assign each node a recovery period of 21 days, after 21 days the probability of causing a new infections is
-        # 0, due to the generation time distribution
+        # We assign each node a recovery period of 21 days, after 21 days the probability of
+        # causing a new infections is 0, due to the generation time distribution
         recovery_time = self.time + 14
 
         household = self.houses.household(household_id)
 
-        # If the household has the propensity to use the contact tracing app, decide if the node uses the app.
+        # If the household has the propensity to use the contact tracing app, decide
+        # if the node uses the app.
         if household.propensity_trace_app:
             has_trace_app = self.has_contact_tracing_app()
         else:
@@ -326,7 +336,8 @@ class household_sim_contact_tracing:
             infecting_node=infecting_node,
         )
 
-        # Each house now stores a the ID's of which nodes are stored inside the house, so that quarantining can be done at the household level
+        # Each house now stores the ID's of which nodes are stored inside the house,
+        # so that quarantining can be done at the household level
         household.node_ids.append(node_count)
 
     def new_household(
@@ -592,7 +603,6 @@ class household_sim_contact_tracing:
             and not node.household().contact_traced
         ]
 
-
     def increment_contact_tracing(self):
         """
         Performs a days worth of contact tracing by:
@@ -683,7 +693,7 @@ class household_sim_contact_tracing:
 
     def perform_recoveries(self):
         """
-        Loops over all nodes in the branching process and determins recoveries.
+        Loops over all nodes in the branching process and determine recoveries.
 
         time - The current time of the process, if a nodes recovery time equals the current time, then it is set to the recovered state
         """
@@ -691,14 +701,12 @@ class household_sim_contact_tracing:
             if node.recovery_time == self.time:
                 node.recovered = True
 
-
     def colour_node_edges_between_houses(self, house_to: Household, house_from: Household, new_colour):
         # Annoying bit of logic to find the edge and colour it
         for node_1 in house_to.nodes():
             for node_2 in house_from.nodes():
                 if self.nodes.G.has_edge(node_1.node_id, node_2.node_id):
                     self.nodes.G.edges[node_1.node_id, node_2.node_id].update({"colour": new_colour})
-
 
     def attempt_contact_trace_of_household(self, house_to: Household, house_from: Household, contact_trace_delay: int = 0):
         # Decide if the edge was traced by the app
@@ -736,7 +744,6 @@ class household_sim_contact_tracing:
                 self.colour_node_edges_between_houses(house_to, house_from, visualisation.contact_traced_edge_between_house)
         else:
             self.colour_node_edges_between_houses(house_to, house_from, visualisation.failed_contact_tracing)
-
 
     def isolate_household(self, household: Household):
         """
@@ -809,7 +816,6 @@ class household_sim_contact_tracing:
         for child in child_households_not_traced:
             self.attempt_contact_trace_of_household(child, household)
 
-
     def update_contact_tracing_index(self):
         for household in self.houses.all_households():
             # loop over households with non-zero indexes, those that have been contact traced but with
@@ -830,7 +836,6 @@ class household_sim_contact_tracing:
                             if index_1_hh.contact_tracing_index == 2:
                                 index_1_hh.contact_tracing_index = 1
 
-
     def isolate_self_reporting_cases(self):
         """Applies the isolation status to nodes who have reached their self-report time.
         They may of course decide to not adhere to said isolation, or may be a member of a household
@@ -841,7 +846,6 @@ class household_sim_contact_tracing:
             if node.will_uptake_isolation:
                  if node.time_of_reporting == self.time:
                     node.isolated = True
-
 
     def release_nodes_from_quarantine_or_isolation(self):
         """If a node has completed the quarantine according to the following rules, they are released from
@@ -857,7 +861,6 @@ class household_sim_contact_tracing:
         self.release_nodes_who_completed_isolation()
         self.release_nodes_who_completed_quarantine()
 
-    
     def release_nodes_who_completed_quarantine(self):
         """If a node is currently in quarantine, and has completed the quarantine period then we release them from quarantine.
 
@@ -867,9 +870,6 @@ class household_sim_contact_tracing:
         In our model, this corresponds to the time of infection.
         """
         for node in self.nodes.all_nodes():
-
-            # This is the same code you had as before liz
-
             # For nodes who do not self-report, and are in the same household as their infector
             # (if they do not self-report they will not isolate; if contact traced, they will be quarantining for the quarantine duration)          
             #if node.household_id == node.infected_by_node().household_id:
@@ -907,10 +907,7 @@ class household_sim_contact_tracing:
                         node.completed_isolation_reason = 'completed_isolation'
 
     def simulate_one_day(self):
-        """Simulates one day of the epidemic and contact tracing.
-
-        Useful for bug testing and visualisation.
-        """
+        """Simulates one day of the epidemic and contact tracing."""
         # perform a days worth of infections
         self.increment_infection()
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
@@ -927,12 +924,10 @@ class household_sim_contact_tracing:
         # increment time
         self.time += 1
 
-
     def reset_simulation(self):
         """
-        Returns the simulation to it's initially specified values
+        Returns the simulation to its initially specified values
         """
-
         self.time = 0
 
         # Stores information about the contact tracing that has occurred.
@@ -959,7 +954,6 @@ class household_sim_contact_tracing:
         self.house_count = 0
 
         # Initial values
-        node_count = 1
         generation = 0
 
         # Create the starting infectives
@@ -969,30 +963,17 @@ class household_sim_contact_tracing:
             self.new_household(self.house_count, 1, None, None)
             self.new_infection(node_count, generation, self.house_count)
 
-
-    def run_simulation_hitting_times(self, time_out):
-
-        # Return the simulation to it's initial starting state
+    def run_simulation(self, num_steps: int, infection_threshold: int = -1) -> SimulationResult:
+        # Create all the required dictionaries and reset parameters
         self.reset_simulation()
 
-        # Get the number of current nodes in the network
-        node_count = nx.number_of_nodes(self.G)
-
-        # For recording the number of cases over time
         total_cases = []
+        result = None
 
-        # Setting up parameters for this run of the experiment
-        self.time_800 = None    # Time when we hit 800 under surveillance
-        self.time_8000 = None   # Time when we hit 8000 under surveillance
-        self.hit_800 = False    # flag used for the code that records the first time we hit 800 under surveillance
-        self.hit_8000 = False   # same but for 8000
-        self.died_out = False   # flag for whether the epidemic has died out
-        self.timed_out = False  # flag for whether the simulation reached it's time limit without another stop condition being met
-
-        # While loop ends when there are no non-isolated infections
-        currently_infecting = len([node for node in self.nodes.all_nodes() if not node.recovered])
-
-        while (currently_infecting != 0 and self.hit_8000 is False and self.timed_out is False):
+        while not result:
+            # Simulation ends if num_steps is reached
+            if self.time == num_steps:
+                result = SimulationResult('timed_out', False)
 
             # This chunk of code executes a days worth on infections and contact tracings
             node_count = nx.number_of_nodes(self.G)
@@ -1001,162 +982,18 @@ class household_sim_contact_tracing:
             self.house_count = self.houses.count
             total_cases.append(node_count)
 
-            # While loop ends when there are no non-isolated infections
-            currently_infecting = len([node for node in self.nodes.all_nodes() if not node.isolated])
-
-            # Records the first time we hit 800 under surveillance
-            if (self.contact_tracing_dict["currently_being_surveilled"] > 800 and self.hit_800 is False):
-                self.time_800 = self.time
-                self.hit_800 = True
-
-            # Records the first time we hit 8000 surveilled
-            if (self.contact_tracing_dict["currently_being_surveilled"] > 8000 and self.hit_8000 is False):
-                self.time_8000 = self.time
-                self.hit_8000 = True
-
-            if currently_infecting == 0:
-                self.died_out = True
-
-            if self.time == time_out:
-                self.timed_out = True
-
-        # Infection Count output
-        self.inf_counts = total_cases
-        
-
-    def run_simulation_detection_times(self):
-        
-         # Create all the required dictionaries and reset parameters
-        self.reset_simulation()
-
-        # For recording the number of cases over time
-        self.total_cases = []
-
-        # Initial values
-        self.end_reason = ''
-        self.timed_out = False
-        self.extinct = False
-        self.day_extinct = -1
-
-        # While loop ends when there are no non-isolated infections
-        currently_infecting = len([node for node in self.G.nodes() if self.G.nodes[node]["recovered"] is False])
-
-        nodes_reporting_infection = [
-            node
-            for node in self.nodes.all_nodes() 
-            if (node.time_of_reporting + node.testing_delay == self.time)
-        ]
-
-        while self.end_reason == '':
-
-            nodes_reporting_infection = [
-                node
-                for node in self.nodes.all_nodes() 
-                if (node.time_of_reporting + node.testing_delay == self.time)
-            ]
-
-            # This chunk of code executes a days worth on infections and contact tracings
-            node_count = nx.number_of_nodes(self.G)
-            self.simulate_one_day()
-            
-            self.house_count = len(self.houses)
-            self.total_cases.append(node_count)
-
-            # While loop ends when there are no non-isolated infections
-            currently_infecting = len([node for node in self.G.nodes() if self.G.nodes[node]["recovered"] is False])
-
-            if currently_infecting == 0:
-                self.end_reason = 'extinct'
-                self.died_out = True
-                self.day_extinct = self.time
-
-            if len(nodes_reporting_infection) != 0:
-                self.end_reason = 'infection_detected'
-
-        # Infection Count output
-        self.inf_counts = self.total_cases
-
-
-    def run_simulation(self, time_out, stop_when_X_infections=False):
-
-        # Create all the required dictionaries and reset parameters
-        self.reset_simulation()
-
-        # For recording the number of cases over time
-        self.total_cases = []
-
-        # Initial values
-        self.end_reason = ''
-        self.timed_out = False
-        self.extinct = False
-        self.day_extinct = -1
-
-        # Sometimes you want to set up the simulation but not run it
-        # In this case, set the time_out to 0
-        if self.time == time_out:
-            self.end_reason = 'timed_out'
-            self.timed_out = True
-
-        # While loop ends when there are no non-isolated infections
-        currently_infecting = len([node for node in self.nodes.all_nodes() if not node.recovered])
-
-        while self.end_reason == '':
-
-            # This chunk of code executes a days worth on infections and contact tracings
-            node_count = nx.number_of_nodes(self.G)
-            self.simulate_one_day()
-
-            self.house_count = self.houses.count
-            self.total_cases.append(node_count)
-
-            # While loop ends when there are no non-isolated infections
+            # Calculate non-isolated infections
             currently_infecting = len([node for node in self.nodes.all_nodes() if not node.recovered])
 
             if currently_infecting == 0:
-                self.end_reason = 'extinct'
-                self.died_out = True
-                self.day_extinct = self.time
+                result = SimulationResult('extinct', True, self.time)
 
-            if self.time == time_out:
-                self.end_reason = 'timed_out'
-                self.timed_out = True
-
-            if stop_when_X_infections is True and currently_infecting > 5000:
-                self.end_reason = 'more_than_X'
-                self.timed_out = True
+            elif infection_threshold != -1 and currently_infecting > infection_threshold:
+                result = SimulationResult('Infections > {infection_threshold}', False, )
 
         # Infection Count output
-        self.inf_counts = self.total_cases
-
-    def onset_to_isolation_times(self, include_self_reports=True):
-        if include_self_reports:
-            return [
-                node.household().isolated_time - node.symptom_onset_time
-                for node in self.nodes.all_nodes()
-                if node.isolated
-            ]
-        else:
-            return [
-                node.household().isolated_time - node.symptom_onset_time
-                for node in self.nodes.all_nodes()
-                if node.isolated
-                and node.household().being_contact_traced_from is not None
-            ]
-
-    def infected_to_isolation_times(self, include_self_reports=True):
-        if include_self_reports:
-            return [
-                node.household().isolated_time - node.time_infected
-                for node in self.nodes.all_nodes()
-                if node.isolated
-            ]
-        else:
-            return [
-                node.household().isolated_time - node.time_infected
-                for node in self.nodes.all_nodes()
-                if node.isolated
-                and node.household().being_contact_traced_from is not None
-            ]
+        result.inf_counts = total_cases
+        return result
 
     def node_colour(self, node: Node):
         """Returns a node colour, given the current status of the node.
