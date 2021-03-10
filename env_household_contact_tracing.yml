@@ -1,0 +1,10 @@
+name: household-contact-tracing
+channels:
+  - defaults
+dependencies:
+  - numpy
+  - setuptools
+  - matplotlib
+  - networkx
+  - scipy
+  - pytest
