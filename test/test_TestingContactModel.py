@@ -1,0 +1,622 @@
+from household_contact_tracing.BranchingProcessSimulation import TestingContactModel
+import pytest
+
+@pytest.fixture
+def simple_model():
+
+    def prob_testing_positive_lfa_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 0.5
+        else:
+            return 0
+
+    def prob_testing_positive_pcr_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 0.8
+        else:
+            return 0
+
+    def test_delay_dist():
+        return 1
+
+    def contact_trace_delay_dist():
+        return 1
+
+    def incubation_period_delay_dist():
+        return 5
+
+    def symptom_reporting_delay_dist():
+        return 1
+
+    model = TestingContactModel(
+        outside_household_infectivity_scaling=0.3,
+        contact_tracing_success_prob=0.7,
+        overdispersion=0.32,
+        asymptomatic_prob=0.2,
+        asymptomatic_relative_infectivity=0.35,
+        infection_reporting_prob=0.3,
+        contact_trace=True,
+        prob_testing_positive_lfa_func = prob_testing_positive_lfa_func,
+        prob_testing_positive_pcr_func = prob_testing_positive_pcr_func,
+        LFA_testing_requires_confirmatory_PCR=False,
+        test_delay_dist=test_delay_dist,
+        contact_trace_delay_dist=contact_trace_delay_dist,
+        incubation_period_delay_dist=incubation_period_delay_dist,
+        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
+        household_pairwise_survival_prob=0.2,
+        propensity_risky_behaviour_lfa_testing=0,
+        global_contact_reduction_risky_behaviour=0,
+        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
+    )
+
+    return model
+
+@pytest.fixture
+def simple_model_high_test_prob():
+    """The probability of testing positive is 1 on the days either side of symptom onset
+    """
+
+    def prob_testing_positive_lfa_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 1
+        else:
+            return 0
+
+    def prob_testing_positive_pcr_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 0
+        else:
+            return 0
+
+    def test_delay_dist():
+        return 1
+
+    def contact_trace_delay_dist():
+        return 1
+
+    def incubation_period_delay_dist():
+        return 5
+
+    def symptom_reporting_delay_dist():
+        return 1
+
+    model = TestingContactModel(
+        outside_household_infectivity_scaling=0.3,
+        contact_tracing_success_prob=0.7,
+        overdispersion=0.32,
+        asymptomatic_prob=0.2,
+        asymptomatic_relative_infectivity=0.35,
+        infection_reporting_prob=0.3,
+        contact_trace=True,
+        prob_testing_positive_lfa_func = prob_testing_positive_lfa_func,
+        prob_testing_positive_pcr_func = prob_testing_positive_pcr_func,
+        LFA_testing_requires_confirmatory_PCR=False,
+        test_delay_dist=test_delay_dist,
+        contact_trace_delay_dist=contact_trace_delay_dist,
+        incubation_period_delay_dist=incubation_period_delay_dist,
+        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
+        household_pairwise_survival_prob=0.2,
+        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
+    )
+
+    return model
+
+@pytest.fixture
+def simple_model_risky_behaviour():
+    """
+    Model where no nodes engage in global contacts unless they are being lfa tested 
+    and engage in risky behaviour.
+
+    You must manually set the nodes to engage in risky behaviour.
+    """
+
+    def prob_testing_positive_lfa_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 0.5
+        else:
+            return 0
+
+    def prob_testing_positive_pcr_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 0.8
+        else:
+            return 0
+
+    def test_delay_dist():
+        return 1
+
+    def contact_trace_delay_dist():
+        return 1
+
+    def incubation_period_delay_dist():
+        return 5
+
+    def symptom_reporting_delay_dist():
+        return 1
+
+    model = TestingContactModel(
+        outside_household_infectivity_scaling=0.3,
+        contact_tracing_success_prob=0.7,
+        overdispersion=0.32,
+        asymptomatic_prob=0.2,
+        asymptomatic_relative_infectivity=0.35,
+        infection_reporting_prob=0.3,
+        contact_trace=True,
+        prob_testing_positive_lfa_func = prob_testing_positive_lfa_func,
+        prob_testing_positive_pcr_func = prob_testing_positive_pcr_func,
+        LFA_testing_requires_confirmatory_PCR=False,
+        test_delay_dist=test_delay_dist,
+        contact_trace_delay_dist=contact_trace_delay_dist,
+        incubation_period_delay_dist=incubation_period_delay_dist,
+        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
+        household_pairwise_survival_prob=0.2,
+        propensity_risky_behaviour_lfa_testing=1, # all lfa tested nodes engage in risky behaviour
+        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
+    )
+
+    return model
+
+def test_pseudo_symptom_onset_asymptomatics():
+    """Tests that asymptomatics have a pseudo_symptom_onset_time
+
+    Create a model where every node is asymptomatic
+
+    Check every node has a psuedo symptom onset of 5, see delay below
+    """
+
+    def prob_testing_positive_lfa_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 1
+        else:
+            return 0
+
+    def prob_testing_positive_pcr_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 1
+        else:
+            return 0
+    def test_delay_dist():
+        return 1
+
+    def contact_trace_delay_dist():
+        return 1
+
+    def incubation_period_delay_dist():
+        return 5
+
+    def symptom_reporting_delay_dist():
+        return 1
+
+    model = TestingContactModel(
+        outside_household_infectivity_scaling=0.3,
+        contact_tracing_success_prob=0.7,
+        overdispersion=0.32,
+        asymptomatic_prob=1, # all asymptomatic
+        asymptomatic_relative_infectivity=0.35,
+        infection_reporting_prob=0.3,
+        contact_trace=True,
+        prob_testing_positive_pcr_func=prob_testing_positive_pcr_func,
+        prob_testing_positive_lfa_func = prob_testing_positive_lfa_func,
+        LFA_testing_requires_confirmatory_PCR=False,
+        test_delay_dist=test_delay_dist,
+        contact_trace_delay_dist=contact_trace_delay_dist,
+        incubation_period_delay_dist=incubation_period_delay_dist,
+        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
+        household_pairwise_survival_prob=0.2,
+        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
+    )
+
+    assert model.nodes.node(1).pseudo_symptom_onset_time == 5
+
+def test_pseudo_symptom_onset(simple_model):
+    """Checks that it is also working for symptomatics
+    """
+
+    assert simple_model.nodes.node(1).pseudo_symptom_onset_time == 5
+
+def test_time_relative_to_symptom_onset(simple_model):
+    """Tests that nodes return the correct time relative to symptom onset
+    """
+    # we know symptom onset it at time 5
+    assert simple_model.nodes.node(1).time_relative_to_symptom_onset(5) == 0
+    assert simple_model.nodes.node(1).time_relative_to_symptom_onset(6) == 1
+    assert simple_model.nodes.node(1).time_relative_to_symptom_onset(4) == -1
+
+def test_lfa_test_node(simple_model_high_test_prob):
+
+    model = simple_model_high_test_prob
+
+    node_of_interest = model.nodes.node(1)
+
+    assert not model.lfa_test_node(node_of_interest)
+
+    # set the model time to 5
+    # the time relative to symptom onset should now be 0
+    # the node should test positive as a result
+    model.time = 5
+
+    assert model.lfa_test_node(node_of_interest)
+
+def test_being_lateral_flow_tested_attribute(simple_model):
+    """Check nodes are generated with the lateral flow testing attribute
+    """
+
+    assert not simple_model.nodes.node(1).being_lateral_flow_tested
+
+def test_get_positive_lateral_flow_nodes_default_exclusion(simple_model_high_test_prob):
+    """Check that nodes are automatically being tested for some reason
+    """
+
+    model = simple_model_high_test_prob
+
+    assert model.get_positive_lateral_flow_nodes() == []
+    
+def test_get_positive_lateral_flow_nodes_timings(simple_model_high_test_prob):
+    """Check model is taking timings correctly into account
+    """
+
+    model = simple_model_high_test_prob
+
+    node_of_interest = model.nodes.node(1)
+
+    node_of_interest.being_lateral_flow_tested = True
+
+    assert model.get_positive_lateral_flow_nodes() == []
+
+def test_get_positive_lateral_flow_nodes(simple_model_high_test_prob):
+    """Check the node tests positive and is returned by the function
+    """
+
+    model = simple_model_high_test_prob
+
+    node_of_interest = model.nodes.node(1)
+
+    node_of_interest.being_lateral_flow_tested = True
+
+    model.time = 5
+
+    assert model.get_positive_lateral_flow_nodes() == [node_of_interest]
+
+def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
+    """Checks that a node who is traced is placed under lateral flow testing.
+
+    To do this we:
+        * Initialises a model with 100% contact tracing success probability
+        * Create a new infection outside the initial household
+        * Household 1 traces household 2 with 100% success probability and delay 1
+        * Simulate one day
+
+    """
+
+    model = simple_model_high_test_prob
+
+    model.contact_tracing_success_prob = 1
+
+    model.new_outside_household_infection(
+        infecting_node = model.nodes.node(1),
+        serial_interval=0
+    )
+    
+    model.attempt_contact_trace_of_household(
+        house_to = model.houses.household(2),
+        house_from = model.houses.household(1),
+        days_since_contact_occurred=0,
+        contact_trace_delay=0
+    )
+
+    model.simulate_one_day()
+
+    model.simulate_one_day()
+
+    assert model.nodes.node(2).being_lateral_flow_tested == True
+
+def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: TestingContactModel):
+
+    model = simple_model_high_test_prob
+
+    model.time = 5
+
+    model.nodes.node(1).being_lateral_flow_tested = True
+
+    # this line is required before the isolate_positive_lateral_flow_tests func
+    # can work
+    model.current_LFA_positive_nodes = model.get_positive_lateral_flow_nodes()
+
+    model.isolate_positive_lateral_flow_tests()
+
+
+    # add another infection to the household, so we can check that they are not quarantining
+    # but they are lfa testing
+    model.new_within_household_infection(
+        infecting_node = model.nodes.node(1),
+        serial_interval = 0
+    )
+
+    assert model.nodes.node(1).isolated
+    assert model.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
+    assert model.nodes.node(1).received_positive_test_result
+    assert not model.nodes.node(2).isolated
+    assert model.nodes.node(2).being_lateral_flow_tested
+
+@pytest.fixture
+def simple_model_lfa_testing_and_quarantine():
+    """Individuals who test lfa test are guaranteed to test positive
+
+    Because that makes life easier.
+
+    Used to test the household contact policy option - 'lfa testing and quarantine'
+    """
+
+    def prob_testing_positive_lfa_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 1
+        else:
+            return 0
+
+    def prob_testing_positive_pcr_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 0.8
+        else:
+            return 0
+
+    def test_delay_dist():
+        return 1
+
+    def contact_trace_delay_dist():
+        return 1
+
+    def incubation_period_delay_dist():
+        return 5
+
+    def symptom_reporting_delay_dist():
+        return 1
+
+    model = TestingContactModel(
+        outside_household_infectivity_scaling=0.3,
+        contact_tracing_success_prob=0.7,
+        overdispersion=0.32,
+        asymptomatic_prob=0.2,
+        asymptomatic_relative_infectivity=0.35,
+        infection_reporting_prob=0.3,
+        contact_trace=True,
+        prob_testing_positive_lfa_func = prob_testing_positive_lfa_func,
+        prob_testing_positive_pcr_func = prob_testing_positive_pcr_func,
+        LFA_testing_requires_confirmatory_PCR=False,
+        test_delay_dist=test_delay_dist,
+        contact_trace_delay_dist=contact_trace_delay_dist,
+        incubation_period_delay_dist=incubation_period_delay_dist,
+        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
+        household_pairwise_survival_prob=0.2,
+        propensity_risky_behaviour_lfa_testing=0,
+        global_contact_reduction_risky_behaviour=0,
+        policy_for_household_contacts_of_a_positive_case='lfa testing and quarantine'
+    )
+
+    return model
+
+
+def test_start_lateral_flow_testing_household_and_quarantine(
+    simple_model_lfa_testing_and_quarantine: simple_model_lfa_testing_and_quarantine
+    ):
+    """Tests that setting the policy option to 'lfa testing no quarantine' changed the model
+    behaviour so if a member of a household tests positive self isolate and start LFA testing.
+    """
+    model = simple_model_lfa_testing_and_quarantine
+
+    model.time = 5
+
+    model.nodes.node(1).being_lateral_flow_tested = True
+
+    # this line is required before the isolate_positive_lateral_flow_tests func
+    # can work
+    model.current_LFA_positive_nodes = model.get_positive_lateral_flow_nodes()
+
+    model.isolate_positive_lateral_flow_tests()
+
+    model.new_within_household_infection(
+        infecting_node = model.nodes.node(1),
+        serial_interval = 0
+    )
+
+    assert model.nodes.node(1).isolated
+    assert model.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
+    assert model.nodes.node(1).received_positive_test_result
+    assert model.nodes.node(2).isolated
+    assert model.nodes.node(2).being_lateral_flow_tested
+
+
+@pytest.fixture
+def simple_model_lfa_testing_and_quarantine():
+    """Individuals who test lfa test are guaranteed to test positive
+
+    Because that makes life easier.
+
+    Used to test the household contact policy option - 'no lfa testing only quarantine'
+    """
+
+    def prob_testing_positive_lfa_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 1
+        else:
+            return 0
+
+    def prob_testing_positive_pcr_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 0.8
+        else:
+            return 0
+
+    def test_delay_dist():
+        return 1
+
+    def contact_trace_delay_dist():
+        return 1
+
+    def incubation_period_delay_dist():
+        return 5
+
+    def symptom_reporting_delay_dist():
+        return 1
+
+    model = TestingContactModel(
+        outside_household_infectivity_scaling=0.3,
+        contact_tracing_success_prob=0.7,
+        overdispersion=0.32,
+        asymptomatic_prob=0.2,
+        asymptomatic_relative_infectivity=0.35,
+        infection_reporting_prob=0.3,
+        contact_trace=True,
+        prob_testing_positive_lfa_func = prob_testing_positive_lfa_func,
+        prob_testing_positive_pcr_func = prob_testing_positive_pcr_func,
+        LFA_testing_requires_confirmatory_PCR=False,
+        test_delay_dist=test_delay_dist,
+        contact_trace_delay_dist=contact_trace_delay_dist,
+        incubation_period_delay_dist=incubation_period_delay_dist,
+        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
+        household_pairwise_survival_prob=0.2,
+        propensity_risky_behaviour_lfa_testing=0,
+        global_contact_reduction_risky_behaviour=0,
+        policy_for_household_contacts_of_a_positive_case='no lfa testing only quarantine'
+    )
+
+    return model
+
+
+def test_household_contacts_quarantine_only(
+    simple_model_lfa_testing_and_quarantine: simple_model_lfa_testing_and_quarantine
+    ):
+    """Tests that setting the policy option to 'no lfa testing only quarantine' changed the model
+    behaviour so if a member of a household tests positive self isolate and start LFA testing.
+    """
+    model = simple_model_lfa_testing_and_quarantine
+
+    model.time = 5
+
+    model.nodes.node(1).being_lateral_flow_tested = True
+
+    # this line is required before the isolate_positive_lateral_flow_tests func
+    # can work
+    model.current_LFA_positive_nodes = model.get_positive_lateral_flow_nodes()
+
+    model.isolate_positive_lateral_flow_tests()
+
+    model.new_within_household_infection(
+        infecting_node = model.nodes.node(1),
+        serial_interval = 0
+    )
+
+    assert model.nodes.node(1).isolated
+    assert model.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
+    assert model.nodes.node(1).received_positive_test_result
+    assert model.nodes.node(2).isolated
+    assert model.nodes.node(2).being_lateral_flow_tested
+
+def test_risky_behaviour_attributes_default(simple_model: simple_model):
+    """Tests that the default behaviour is no more risky behaviour
+    """
+
+    assert not simple_model.nodes.node(1).propensity_risky_behaviour_lfa_testing 
+
+def test_risky_behaviour_attributes(simple_model_risky_behaviour: simple_model_risky_behaviour):
+    """Tests that nodes are created with the propensity for risky behaviour while they are
+    being tested.
+    """
+
+    assert simple_model_risky_behaviour.nodes.node(1).propensity_risky_behaviour_lfa_testing 
+
+@pytest.fixture
+def simple_model_risky_behaviour_2_infections():
+    """
+    Model where no nodes engage in global contacts unless they are being lfa tested 
+    and engage in risky behaviour.
+
+    You must manually set the nodes to engage in risky behaviour.
+    """
+
+    def prob_testing_positive_lfa_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 0.5
+        else:
+            return 0
+
+    def prob_testing_positive_pcr_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 0.8
+        else:
+            return 0
+
+    def test_delay_dist():
+        return 1
+
+    def contact_trace_delay_dist():
+        return 1
+
+    def incubation_period_delay_dist():
+        return 5
+
+    def symptom_reporting_delay_dist():
+        return 1
+
+    model = TestingContactModel(
+        outside_household_infectivity_scaling=0.3,
+        contact_tracing_success_prob=0.7,
+        overdispersion=0.32,
+        asymptomatic_prob=0.2,
+        asymptomatic_relative_infectivity=0.35,
+        infection_reporting_prob=0.3,
+        contact_trace=True,
+        starting_infections=2,
+        reduce_contacts_by=1,
+        prob_testing_positive_lfa_func = prob_testing_positive_lfa_func,
+        prob_testing_positive_pcr_func = prob_testing_positive_pcr_func,
+        LFA_testing_requires_confirmatory_PCR=False,
+        test_delay_dist=test_delay_dist,
+        contact_trace_delay_dist=contact_trace_delay_dist,
+        incubation_period_delay_dist=incubation_period_delay_dist,
+        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
+        household_pairwise_survival_prob=0.2,
+        propensity_risky_behaviour_lfa_testing=1, # all lfa tested nodes engage in risky behaviour
+        global_contact_reduction_risky_behaviour=0, # they resume all contacts
+        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
+    )
+
+    return model
+
+
+def test_lfa_tested_nodes_make_more_contacts_if_risky(
+    simple_model_risky_behaviour_2_infections: simple_model_risky_behaviour_2_infections
+    ):
+    """Create 2 initial infections, one who engages in risky behaviour while LFA tested 
+    and one who doesn't.
+
+    Set both to being lfa tested.
+
+    Sets the household sizes to 1 so that all contact would have to be outside household.
+
+    Assert that the individual who engages in risky behaviour while lfa testing makes contacts
+    Assert that the individual does not engage in risky behaviour makes no contacts.
+    """ 
+
+    model = simple_model_risky_behaviour_2_infections
+
+    model.nodes.node(1).propensity_risky_behaviour_lfa_testing = False
+
+    # stop there being any within household infections
+    # not sure if this is strictly necessary
+    model.houses.household(1).size = 1
+    model.houses.household(2).size = 1
+    model.houses.household(1).susceptibles = 0
+    model.houses.household(2).susceptibles = 0
+
+    # set the nodes to being lfa tested
+    model.nodes.node(1).being_lateral_flow_tested = True
+    model.nodes.node(2).being_lateral_flow_tested = True
+
+    for _ in range(5):
+        model.simulate_one_day()
+
+    # node 1 does not engage in risky behaviour and should not make any global contacts
+    assert model.nodes.node(1).outside_house_contacts_made == 0
+    assert model.nodes.node(2).outside_house_contacts_made != 0
+
+
