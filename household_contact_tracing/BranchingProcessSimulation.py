@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from types import FunctionType
 from typing import List, Optional
 
@@ -10,15 +9,7 @@ from household_contact_tracing import visualisation
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, \
     compute_negbin_cdf
 from household_contact_tracing.network import Household, HouseholdCollection, Node, NodeCollection
-
-
-@dataclass
-class SimulationResult:
-    """The result of a simulation."""
-    end_reason: str         # The reason for the simulation ending
-    died_out: bool = None         # Whether the infection died out when the simulation ended
-    extinction_day: int = None    # The day number on which the infection died out
-    inf_counts: int = None        # The number of people infected over the course of the simulation
+from household_contact_tracing.simulation import EndReason, SimulationResult
 
 
 class household_sim_contact_tracing:
@@ -162,7 +153,10 @@ class household_sim_contact_tracing:
             self.asymptomatic_global_infection_probs.append(self.outside_household_infectivity_scaling * asymptomatic_relative_infectivity * current_rate_infection(day) * transmission_probability_multiplier)
 
         # Calls the simulation reset function, which creates all the required dictionaries
-        self.reset_simulation()
+        self.initialise_simulation()
+
+        # Iterator which increases each time a household is infected
+        self.house_count = 0
 
     def compute_hh_infection_probs(self, pairwise_survival_prob: float, transmission_probability_multiplier: float) -> list:
         # Precomputing the infection probabilities for the within household epidemics.
@@ -924,21 +918,9 @@ class household_sim_contact_tracing:
         # increment time
         self.time += 1
 
-    def reset_simulation(self):
-        """
-        Returns the simulation to its initially specified values
-        """
+    def initialise_simulation(self):
+        """Initialise the simulation to its starting values."""
         self.time = 0
-
-        # Stores information about the contact tracing that has occurred.
-        self.contact_tracing_dict = {
-            "contacts_to_be_traced": 0,         # connections made by nodes that are contact traced and symptomatic
-            "possible_to_trace_contacts": 0,    # contacts that are possible to trace assuming a failure rate, not all connections will be traceable
-            "total_traced_each_day": [0],       # A list recording the the number of contacts added to the system each day
-            "daily_active_surveillances": [],   # A list recording how many surveillances were happening each day
-            "currently_being_surveilled": 0,    # Ongoing surveillances
-            "day_800_cases_traced": None        # On which day was 800 cases reached
-        }
 
         # Create the empty graph - we add the houses properly below
         self.nodes = NodeCollection(None)
@@ -947,7 +929,7 @@ class household_sim_contact_tracing:
         self.houses = HouseholdCollection(self.nodes)
         self.nodes.houses = self.houses
 
-        # make things available as before
+        # The graph of infections
         self.G = self.nodes.G
 
         # Create first household
@@ -963,36 +945,28 @@ class household_sim_contact_tracing:
             self.new_household(self.house_count, 1, None, None)
             self.new_infection(node_count, generation, self.house_count)
 
-    def run_simulation(self, num_steps: int, infection_threshold: int = -1) -> SimulationResult:
+    def run_simulation(self, num_steps: int, infection_threshold: int = 100000) -> SimulationResult:
         # Create all the required dictionaries and reset parameters
-        self.reset_simulation()
+        self.initialise_simulation()
 
-        total_cases = []
-        result = None
+        result = SimulationResult()
 
-        while not result:
+        while result.end_reason == EndReason.not_ended:
             # Simulation ends if num_steps is reached
             if self.time == num_steps:
-                result = SimulationResult('timed_out', False)
+                result.end_simulation(EndReason.timed_out, self.time)
 
-            # This chunk of code executes a days worth on infections and contact tracings
-            node_count = nx.number_of_nodes(self.G)
+            # This chunk of code executes a days worth of infections and contact tracings
             self.simulate_one_day()
 
-            self.house_count = self.houses.count
-            total_cases.append(node_count)
+            result.inf_counts.append(nx.number_of_nodes(self.G))
 
-            # Calculate non-isolated infections
-            currently_infecting = len([node for node in self.nodes.all_nodes() if not node.recovered])
+            if self.count_non_recovered_nodes() == 0:
+                result.end_simulation(EndReason.extinct, self.time)
 
-            if currently_infecting == 0:
-                result = SimulationResult('extinct', True, self.time)
+            elif self.count_non_recovered_nodes() > infection_threshold:
+                result.end_simulation(EndReason.infection_above_threshold, self.time)
 
-            elif infection_threshold != -1 and currently_infecting > infection_threshold:
-                result = SimulationResult('Infections > {infection_threshold}', False, )
-
-        # Infection Count output
-        result.inf_counts = total_cases
         return result
 
     def node_colour(self, node: Node):
