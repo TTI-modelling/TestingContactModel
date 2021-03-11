@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from matplotlib.lines import Line2D
 
-from network import Node, NodeCollection
+from household_contact_tracing.network import Node, NodeCollection
 
 contact_traced_edge_colour_within_house = "blue"
 contact_traced_edge_between_house = "magenta"
