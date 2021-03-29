@@ -946,8 +946,6 @@ class household_sim_contact_tracing:
             self.new_infection(node_count, generation, self.house_count)
 
     def run_simulation(self, num_steps: int, infection_threshold: int = 100000) -> SimulationResult:
-        # Create all the required dictionaries and reset parameters
-        self.initialise_simulation()
 
         result = SimulationResult()
 
