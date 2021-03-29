@@ -155,9 +155,6 @@ class household_sim_contact_tracing:
         # Calls the simulation reset function, which creates all the required dictionaries
         self.initialise_simulation()
 
-        # Iterator which increases each time a household is infected
-        self.house_count = 0
-
     def compute_hh_infection_probs(self, pairwise_survival_prob: float, transmission_probability_multiplier: float) -> list:
         # Precomputing the infection probabilities for the within household epidemics.
         contact_prob = 0.8
