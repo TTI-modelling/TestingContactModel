@@ -426,7 +426,7 @@ def test_start_lateral_flow_testing_household_and_quarantine(
 
 
 @pytest.fixture
-def simple_model_lfa_testing_and_quarantine():
+def simple_model_no_lfa_testing_only_quarantine():
     """Individuals who test lfa test are guaranteed to test positive
 
     Because that makes life easier.
@@ -483,7 +483,7 @@ def simple_model_lfa_testing_and_quarantine():
 
 
 def test_household_contacts_quarantine_only(
-    simple_model_lfa_testing_and_quarantine: simple_model_lfa_testing_and_quarantine
+    simple_model_lfa_testing_and_quarantine: simple_model_no_lfa_testing_only_quarantine
     ):
     """Tests that setting the policy option to 'no lfa testing only quarantine' changed the model
     behaviour so if a member of a household tests positive self isolate and start LFA testing.

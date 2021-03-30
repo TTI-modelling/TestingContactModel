@@ -121,6 +121,3 @@ def test_get_asymptomatic_infection_prob(simple_branching_process):
 
     assert local_relative_infectivity < 0.51
     assert local_relative_infectivity > 0.49
-
-def test_get_symptomatic_infection_prob():
-    pass
