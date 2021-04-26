@@ -1,4 +1,4 @@
-from household_contact_tracing.BranchingProcessSimulation import TestingContactModel
+from household_contact_tracing.BranchingProcessSimulation import ContactModelTest
 import pytest
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def simple_model():
     def symptom_reporting_delay_dist():
         return 1
 
-    model = TestingContactModel(
+    model = ContactModelTest(
         outside_household_infectivity_scaling=0.3,
         contact_tracing_success_prob=0.7,
         overdispersion=0.32,
@@ -80,7 +80,7 @@ def simple_model_high_test_prob():
     def symptom_reporting_delay_dist():
         return 1
 
-    model = TestingContactModel(
+    model = ContactModelTest(
         outside_household_infectivity_scaling=0.3,
         contact_tracing_success_prob=0.7,
         overdispersion=0.32,
@@ -134,7 +134,7 @@ def simple_model_risky_behaviour():
     def symptom_reporting_delay_dist():
         return 1
 
-    model = TestingContactModel(
+    model = ContactModelTest(
         outside_household_infectivity_scaling=0.3,
         contact_tracing_success_prob=0.7,
         overdispersion=0.32,
@@ -187,7 +187,7 @@ def test_pseudo_symptom_onset_asymptomatics():
     def symptom_reporting_delay_dist():
         return 1
 
-    model = TestingContactModel(
+    model = ContactModelTest(
         outside_household_infectivity_scaling=0.3,
         contact_tracing_success_prob=0.7,
         overdispersion=0.32,
@@ -310,7 +310,7 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
 
     assert model.nodes.node(2).being_lateral_flow_tested == True
 
-def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: TestingContactModel):
+def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: ContactModelTest):
 
     model = simple_model_high_test_prob
 
@@ -371,7 +371,7 @@ def simple_model_lfa_testing_and_quarantine():
     def symptom_reporting_delay_dist():
         return 1
 
-    model = TestingContactModel(
+    model = ContactModelTest(
         outside_household_infectivity_scaling=0.3,
         contact_tracing_success_prob=0.7,
         overdispersion=0.32,
@@ -458,7 +458,7 @@ def simple_model_no_lfa_testing_only_quarantine():
     def symptom_reporting_delay_dist():
         return 1
 
-    model = TestingContactModel(
+    model = ContactModelTest(
         outside_household_infectivity_scaling=0.3,
         contact_tracing_success_prob=0.7,
         overdispersion=0.32,
@@ -557,7 +557,7 @@ def simple_model_risky_behaviour_2_infections():
     def symptom_reporting_delay_dist():
         return 1
 
-    model = TestingContactModel(
+    model = ContactModelTest(
         outside_household_infectivity_scaling=0.3,
         contact_tracing_success_prob=0.7,
         overdispersion=0.32,

@@ -1255,7 +1255,7 @@ class uk_model(household_sim_contact_tracing):
             self.colour_node_edges_between_houses(house_to, house_from, visualisation.failed_contact_tracing)
 
 
-class TestingContactModel(uk_model):
+class ContactModelTest(uk_model):
 
     def __init__(self,
         outside_household_infectivity_scaling: float,
