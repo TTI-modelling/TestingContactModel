@@ -1,5 +1,5 @@
 from household_contact_tracing import visualisation
-from household_contact_tracing.BranchingProcessSimulation import TestingContactModel
+from household_contact_tracing.BranchingProcessSimulation import ContactModelTest
 import matplotlib.pyplot as plt
 
 def prob_testing_positive_function(time_relative_to_symptom_onset):
@@ -26,7 +26,7 @@ def symptom_reporting_delay_dist():
 
 
 def main():
-    model = TestingContactModel(
+    model = ContactModelTest(
         outside_household_infectivity_scaling=0.3,      # How likely an outside contact is to spread
         contact_tracing_success_prob=0.7,               #
         overdispersion=0.32,                            # Variance in number of contacts - Fixed at 0.32
