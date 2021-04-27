@@ -8,11 +8,13 @@ import networkx as nx
 from household_contact_tracing import visualisation
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, \
     compute_negbin_cdf
+
 from household_contact_tracing.network import Household, HouseholdCollection, Node, NodeCollection
 from household_contact_tracing.simulation import EndReason, SimulationResult
+from household_contact_tracing.bp_simulation_model import BPSimulationModel
 
 
-class household_sim_contact_tracing:
+class household_sim_contact_tracing(BPSimulationModel):
     # Local contact probability:
     local_contact_probs = [0, 0.826, 0.795, 0.803, 0.787, 0.819]
 
@@ -78,6 +80,10 @@ class household_sim_contact_tracing:
             node_daily_prob_lfa_test (float, optional): probability on each day that a node who should be lateral flow testing will actually test. Defaults to 1.
             transmission_probability_multiplier: multiplier to reflect increased probability of transmission of new variant(s) relative to parameers estimated with early/mid 2020 data ]
         """
+
+        # Call parent init
+        BPSimulationModel.__init__(self)
+
         # Probability of each household size
         house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886, 0.045067385, 0.021455526]
 
@@ -897,7 +903,8 @@ class household_sim_contact_tracing:
                         node.completed_isolation_time = self.time
                         node.completed_isolation_reason = 'completed_isolation'
 
-    def simulate_one_day(self):
+    def simulate_one_step(self):
+
         """Simulates one day of the epidemic and contact tracing."""
         # perform a days worth of infections
         self.increment_infection()
@@ -915,8 +922,15 @@ class household_sim_contact_tracing:
         # increment time
         self.time += 1
 
+        # Call parent simulate_one_step
+        BPSimulationModel.completed_step_increment(self)
+
     def initialise_simulation(self):
-        """Initialise the simulation to its starting values."""
+        """ Initialise the simulation to its starting values. """
+
+        # Call parent initialise_simulation
+        BPSimulationModel.initialise_simulation(self)
+
         self.time = 0
 
         # Create the empty graph - we add the houses properly below
@@ -942,7 +956,11 @@ class household_sim_contact_tracing:
             self.new_household(self.house_count, 1, None, None)
             self.new_infection(node_count, generation, self.house_count)
 
+
     def run_simulation(self, num_steps: int, infection_threshold: int = 100000) -> SimulationResult:
+
+        # Call parent run_simulation
+        BPSimulationModel.start_simulation(self, num_steps, infection_threshold)
 
         result = SimulationResult()
 
@@ -952,7 +970,7 @@ class household_sim_contact_tracing:
                 result.end_simulation(EndReason.timed_out, self.time)
 
             # This chunk of code executes a days worth of infections and contact tracings
-            self.simulate_one_day()
+            self.simulate_one_step()
 
             result.inf_counts.append(nx.number_of_nodes(self.G))
 
@@ -1995,11 +2013,14 @@ class ContactModelTest(uk_model):
         #                 node.being_lateral_flow_tested = False
         #                 node.completed_lateral_flow_testing_time = self.time
 
-    def simulate_one_day(self):
+    def simulate_one_step(self):
         """Simulates one day of the epidemic and contact tracing.
 
         Useful for bug testing and visualisation.
         """
+        # Call parent simulate_one_step
+        BPSimulationModel.completed_step_increment(self)
+
         self.receive_pcr_test_results()
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         self.isolate_self_reporting_cases()
