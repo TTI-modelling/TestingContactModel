@@ -9,7 +9,7 @@ class BPSimulationModel(SimulationModelInterface):
     def __init__(self):
         # Set observer lists
         self._observers_param_change = []
-        self._observers_model_change = []
+        self._observers_graph_change = []
         self._observers_state_change = []
         self._observers_step_increment = []
 
@@ -29,16 +29,16 @@ class BPSimulationModel(SimulationModelInterface):
         # NOTIFY OF STATE CHANGE HERE (ONCE SIMULATION STATES ARE FULLY IMPLEMENTED)
         pass
 
-    def simulate_one_step(self):
-        pass
+    def graph_change(self):
+        """ The graph has chnaged """
+        self.notify_observer_graph_change()
 
     def completed_step_increment(self):
         """ Completed incrementing simulation by one step """
         self.notify_observer_step_increment()
 
-
-
     # Register observers
+
     def register_observer_param_change(self, observer: object):
         """ Register as observer for parameter changes
 
@@ -48,14 +48,14 @@ class BPSimulationModel(SimulationModelInterface):
         if observer not in self._observers_param_change:
             self._observers_param_change.append(observer)
 
-    def register_observer_model_change(self, observer: SimulationViewInterface):
+    def register_observer_graph_change(self, observer: SimulationViewInterface):
         """ Register as observer for changes in model (nodes/households network)
 
         Arguments:
             observer -- the object to be added to the model change observers list
         """
-        if observer not in self._observers_model_change:
-            self._observers_model_change.append(observer)
+        if observer not in self._observers_graph_change:
+            self._observers_graph_change.append(observer)
 
     def register_observer_state_change(self, observer: SimulationViewInterface):
         """ Register as observer for changes in model state (e.g. running, extinct, timed-out)
@@ -109,11 +109,11 @@ class BPSimulationModel(SimulationModelInterface):
             if observer != modifier:
                 observer.update_model_param_change(self)
 
-    def notify_observer_model_change(self, modifier=None):
-        """ Notify observer about changes in model (nodes/households network) """
-        for observer in self._observers_model_change:
+    def notify_observer_graph_change(self, modifier=None):
+        """ Notify observer about changes in graph (nodes/households network) """
+        for observer in self._observers_graph_change:
             if observer != modifier:
-                observer.update_model_change(self)
+                observer.update_graph_change(self)
 
     def notify_observer_state_change(self, modifier=None):
         """ Notify observer about changes in model state (e.g. running, extinct, timed-out)  """

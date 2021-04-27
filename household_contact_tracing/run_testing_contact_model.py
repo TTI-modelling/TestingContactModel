@@ -54,7 +54,7 @@ def main():
 
     controller.run_simulation(20)
 
-    model.draw_network()
+    #model.draw_network()
     plt.show()
 
 

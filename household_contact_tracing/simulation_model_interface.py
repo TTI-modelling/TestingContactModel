@@ -28,8 +28,8 @@ class SimulationModelInterface:
         """ Register as observer for parameter changes """
         pass
 
-    def register_observer_model_change(self, observer: object):
-        """ Register as observer for changes in model (nodes/households network) """
+    def register_observer_graph_change(self, observer: object):
+        """ Register as observer for changes in graph (nodes/households network) """
         pass
 
     def register_observer_state_change(self, observer: object):
@@ -44,8 +44,8 @@ class SimulationModelInterface:
         """ Remove as observer for parameter changes """
         pass
 
-    def remove_observer_model_change(self, observer: object):
-        """ Remove as observer for changes in model (nodes/households network) """
+    def remove_observer_graph_change(self, observer: object):
+        """ Remove as observer for changes in graph (nodes/households network) """
         pass
 
     def remove_observer_state_change(self, observer: object):
@@ -61,8 +61,8 @@ class SimulationModelInterface:
         """ Notify observer about parameter changes """
         pass
 
-    def notify_observer_model_change(self, modifier=None):
-        """ Notify observer about changes in model (nodes/households network) """
+    def notify_observer_graph_change(self, modifier=None):
+        """ Notify observer about changes in graph (nodes/households network) """
         pass
 
     def notify_observer_state_change(self, modifier=None):
