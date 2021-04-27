@@ -1,3 +1,5 @@
+import networkx as nx
+
 from household_contact_tracing.simulation_view_interface import SimulationViewInterface
 
 

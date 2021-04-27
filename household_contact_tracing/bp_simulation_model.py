@@ -29,6 +29,9 @@ class BPSimulationModel(SimulationModelInterface):
         # NOTIFY OF STATE CHANGE HERE (ONCE SIMULATION STATES ARE FULLY IMPLEMENTED)
         pass
 
+    def simulate_one_step(self):
+        pass
+
     def completed_step_increment(self):
         """ Completed incrementing simulation by one step """
         self.notify_observer_step_increment()

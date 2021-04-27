@@ -15,6 +15,10 @@ class SimulationModelInterface:
         """ Start the simulation running."""
         pass
 
+    def simulate_one_step(self):
+        """ Just do a single step of simulation """
+        pass
+
     def completed_step_increment(self):
         """ Completed incrementing simulation by one step """
         pass
