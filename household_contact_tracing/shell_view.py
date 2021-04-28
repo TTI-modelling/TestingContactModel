@@ -17,25 +17,14 @@ class ShellView(SimulationViewInterface):
         model.register_observer_state_change(self)
         model.register_observer_step_increment(self)
 
-    def reset(self):
-        """ Initialise/Reset the simulation to starting values."""
-        pass
-
-    def run(self):
-        """ Start the simulation running."""
-        pass
-
-    def set_params(self, params):
-        """ Set new parameters for the simulation."""
-        pass
 
     def update_model_param_change(self, subject):
         """ Respond to parameter change(s) """
         print('shell view observed param change')
 
     def update_graph_change(self, subject):
-        """ Respond to changes in model (nodes/households network) """
-        print('shell view observed model change')
+        """ Respond to changes in graph (nodes/households network) """
+        print('shell view observed graph change')
 
     def update_model_state_change(self, subject):
         """ Respond to changes in model state (e.g. running, extinct, timed-out) """

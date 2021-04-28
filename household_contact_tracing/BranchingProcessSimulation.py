@@ -1001,11 +1001,10 @@ class household_sim_contact_tracing(BPSimulationModel):
             elif self.count_non_recovered_nodes() > infection_threshold:
                 result.end_simulation(EndReason.infection_above_threshold, self.time)
 
-
         return result
 
     def node_type(self, node: Node):
-        """Returns a node colour, given the current status of the node.
+        """Returns a node type, given the current status of the node.
 
         Arguments:
             node {int} -- The node id

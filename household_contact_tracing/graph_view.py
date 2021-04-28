@@ -33,30 +33,16 @@ class GraphView(SimulationViewInterface):
         Graph View
     '''
 
-    edge_type_colours = {}
-    edge_type_colours['within_house'] = "blue"
-    edge_type_colours['between_house'] = "magenta"
-    edge_type_colours['default'] = "black"
-    edge_type_colours['failed_contact_tracing'] = "red"
-    edge_type_colours['app_traced'] = "green"
+    edge_type_colours = {'within_house': "blue", 'between_house': "magenta", 'default': "black",
+                         'failed_contact_tracing': "red", 'app_traced': "green"}
 
-    node_type_colours = {}
-    node_type_colours['default'] = 'white'
-    node_type_colours['isolated_only'] = 'yellow'
-    node_type_colours['had_contacts_traced'] = 'orange'
-    node_type_colours['symptomatic_will_report_infection'] = 'lime'
-    node_type_colours['symptomatic_will_not_report_infection'] = 'green'
+    node_type_colours = {'default': 'white', 'isolated_only': 'yellow', 'had_contacts_traced': 'orange',
+                         'symptomatic_will_report_infection': 'lime', 'symptomatic_will_not_report_infection': 'green',
 
-    node_type_colours['received_pos_test_pcr'] = 'grey'
-    node_type_colours['received_neg_test_pcr'] = 'deeppink'
-    node_type_colours['confirmatory_pos_pcr_test'] = 'turquoise'
-    node_type_colours['confirmatory_neg_pcr_test'] = 'tomato'
-    node_type_colours['received_pos_test_lfa'] = 'pink'
-    node_type_colours['being_lateral_flow_tested_isolated'] = 'blue'
-    node_type_colours['being_lateral_flow_tested_not_isolated'] = 'orange'
-    node_type_colours['isolated_only'] = 'yellow'
-    node_type_colours['symptomatic_will_report_infection'] = 'lime'
-    node_type_colours['symptomatic_will_not_report_infection'] = 'green'
+                         'received_pos_test_pcr': 'grey', 'received_neg_test_pcr': 'deeppink',
+                         'confirmatory_pos_pcr_test': 'turquoise', 'confirmatory_neg_pcr_test': 'tomato',
+                         'received_pos_test_lfa': 'pink', 'being_lateral_flow_tested_isolated': 'blue',
+                         'being_lateral_flow_tested_not_isolated': 'orange'}
 
     def __init__(self, controller, model):
         # Viewers own copies of controller and model (MVC pattern)
@@ -114,3 +100,4 @@ class GraphView(SimulationViewInterface):
         plt.axis('equal')
         plt.title("Household Branching Process with Contact Tracing")
         plt.legend(proxies, labels)
+        plt.show()
