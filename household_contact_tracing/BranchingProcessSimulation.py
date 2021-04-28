@@ -10,8 +10,8 @@ from household_contact_tracing.distributions import current_hazard_rate, current
     compute_negbin_cdf
 
 from household_contact_tracing.network import Household, HouseholdCollection, Node, NodeCollection
-from household_contact_tracing.simulation import EndReason, SimulationResult
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
+from household_contact_tracing.simulation_states import *
 
 
 class EdgeType(Enum):
@@ -941,16 +941,13 @@ class household_sim_contact_tracing(BPSimulationModel):
         new_graph = self.G
 
         if not nx.is_isomorphic(prev_graph, new_graph):
-            BPSimulationModel.graph_change(self)
+            BPSimulationModel.graph_changed(self)
 
         # Call parent simulate_one_step
         BPSimulationModel.completed_step_increment(self)
 
     def initialise_simulation(self):
         """ Initialise the simulation to its starting values. """
-
-        # Call parent initialise_simulation
-        BPSimulationModel.initialise_simulation(self)
 
         self.time = 0
 
@@ -977,31 +974,30 @@ class household_sim_contact_tracing(BPSimulationModel):
             self.new_household(self.house_count, 1, None, None)
             self.new_infection(node_count, generation, self.house_count)
 
+        # Call parent initialise_simulation
+        BPSimulationModel.initialised_simulation(self)
 
-    def run_simulation(self, num_steps: int, infection_threshold: int = 100000) -> SimulationResult:
+
+    def run_simulation(self, num_steps: int, infection_threshold: int = 100000) -> None:
 
         # Call parent run_simulation
-        BPSimulationModel.start_simulation(self, num_steps, infection_threshold)
+        BPSimulationModel.started_simulation(self, num_steps, infection_threshold)
 
-        result = SimulationResult()
-
-        while result.end_reason == EndReason.not_ended:
+        while type(self.state) is RunningState:
             # Simulation ends if num_steps is reached
             if self.time == num_steps:
-                result.end_simulation(EndReason.timed_out, self.time)
+                self.state.timed_out()
 
             # This chunk of code executes a days worth of infections and contact tracings
             self.simulate_one_step()
 
-            result.inf_counts.append(nx.number_of_nodes(self.G))
+            #result.inf_counts.append(nx.number_of_nodes(self.G))
 
             if self.count_non_recovered_nodes() == 0:
-                result.end_simulation(EndReason.extinct, self.time)
-
+                self.state.go_extinct()
             elif self.count_non_recovered_nodes() > infection_threshold:
-                result.end_simulation(EndReason.infection_above_threshold, self.time)
+                self.state.max_nodes_infectious()
 
-        return result
 
     def node_type(self, node: Node):
         """Returns a node type, given the current status of the node.
@@ -2076,7 +2072,7 @@ class ContactModelTest(uk_model):
         new_graph = self.G
 
         if not nx.is_isomorphic(prev_graph, new_graph):
-            BPSimulationModel.graph_change(self)
+            BPSimulationModel.graph_changed(self)
 
         # Call parent simulate_one_step
         BPSimulationModel.completed_step_increment(self)

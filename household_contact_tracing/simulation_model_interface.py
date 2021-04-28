@@ -1,21 +1,21 @@
 class SimulationModelInterface:
     '''
-        Simulation Controller interface (MVC pattern)
+        Simulation Model interface (MVC pattern)
     '''
 
-    def initialise_simulation(self):
+    def initialised_simulation(self):
         """ Initialise/Reset the simulation to starting values."""
         pass
 
-    def update_parameters(self, params):
+    def updated_parameters(self, params):
         """ Set new params for simulation """
         pass
 
-    def start_simulation(self,  num_steps: int, infection_threshold: int = 5000):
+    def started_simulation(self,  num_steps: int, infection_threshold: int = 5000):
         """ Start the simulation running."""
         pass
 
-    def simulate_one_step(self):
+    def simulated_one_step(self):
         """ Just do a single step of simulation """
         pass
 

@@ -17,7 +17,6 @@ class ShellView(SimulationViewInterface):
         model.register_observer_state_change(self)
         model.register_observer_step_increment(self)
 
-
     def update_model_param_change(self, subject):
         """ Respond to parameter change(s) """
         print('shell view observed param change')

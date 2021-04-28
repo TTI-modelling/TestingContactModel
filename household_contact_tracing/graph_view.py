@@ -7,7 +7,8 @@ from matplotlib.lines import Line2D
 
 from household_contact_tracing.simulation_view_interface import SimulationViewInterface
 from household_contact_tracing.network import Node, NodeCollection
-from household_contact_tracing.bp_simulation_model import BPSimulationModel
+from household_contact_tracing.simulation_model_interface import SimulationModelInterface
+from household_contact_tracing.simulation_controller_interface import SimulationControllerInterface
 
 contact_traced_edge_colour_within_house = "blue"
 contact_traced_edge_between_house = "magenta"
@@ -44,15 +45,16 @@ class GraphView(SimulationViewInterface):
                          'received_pos_test_lfa': 'pink', 'being_lateral_flow_tested_isolated': 'blue',
                          'being_lateral_flow_tested_not_isolated': 'orange'}
 
-    def __init__(self, controller, model):
+    def __init__(self, controller: SimulationControllerInterface, model: SimulationModelInterface):
         # Viewers own copies of controller and model (MVC pattern)
-        self.controller = controller
+        # ... but controller not required yet
+        #self.controller = controller
         self.model = model
 
         # Register as observer
-        model.register_observer_graph_change(self)
+        self.model.register_observer_graph_change(self)
 
-    def update_graph_change(self, subject: BPSimulationModel):
+    def update_graph_change(self, subject: SimulationModelInterface):
         """ Respond to changes in graph (nodes/households network) """
         print('graph view observed that graph changed')
         self.draw_network(subject.nodes, subject.node_type)

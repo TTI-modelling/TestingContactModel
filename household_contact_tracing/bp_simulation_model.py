@@ -1,5 +1,8 @@
 from household_contact_tracing.simulation_model_interface import SimulationModelInterface
 from household_contact_tracing.simulation_view_interface import SimulationViewInterface
+from household_contact_tracing.simulation_states import SimulationStateInterface, ReadyState, RunningState, \
+    ExtinctState, TimedOutState, MaxNodesInfectiousState
+
 
 class BPSimulationModel(SimulationModelInterface):
     """
@@ -13,24 +16,63 @@ class BPSimulationModel(SimulationModelInterface):
         self._observers_state_change = []
         self._observers_step_increment = []
 
+        # States
+        self._ready_state = ReadyState(self)
+        self._running_state = RunningState(self)
+        self._extinct_state = ExtinctState(self)
+        self._timed_out_state = TimedOutState(self)
+        self._max_nodes_infectious_state = MaxNodesInfectiousState(self)
+        self._state = self._ready_state
+
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, state: SimulationStateInterface):
+        self._state = state
+
+    @property
+    def ready_state(self):
+        return self._ready_state
+
+    @property
+    def running_state(self):
+        return self._running_state
+
+    @property
+    def extinct_state(self):
+        return self._extinct_state
+
+    @property
+    def timed_out_state(self):
+        return self._timed_out_state
+
+    @property
+    def max_nodes_infectious_state(self):
+        return self._max_nodes_infectious_state
+
+
     ### Fulfill inherited interface methods: ###
 
-    def initialise_simulation(self):
+    def initialised_simulation(self):
         """ Initialise/Reset the simulation to starting values."""
-        # NOTIFY OF STATE CHANGE HERE (ONCE SIMULATION STATES ARE FULLY IMPLEMENTED)
-        pass
+        # NOTIFY OF STATE CHANGE
+        print('Initialised simulation, so set simulator state to Ready')
+        self._state.reset()
 
-    def update_parameters(self):
+    def updated_parameters(self):
         """ Increment simulation by one step """
         self.notify_observer_param_change()
 
-    def start_simulation(self,  num_steps: int, infection_threshold: int = 5000):
+    def started_simulation(self,  num_steps: int, infection_threshold: int = 5000):
         """ Start the simulation running."""
-        # NOTIFY OF STATE CHANGE HERE (ONCE SIMULATION STATES ARE FULLY IMPLEMENTED)
-        pass
+        # NOTIFY OF STATE CHANGE
+        print('Started simulation, so set simulator state to Running')
+        self._state.start_run()
 
-    def graph_change(self):
-        """ The graph has chnaged """
+    def graph_changed(self):
+        """ The graph has changed """
         self.notify_observer_graph_change()
 
     def completed_step_increment(self):
