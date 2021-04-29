@@ -1,7 +1,5 @@
-import matplotlib.pyplot as plt
-
 from household_contact_tracing.simulation_controller import SimulationController
-from household_contact_tracing.BranchingProcessSimulation import ContactModelTest, uk_model, household_sim_contact_tracing
+from household_contact_tracing.BranchingProcessSimulation import ContactModelTest
 
 
 def prob_testing_positive_function(time_relative_to_symptom_onset):

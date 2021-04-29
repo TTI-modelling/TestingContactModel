@@ -1,6 +1,7 @@
 import household_contact_tracing.BranchingProcessSimulation as hct    # The code to test
 import pytest
 
+
 def test_asymptomatic_nodes_attributes():
 
     def test_delay_dist():
@@ -15,21 +16,22 @@ def test_asymptomatic_nodes_attributes():
     def symptom_reporting_delay_dist():
         return 1
 
+    params = {"outside_household_infectivity_scaling": 0.8,
+              "contact_tracing_success_prob": 0.7,
+              "overdispersion": 0.32,
+              "asymptomatic_prob": 1,
+              "asymptomatic_relative_infectivity": 0.6,
+              "infection_reporting_prob": 0.5,
+              "contact_trace": True,
+              "household_pairwise_survival_prob": 0.8
+              }
+
     # everyone's asymptomatic
-    test_model = hct.household_sim_contact_tracing(
-        outside_household_infectivity_scaling=0.8,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=1,
-        asymptomatic_relative_infectivity=0.6,
-        infection_reporting_prob=0.5,
-        contact_trace=True,
-        test_delay_dist=test_delay_dist,
-        contact_trace_delay_dist=contact_trace_delay_dist,
-        incubation_period_delay_dist=incubation_period_delay_dist,
-        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
-        household_pairwise_survival_prob=0.8
-    )
+    test_model = hct.household_sim_contact_tracing(params,
+                                                   test_delay_dist=test_delay_dist,
+                                                   contact_trace_delay_dist=contact_trace_delay_dist,
+                                                   incubation_period_delay_dist=incubation_period_delay_dist,
+                                                   symptom_reporting_delay_dist=symptom_reporting_delay_dist)
 
     lfa_test_node = test_model.network.nodes.node(1)
 
@@ -51,21 +53,22 @@ def test_symptomatic_nodes_attributes():
     def symptom_reporting_delay_dist():
         return 1
 
+    params = {"outside_household_infectivity_scaling": 0.8,
+              "contact_tracing_success_prob": 0.7,
+              "overdispersion": 0.32,
+              "asymptomatic_prob": 0,
+              "asymptomatic_relative_infectivity": 0.6,
+              "infection_reporting_prob": 1,
+              "contact_trace": True,
+              "household_pairwise_survival_prob": 0.8
+              }
+
     # no asymptomatics
-    test_model = hct.household_sim_contact_tracing(
-        outside_household_infectivity_scaling=0.8,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=0,
-        asymptomatic_relative_infectivity=0.6,
-        infection_reporting_prob=1,
-        contact_trace=True,
-        test_delay_dist=test_delay_dist,
-        contact_trace_delay_dist=contact_trace_delay_dist,
-        incubation_period_delay_dist=incubation_period_delay_dist,
-        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
-        household_pairwise_survival_prob=0.8
-    )
+    test_model = hct.household_sim_contact_tracing(params,
+                                                   test_delay_dist=test_delay_dist,
+                                                   contact_trace_delay_dist=contact_trace_delay_dist,
+                                                   incubation_period_delay_dist=incubation_period_delay_dist,
+                                                   symptom_reporting_delay_dist=symptom_reporting_delay_dist)
 
     lfa_test_node = test_model.network.nodes.node(1)
 
@@ -89,22 +92,23 @@ def simple_branching_process():
     def symptom_reporting_delay_dist():
         return 1
 
-    # 50% asymptomatic
-    test_model = hct.household_sim_contact_tracing(
-        outside_household_infectivity_scaling=0.8,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=0.5,
-        asymptomatic_relative_infectivity=0.5,
-        infection_reporting_prob=0.5,
-        contact_trace=True,
-        test_delay_dist=test_delay_dist,
-        contact_trace_delay_dist=contact_trace_delay_dist,
-        incubation_period_delay_dist=incubation_period_delay_dist,
-        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
-        household_pairwise_survival_prob=0.8
-    )
+    params = {"outside_household_infectivity_scaling": 0.8,
+              "contact_tracing_success_prob": 0.7,
+              "overdispersion": 0.32,
+              "asymptomatic_prob": 0.5,
+              "asymptomatic_relative_infectivity": 0.5,
+              "infection_reporting_prob": 0.5,
+              "contact_trace": True,
+              "household_pairwise_survival_prob": 0.8
+              }
 
+    # 50% asymptomatic
+    test_model = hct.household_sim_contact_tracing(params,
+                                                   test_delay_dist=test_delay_dist,
+                                                   contact_trace_delay_dist=contact_trace_delay_dist,
+                                                   incubation_period_delay_dist=incubation_period_delay_dist,
+                                                   symptom_reporting_delay_dist=symptom_reporting_delay_dist
+                                                   )
     return test_model
 
 
