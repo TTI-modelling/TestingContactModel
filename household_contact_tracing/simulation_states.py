@@ -24,18 +24,29 @@ class SimulationStateInterface:
         pass
 
 
-class ReadyState(SimulationStateInterface):
+class SimulationState(SimulationStateInterface):
+    def __init__(self, simulation_model):
+        self._simulation_model = simulation_model
+
+    def get_state_name(self: str):
+        """ Return the state name."""
+        return self.__class__.__name__
+
+    @property
+    def name(self):
+        return self.get_state_name()
+
+
+class ReadyState(SimulationState):
     """
         Simulation is ready to start
     """
-
-    def __init__(self, simulation_model):
-        self._simulation_model = simulation_model
 
     def start_run(self):
         """ The simulation has started running."""
         print('Changing to running state')
         self._simulation_model.state = self._simulation_model.running_state
+        self._simulation_model.notify_observer_state_change()
 
     def timed_out(self):
         """ The simulation timed out """
@@ -54,14 +65,10 @@ class ReadyState(SimulationStateInterface):
         print('Already re-set and ready to run!')
 
 
-class RunningState(SimulationStateInterface):
+class RunningState(SimulationState):
     """
         Simulation is running
     """
-
-    def __init__(self, simulation_model):
-        self._simulation_model = simulation_model
-
 
     def start_run(self):
         """ The simulation has started running."""
@@ -71,29 +78,29 @@ class RunningState(SimulationStateInterface):
         """ The simulation timed out """
         print('Timed out state')
         self._simulation_model.state = self._simulation_model.timed_out_state
+        self._simulation_model.notify_observer_state_change()
 
     def go_extinct(self):
         """ The simulation went extinct (no more infectious nodes) """
         print('Gone extinct state')
         self._simulation_model.state = self._simulation_model.extinct_state
+        self._simulation_model.notify_observer_state_change()
 
     def max_nodes_infectious(self):
         """  The max number of infectious nodes was reached """
         print('Max infectious nodes threshold met')
         self._simulation_model.state = self._simulation_model.max_infectious_nodes_state
+        self._simulation_model.notify_observer_state_change()
 
     def reset(self):
         """ The simulation was re-set to initial pre-run state """
         print('Cannot reset whilst running')
 
 
-class ExtinctState(SimulationStateInterface):
+class ExtinctState(SimulationState):
     """
         Simulated outbreak has gone extinct
     """
-
-    def __init__(self, simulation_model):
-        self._simulation_model = simulation_model
 
     def start_run(self):
         """ The simulation has started running."""
@@ -115,15 +122,13 @@ class ExtinctState(SimulationStateInterface):
         """ The simulation was re-set to initial pre-run state """
         print('Changing to ready state')
         self._simulation_model.state = self._simulation_model.ready_state
+        self._simulation_model.notify_observer_state_change()
 
 
-class TimedOutState(SimulationStateInterface):
+class TimedOutState(SimulationState):
     """
         Simulated outbreak has timed out
     """
-
-    def __init__(self, simulation_model):
-        self._simulation_model = simulation_model
 
     def start_run(self):
         """ The simulation has started running."""
@@ -145,15 +150,13 @@ class TimedOutState(SimulationStateInterface):
         """ The simulation was re-set to initial pre-run state """
         print('Changing to ready state')
         self._simulation_model.state = self._simulation_model.ready_state
+        self._simulation_model.notify_observer_state_change()
 
 
-class MaxNodesInfectiousState(SimulationStateInterface):
+class MaxNodesInfectiousState(SimulationState):
     """
         Simulated outbreak has reached maximum number of infectious nodes
     """
-
-    def __init__(self, simulation_model):
-        self._simulation_model = simulation_model
 
     def start_run(self):
         """ The simulation has started running."""
@@ -175,3 +178,4 @@ class MaxNodesInfectiousState(SimulationStateInterface):
         """ The simulation was re-set to initial pre-run state """
         print('Changing to ready state')
         self._simulation_model.state = self._simulation_model.ready_state
+        self._simulation_model.notify_observer_state_change()

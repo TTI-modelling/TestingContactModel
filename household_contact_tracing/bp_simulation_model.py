@@ -65,7 +65,7 @@ class BPSimulationModel(SimulationModelInterface):
         """ Increment simulation by one step """
         self.notify_observer_param_change()
 
-    def started_simulation(self,  num_steps: int, infection_threshold: int = 5000):
+    def started_simulation(self):
         """ Start the simulation running."""
         # NOTIFY OF STATE CHANGE
         print('Started simulation, so set simulator state to Running')
@@ -149,22 +149,22 @@ class BPSimulationModel(SimulationModelInterface):
         """ Notify observer about parameter changes """
         for observer in self._observers_param_change:
             if observer != modifier:
-                observer.update_model_param_change(self)
+                observer.model_param_change(self)
 
     def notify_observer_graph_change(self, modifier=None):
         """ Notify observer about changes in graph (nodes/households network) """
         for observer in self._observers_graph_change:
             if observer != modifier:
-                observer.update_graph_change(self)
+                observer.graph_change(self)
 
     def notify_observer_state_change(self, modifier=None):
         """ Notify observer about changes in model state (e.g. running, extinct, timed-out)  """
         for observer in self._observers_state_change:
             if observer != modifier:
-                observer.update_model_state_change(self)
+                observer.model_state_change(self)
 
     def notify_observer_step_increment(self, modifier=None):
         """ Notify observer about  increment in simulation """
         for observer in self._observers_step_increment:
             if observer != modifier:
-                observer.update_model_step_increment(self)
+                observer.model_step_increment(self)

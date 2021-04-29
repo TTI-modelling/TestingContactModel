@@ -980,20 +980,17 @@ class household_sim_contact_tracing(BPSimulationModel):
 
     def run_simulation(self, num_steps: int, infection_threshold: int = 100000) -> None:
 
-        # Call parent run_simulation
-        BPSimulationModel.started_simulation(self, num_steps, infection_threshold)
+        # Tell parent simulation started
+        BPSimulationModel.started_simulation(self)
 
         while type(self.state) is RunningState:
+            # This chunk of code executes one step (a days worth of infections and contact tracings)
+            self.simulate_one_step()
+
             # Simulation ends if num_steps is reached
             if self.time == num_steps:
                 self.state.timed_out()
-
-            # This chunk of code executes a days worth of infections and contact tracings
-            self.simulate_one_step()
-
-            #result.inf_counts.append(nx.number_of_nodes(self.G))
-
-            if self.count_non_recovered_nodes() == 0:
+            elif self.count_non_recovered_nodes() == 0:
                 self.state.go_extinct()
             elif self.count_non_recovered_nodes() > infection_threshold:
                 self.state.max_nodes_infectious()

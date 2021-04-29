@@ -10,7 +10,7 @@ class SimulationController(SimulationControllerInterface):
     def __init__(self, model: SimulationModelInterface):
         self._model = model
         self.shellView = ShellView(self, model)
-        self.graphView = GraphView(self, model)
+        self.graphView = GraphView(self, model, show_all_updates=True)
 
     def reset(self):
         """ Reset the simulation model."""
