@@ -615,10 +615,8 @@ def test_lfa_tested_nodes_make_more_contacts_if_risky(
     model.nodes.node(1).being_lateral_flow_tested = True
     model.nodes.node(2).being_lateral_flow_tested = True
 
-    controller = SimulationController(model)
-
     for _ in range(5):
-        controller.simulate_one_step()
+        model.simulate_one_step()
 
     # node 1 does not engage in risky behaviour and should not make any global contacts
     assert model.nodes.node(1).outside_house_contacts_made == 0
