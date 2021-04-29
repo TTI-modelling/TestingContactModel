@@ -44,7 +44,7 @@ class GraphView(SimulationViewInterface):
                          'received_pos_test_lfa': 'pink', 'being_lateral_flow_tested_isolated': 'blue',
                          'being_lateral_flow_tested_not_isolated': 'orange'}
 
-    def __init__(self, controller, model: SimulationModelInterface, show_all_updates=False):
+    def __init__(self, controller, model: SimulationModelInterface):
         # Viewers own copies of controller and model (MVC pattern)
         # ... but controller not required yet (no input collected from view)
         #self.controller = controller
@@ -52,18 +52,23 @@ class GraphView(SimulationViewInterface):
 
         # Register as observer
         self.model.register_observer_state_change(self)
-        if show_all_updates:
-            self.model.register_observer_graph_change(self)
+        self.model.register_observer_simulation_stopped(self)
 
-    def model_state_change(self, subject: SimulationModelInterface):
-        if subject.state.name != 'RunningState':
-            print('graph view observed that simulation no longer running')
-            self.draw_network(subject.nodes, subject.node_type)
+    def set_show_all_graphs(self, show_all):
+        if show_all:
+            self.model.register_observer_graph_change(self)
+        else:
+            self.model.remove_observer_graph_change(self)
+
+    def model_simulation_stopped(self, subject: SimulationModelInterface):
+        print('graph view observed that simulation has stopped running')
+        if self not in subject._observers_graph_change:
+            self.draw_network(subject.network.nodes, subject.node_type)
 
     def graph_change(self, subject: SimulationModelInterface):
         """ Respond to changes in graph (nodes/households network) """
         print('graph view observed that graph changed')
-        self.draw_network(subject.nodes, subject.node_type)
+        self.draw_network(subject.network.nodes, subject.node_type)
 
 
     def draw_network(self, nodes: NodeCollection, node_type: Callable[[Node], str]):

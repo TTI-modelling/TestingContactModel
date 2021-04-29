@@ -1,11 +1,90 @@
 # Contains objects which encode the network
 from typing import Optional, Iterator, List, Tuple, Dict
-
 import networkx as nx
+from enum import Enum
+
+
+class EdgeType(Enum):
+    default = 0
+    within_house = 1
+    between_house = 2
+    failed_contact_tracing = 3
+    app_traced = 4
+
+
+class NodeTypeDetailed(Enum):
+    default = 0
+    received_pos_test_pcr= 1
+    received_neg_test_pcr = 2
+    confirmatory_pos_pcr_test = 3
+    confirmatory_neg_pcr_test = 4
+    received_pos_test_lfa = 5
+    being_lateral_flow_tested_isolated = 6
+    being_lateral_flow_tested_not_isolated = 7
+    isolated_only = 8
+    symptomatic_will_report_infection = 9
+    symptomatic_will_not_report_infection = 10
+
+
+class NodeType(Enum):
+    default = 0
+    isolated = 1
+    had_contacts_traced = 2
+    symptomatic_will_report_infection = 3
+    symptomatic_wont_report_infection = 4
+
+
+class Network:
+    def __init__(self):
+        self._nodes = None
+        self._houses = None
+        self._graph = None
+
+    @property
+    def nodes(self):
+        return self._nodes
+
+    @nodes.setter
+    def nodes(self, nodes: 'NodeCollection'):
+        self._nodes = nodes
+
+    @property
+    def houses(self):
+        return self._houses
+
+    @houses.setter
+    def houses(self, houses: 'HouseholdCollection'):
+        self._houses = houses
+
+    @property
+    def graph(self):
+        return self._graph
+
+    @property
+    def house_count(self):
+        return len(self.houses.house_dict)
+
+    @property
+    def node_count(self):
+        return nx.number_of_nodes(self.graph)
+
+    def graphs_isophomorphic(self, graph1, graph2):
+        return nx.is_isomorphic(graph1, graph2)
+
+    def reset(self):
+        # Create the empty graph - we add the houses properly below
+        self.nodes = NodeCollection(None)
+
+        # Stores information about the households.
+        self.houses = HouseholdCollection(self.nodes)
+        self.nodes.houses = self.houses
+
+        # The graph of infections
+        self._graph = self.nodes.G
+
 
 
 class Node:
-
     def __init__(
         self,
         nodes: 'NodeCollection',
@@ -122,6 +201,47 @@ class Node:
                 if self.time_of_reporting <= time_now:
                     return "self_recognised_infection"
         return "unknown_infection"
+
+    def node_type(self):
+        """Returns a node type, given the current status of the node.
+        """
+
+        if self.isolated:
+            return NodeType.isolated.name
+        elif self.had_contacts_traced:
+            return NodeType.had_contacts_traced.name
+        elif not self.asymptomatic and self.will_report_infection:
+            return NodeType.symptomatic_will_report_infection.name
+        elif not self.asymptomatic and not self.will_report_infection:
+            return NodeType.symptomatic_wont_report_infection.name
+        else:
+            return NodeType.default.name
+
+    def node_type_detailed(self):
+        """Returns a detailed node type, given the current status of the node.
+        """
+        if self.received_result and not self.received_positive_test_result and self.avenue_of_testing == 'PCR':
+            return NodeTypeDetailed.received_neg_test_pcr.name
+        elif self.received_positive_test_result and self.avenue_of_testing == 'PCR':
+            return NodeTypeDetailed.received_pos_test_pcr.name
+        elif self.taken_confirmatory_PCR_test and self.confirmatory_PCR_result_was_positive and self.time >= self.confirmatory_PCR_test_result_time:
+            return NodeTypeDetailed.confirmatory_pos_pcr_test.name
+        elif self.taken_confirmatory_PCR_test and not self.confirmatory_PCR_result_was_positive and self.time >= self.confirmatory_PCR_test_result_time:
+            return NodeTypeDetailed.confirmatory_neg_pcr_test.name
+        elif self.received_positive_test_result and self.avenue_of_testing == 'LFA':
+            return NodeTypeDetailed.received_pos_test_lfa.name
+        elif self.being_lateral_flow_tested and self.isolated:
+            return NodeTypeDetailed.being_lateral_flow_tested_isolated.name
+        elif self.being_lateral_flow_tested and not self.isolated:
+            return NodeTypeDetailed.being_lateral_flow_tested_not_isolated.name
+        elif self.isolated:
+            return NodeTypeDetailed.isolated_only.name
+        elif not self.asymptomatic and self.will_report_infection:
+            return NodeTypeDetailed.symptomatic_will_report_infection.name
+        elif not self.asymptomatic and not self.will_report_infection:
+            return NodeTypeDetailed.symptomatic_will_not_report_infection.name
+        else:
+            return NodeTypeDetailed.default.name
 
 
 class NodeCollection:

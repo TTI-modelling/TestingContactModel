@@ -54,5 +54,9 @@ def main():
 
     controller.run_simulation(20)
 
+    controller.set_show_all_graphs(True)
+    controller.reset()
+    controller.run_simulation(10)
+
 
 main()

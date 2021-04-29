@@ -15,6 +15,7 @@ class BPSimulationModel(SimulationModelInterface):
         self._observers_graph_change = []
         self._observers_state_change = []
         self._observers_step_increment = []
+        self._observers_simulation_stopped = []
 
         # States
         self._ready_state = ReadyState(self)
@@ -55,7 +56,7 @@ class BPSimulationModel(SimulationModelInterface):
 
     ### Fulfill inherited interface methods: ###
 
-    def initialised_simulation(self):
+    def simulation_initialised(self):
         """ Initialise/Reset the simulation to starting values."""
         # NOTIFY OF STATE CHANGE
         print('Initialised simulation, so set simulator state to Ready')
@@ -65,19 +66,23 @@ class BPSimulationModel(SimulationModelInterface):
         """ Increment simulation by one step """
         self.notify_observer_param_change()
 
-    def started_simulation(self):
+    def simulation_started(self):
         """ Start the simulation running."""
         # NOTIFY OF STATE CHANGE
         print('Started simulation, so set simulator state to Running')
         self._state.start_run()
 
+    def simulation_stopped(self):
+        """ The has stopped running """
+        self.notify_observers_simulation_stopped()
+
     def graph_changed(self):
         """ The graph has changed """
-        self.notify_observer_graph_change()
+        self.notify_observers_graph_change()
 
     def completed_step_increment(self):
         """ Completed incrementing simulation by one step """
-        self.notify_observer_step_increment()
+        self.notify_observers_step_increment()
 
     # Register observers
 
@@ -91,10 +96,10 @@ class BPSimulationModel(SimulationModelInterface):
             self._observers_param_change.append(observer)
 
     def register_observer_graph_change(self, observer: SimulationViewInterface):
-        """ Register as observer for changes in model (nodes/households network)
+        """ Register as observer for changes in model graph (nodes/households network)
 
         Arguments:
-            observer -- the object to be added to the model change observers list
+            observer -- the object to be added to the graph change observers list
         """
         if observer not in self._observers_graph_change:
             self._observers_graph_change.append(observer)
@@ -106,6 +111,14 @@ class BPSimulationModel(SimulationModelInterface):
         """
         if observer not in self._observers_state_change:
             self._observers_state_change.append(observer)
+
+    def register_observer_simulation_stopped(self, observer: SimulationViewInterface):
+        """ Register as observer for when simulation stops
+        Arguments:
+            observer -- the object to be added to the simulation stopped observers list
+        """
+        if observer not in self._observers_simulation_stopped:
+            self._observers_simulation_stopped.append(observer)
 
     def register_observer_step_increment(self, observer: SimulationViewInterface):
         """ Register as observer for increment in simulation
@@ -137,6 +150,13 @@ class BPSimulationModel(SimulationModelInterface):
         except ValueError:
             pass
 
+    def remove_observer_simulation_stopped(self, observer: SimulationViewInterface):
+        """ Remove as observer for when simulation stops """
+        try:
+            self._observers_simulation_stopped.remove(observer)
+        except ValueError:
+            pass
+
     def remove_observer_step_increment(self, observer: SimulationViewInterface):
         """ Remove as observer for increment in simulation """
         try:
@@ -145,25 +165,31 @@ class BPSimulationModel(SimulationModelInterface):
             pass
 
     # Notify Observers
-    def notify_observer_param_change(self, modifier=None):
+    def notify_observers_param_change(self, modifier=None):
         """ Notify observer about parameter changes """
         for observer in self._observers_param_change:
             if observer != modifier:
                 observer.model_param_change(self)
 
-    def notify_observer_graph_change(self, modifier=None):
+    def notify_observers_graph_change(self, modifier=None):
         """ Notify observer about changes in graph (nodes/households network) """
         for observer in self._observers_graph_change:
             if observer != modifier:
                 observer.graph_change(self)
 
-    def notify_observer_state_change(self, modifier=None):
+    def notify_observers_state_change(self, modifier=None):
         """ Notify observer about changes in model state (e.g. running, extinct, timed-out)  """
         for observer in self._observers_state_change:
             if observer != modifier:
                 observer.model_state_change(self)
 
-    def notify_observer_step_increment(self, modifier=None):
+    def notify_observers_simulation_stopped(self, modifier=None):
+        """ Notify observer about when simulation has stopped """
+        for observer in self._observers_simulation_stopped:
+            if observer != modifier:
+                observer.model_simulation_stopped(self)
+
+    def notify_observers_step_increment(self, modifier=None):
         """ Notify observer about  increment in simulation """
         for observer in self._observers_step_increment:
             if observer != modifier:
