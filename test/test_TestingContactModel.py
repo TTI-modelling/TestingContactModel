@@ -207,27 +207,27 @@ def test_pseudo_symptom_onset_asymptomatics():
         policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
     )
 
-    assert model.nodes.node(1).pseudo_symptom_onset_time == 5
+    assert model.network.nodes.node(1).pseudo_symptom_onset_time == 5
 
 def test_pseudo_symptom_onset(simple_model):
     """Checks that it is also working for symptomatics
     """
 
-    assert simple_model.nodes.node(1).pseudo_symptom_onset_time == 5
+    assert simple_model.network.nodes.node(1).pseudo_symptom_onset_time == 5
 
 def test_time_relative_to_symptom_onset(simple_model):
     """Tests that nodes return the correct time relative to symptom onset
     """
     # we know symptom onset it at time 5
-    assert simple_model.nodes.node(1).time_relative_to_symptom_onset(5) == 0
-    assert simple_model.nodes.node(1).time_relative_to_symptom_onset(6) == 1
-    assert simple_model.nodes.node(1).time_relative_to_symptom_onset(4) == -1
+    assert simple_model.network.nodes.node(1).time_relative_to_symptom_onset(5) == 0
+    assert simple_model.network.nodes.node(1).time_relative_to_symptom_onset(6) == 1
+    assert simple_model.network.nodes.node(1).time_relative_to_symptom_onset(4) == -1
 
 def test_lfa_test_node(simple_model_high_test_prob):
 
     model = simple_model_high_test_prob
 
-    node_of_interest = model.nodes.node(1)
+    node_of_interest = model.network.nodes.node(1)
 
     assert not model.lfa_test_node(node_of_interest)
 
@@ -242,7 +242,7 @@ def test_being_lateral_flow_tested_attribute(simple_model):
     """Check nodes are generated with the lateral flow testing attribute
     """
 
-    assert not simple_model.nodes.node(1).being_lateral_flow_tested
+    assert not simple_model.network.nodes.node(1).being_lateral_flow_tested
 
 def test_get_positive_lateral_flow_nodes_default_exclusion(simple_model_high_test_prob):
     """Check that nodes are automatically being tested for some reason
@@ -258,7 +258,7 @@ def test_get_positive_lateral_flow_nodes_timings(simple_model_high_test_prob):
 
     model = simple_model_high_test_prob
 
-    node_of_interest = model.nodes.node(1)
+    node_of_interest = model.network.nodes.node(1)
 
     node_of_interest.being_lateral_flow_tested = True
 
@@ -270,7 +270,7 @@ def test_get_positive_lateral_flow_nodes(simple_model_high_test_prob):
 
     model = simple_model_high_test_prob
 
-    node_of_interest = model.nodes.node(1)
+    node_of_interest = model.network.nodes.node(1)
 
     node_of_interest.being_lateral_flow_tested = True
 
@@ -294,13 +294,13 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
     model.contact_tracing_success_prob = 1
 
     model.new_outside_household_infection(
-        infecting_node = model.nodes.node(1),
+        infecting_node = model.network.nodes.node(1),
         serial_interval=0
     )
     
     model.attempt_contact_trace_of_household(
-        house_to = model.houses.household(2),
-        house_from = model.houses.household(1),
+        house_to = model.network.houses.household(2),
+        house_from = model.network.houses.household(1),
         days_since_contact_occurred=0,
         contact_trace_delay=0
     )
@@ -311,7 +311,7 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
 
     controller.simulate_one_step()
 
-    assert model.nodes.node(2).being_lateral_flow_tested == True
+    assert model.network.nodes.node(2).being_lateral_flow_tested == True
 
 def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: ContactModelTest):
 
@@ -319,7 +319,7 @@ def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: Contac
 
     model.time = 5
 
-    model.nodes.node(1).being_lateral_flow_tested = True
+    model.network.nodes.node(1).being_lateral_flow_tested = True
 
     # this line is required before the isolate_positive_lateral_flow_tests func
     # can work
@@ -331,15 +331,15 @@ def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: Contac
     # add another infection to the household, so we can check that they are not quarantining
     # but they are lfa testing
     model.new_within_household_infection(
-        infecting_node = model.nodes.node(1),
+        infecting_node = model.network.nodes.node(1),
         serial_interval = 0
     )
 
-    assert model.nodes.node(1).isolated
-    assert model.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
-    assert model.nodes.node(1).received_positive_test_result
-    assert not model.nodes.node(2).isolated
-    assert model.nodes.node(2).being_lateral_flow_tested
+    assert model.network.nodes.node(1).isolated
+    assert model.network.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
+    assert model.network.nodes.node(1).received_positive_test_result
+    assert not model.network.nodes.node(2).isolated
+    assert model.network.nodes.node(2).being_lateral_flow_tested
 
 @pytest.fixture
 def simple_model_lfa_testing_and_quarantine():
@@ -408,7 +408,7 @@ def test_start_lateral_flow_testing_household_and_quarantine(
 
     model.time = 5
 
-    model.nodes.node(1).being_lateral_flow_tested = True
+    model.network.nodes.node(1).being_lateral_flow_tested = True
 
     # this line is required before the isolate_positive_lateral_flow_tests func
     # can work
@@ -417,15 +417,15 @@ def test_start_lateral_flow_testing_household_and_quarantine(
     model.isolate_positive_lateral_flow_tests()
 
     model.new_within_household_infection(
-        infecting_node = model.nodes.node(1),
+        infecting_node = model.network.nodes.node(1),
         serial_interval = 0
     )
 
-    assert model.nodes.node(1).isolated
-    assert model.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
-    assert model.nodes.node(1).received_positive_test_result
-    assert model.nodes.node(2).isolated
-    assert model.nodes.node(2).being_lateral_flow_tested
+    assert model.network.nodes.node(1).isolated
+    assert model.network.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
+    assert model.network.nodes.node(1).received_positive_test_result
+    assert model.network.nodes.node(2).isolated
+    assert model.network.nodes.node(2).being_lateral_flow_tested
 
 
 @pytest.fixture
@@ -495,7 +495,7 @@ def test_household_contacts_quarantine_only(
 
     model.time = 5
 
-    model.nodes.node(1).being_lateral_flow_tested = True
+    model.network.nodes.node(1).being_lateral_flow_tested = True
 
     # this line is required before the isolate_positive_lateral_flow_tests func
     # can work
@@ -504,28 +504,28 @@ def test_household_contacts_quarantine_only(
     model.isolate_positive_lateral_flow_tests()
 
     model.new_within_household_infection(
-        infecting_node = model.nodes.node(1),
+        infecting_node = model.network.nodes.node(1),
         serial_interval = 0
     )
 
-    assert model.nodes.node(1).isolated
-    assert model.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
-    assert model.nodes.node(1).received_positive_test_result
-    assert model.nodes.node(2).isolated
-    assert model.nodes.node(2).being_lateral_flow_tested
+    assert model.network.nodes.node(1).isolated
+    assert model.network.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
+    assert model.network.nodes.node(1).received_positive_test_result
+    assert model.network.nodes.node(2).isolated
+    assert model.network.nodes.node(2).being_lateral_flow_tested
 
 def test_risky_behaviour_attributes_default(simple_model: simple_model):
     """Tests that the default behaviour is no more risky behaviour
     """
 
-    assert not simple_model.nodes.node(1).propensity_risky_behaviour_lfa_testing 
+    assert not simple_model.network.nodes.node(1).propensity_risky_behaviour_lfa_testing
 
 def test_risky_behaviour_attributes(simple_model_risky_behaviour: simple_model_risky_behaviour):
     """Tests that nodes are created with the propensity for risky behaviour while they are
     being tested.
     """
 
-    assert simple_model_risky_behaviour.nodes.node(1).propensity_risky_behaviour_lfa_testing 
+    assert simple_model_risky_behaviour.network.nodes.node(1).propensity_risky_behaviour_lfa_testing
 
 @pytest.fixture
 def simple_model_risky_behaviour_2_infections():
@@ -602,24 +602,24 @@ def test_lfa_tested_nodes_make_more_contacts_if_risky(
 
     model = simple_model_risky_behaviour_2_infections
 
-    model.nodes.node(1).propensity_risky_behaviour_lfa_testing = False
+    model.network.nodes.node(1).propensity_risky_behaviour_lfa_testing = False
 
     # stop there being any within household infections
     # not sure if this is strictly necessary
-    model.houses.household(1).size = 1
-    model.houses.household(2).size = 1
-    model.houses.household(1).susceptibles = 0
-    model.houses.household(2).susceptibles = 0
+    model.network.houses.household(1).size = 1
+    model.network.houses.household(2).size = 1
+    model.network.houses.household(1).susceptibles = 0
+    model.network.houses.household(2).susceptibles = 0
 
     # set the nodes to being lfa tested
-    model.nodes.node(1).being_lateral_flow_tested = True
-    model.nodes.node(2).being_lateral_flow_tested = True
+    model.network.nodes.node(1).being_lateral_flow_tested = True
+    model.network.nodes.node(2).being_lateral_flow_tested = True
 
     for _ in range(5):
         model.simulate_one_step()
 
     # node 1 does not engage in risky behaviour and should not make any global contacts
-    assert model.nodes.node(1).outside_house_contacts_made == 0
-    assert model.nodes.node(2).outside_house_contacts_made != 0
+    assert model.network.nodes.node(1).outside_house_contacts_made == 0
+    assert model.network.nodes.node(2).outside_house_contacts_made != 0
 
 

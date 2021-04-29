@@ -31,7 +31,7 @@ def test_asymptomatic_nodes_attributes():
         household_pairwise_survival_prob=0.8
     )
 
-    lfa_test_node = test_model.nodes.node(1)
+    lfa_test_node = test_model.network.nodes.node(1)
 
     assert lfa_test_node.asymptomatic == True
     assert lfa_test_node.symptom_onset_time == float('Inf')
@@ -67,7 +67,7 @@ def test_symptomatic_nodes_attributes():
         household_pairwise_survival_prob=0.8
     )
 
-    lfa_test_node = test_model.nodes.node(1)
+    lfa_test_node = test_model.network.nodes.node(1)
 
     assert lfa_test_node.asymptomatic == False
     assert lfa_test_node.symptom_onset_time == 5
