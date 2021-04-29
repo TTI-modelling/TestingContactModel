@@ -1,6 +1,8 @@
-from household_contact_tracing import visualisation
-from household_contact_tracing.BranchingProcessSimulation import ContactModelTest
 import matplotlib.pyplot as plt
+
+from household_contact_tracing.simulation_controller import SimulationController
+from household_contact_tracing.BranchingProcessSimulation import ContactModelTest, uk_model, household_sim_contact_tracing
+
 
 def prob_testing_positive_function(time_relative_to_symptom_onset):
     if time_relative_to_symptom_onset in [4, 5, 6]:
@@ -48,9 +50,13 @@ def main():
         policy_for_household_contacts_of_a_positive_case='no lfa testing only quarantine'
     )
 
-    model.run_simulation(20)
+    controller = SimulationController(model)
 
-    model.draw_network()
-    plt.show()
+    controller.run_simulation(20)
+
+    controller.set_show_all_graphs(True)
+    controller.reset()
+    controller.run_simulation(10)
+
 
 main()
