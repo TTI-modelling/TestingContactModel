@@ -48,10 +48,6 @@
       "description": "The number of infections at time = 0",
       "type": "number"
     },
-    "transmission_probability_multiplier": {
-      "description": "multiplier to reflect increased probability of transmission of new variant(s) relative to parameters estimated with early/mid 2020 data",
-      "type": "number"
-    },
     "incubation_period_delay": {
       "description": "The length of time between infection and presentation of symptoms",
       "type": "number"
@@ -94,10 +90,6 @@
     "contact_tracing_success_prob": {
       "description": "The probability that a contact tracing attempt succeeds",
       "type": "number"
-    },
-    "contact_trace": {
-      "description": "Whether to contact trace or not",
-      "type": "boolean"
     },
     "do_2_step": {
       "description": "Whether to use two step tracing on the households",

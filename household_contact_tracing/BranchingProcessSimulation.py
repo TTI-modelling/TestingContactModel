@@ -71,16 +71,11 @@ class household_sim_contact_tracing(BPSimulationModel):
             self.starting_infections = params["starting_infections"]
         else:
             self.starting_infections = 1
-        if "transmission_probability_multiplier" in params:
-            self.transmission_probability_multiplier = params["transmission_probability_multiplier"]
-        else:
-            self.transmission_probability_multiplier = 1
         self.symptom_reporting_delay = params["symptom_reporting_delay"]
         self.incubation_period_delay = params["incubation_period_delay"]
 
         # contact tracing parameters
         self.contact_tracing_success_prob = params["contact_tracing_success_prob"]
-        self.contact_trace = params["contact_trace"]
         if "do_2_step" in params:
             self.do_2_step = params["do_2_step"]
         else:
@@ -124,9 +119,9 @@ class household_sim_contact_tracing(BPSimulationModel):
         else:
             self.global_contact_reduction_imperfect_quarantine = 0
 
-        self.symptomatic_local_infection_probs = self.compute_hh_infection_probs(params["household_pairwise_survival_prob"], self.transmission_probability_multiplier)
+        self.symptomatic_local_infection_probs = self.compute_hh_infection_probs(params["household_pairwise_survival_prob"])
         asymptomatic_household_pairwise_survival_prob = 1 - self.asymptomatic_relative_infectivity + self.asymptomatic_relative_infectivity * params["household_pairwise_survival_prob"]
-        self.asymptomatic_local_infection_probs = self.compute_hh_infection_probs(asymptomatic_household_pairwise_survival_prob, self.transmission_probability_multiplier)
+        self.asymptomatic_local_infection_probs = self.compute_hh_infection_probs(asymptomatic_household_pairwise_survival_prob)
 
         # Precomputing the cdf's for generating the overdispersed contact data
         self.cdf_dict = {
@@ -143,17 +138,15 @@ class household_sim_contact_tracing(BPSimulationModel):
         self.asymptomatic_global_infection_probs = []
         for day in range(15):
             self.symptomatic_global_infection_probs.append(self.outside_household_infectivity_scaling *
-                                                           current_rate_infection(day) *
-                                                           self.transmission_probability_multiplier)
+                                                           current_rate_infection(day))
             self.asymptomatic_global_infection_probs.append(self.outside_household_infectivity_scaling *
                                                             self.asymptomatic_relative_infectivity *
-                                                            current_rate_infection(day) *
-                                                            self.transmission_probability_multiplier)
+                                                            current_rate_infection(day))
 
         # Calls the simulation reset function, which creates all the required dictionaries
         self.initialise_simulation()
 
-    def compute_hh_infection_probs(self, pairwise_survival_prob: float, transmission_probability_multiplier: float) -> list:
+    def compute_hh_infection_probs(self, pairwise_survival_prob: float) -> list:
         # Precomputing the infection probabilities for the within household epidemics.
         contact_prob = 0.8
         day_0_infection_prob = current_hazard_rate(0, pairwise_survival_prob) / contact_prob
@@ -161,7 +154,7 @@ class household_sim_contact_tracing(BPSimulationModel):
         for day in range(1, 15):
             survival_function = (1 - infection_probs*contact_prob).prod()
             hazard = current_hazard_rate(day, pairwise_survival_prob)
-            current_prob_infection = hazard * (survival_function / contact_prob) * transmission_probability_multiplier
+            current_prob_infection = hazard * (survival_function / contact_prob)
             infection_probs = np.append(infection_probs, current_prob_infection)
         return infection_probs
 
@@ -978,7 +971,6 @@ class uk_model(household_sim_contact_tracing):
         asymptomatic_prob,
         asymptomatic_relative_infectivity,
         infection_reporting_prob,
-        contact_trace,
         test_delay,
         prob_testing_positive_pcr_func,
         contact_trace_delay,
@@ -997,7 +989,6 @@ class uk_model(household_sim_contact_tracing):
         recall_probability_fall_off=1,
         self_isolation_duration=10,
         quarantine_duration=10,
-        transmission_probability_multiplier = 1,
         propensity_imperfect_quarantine=0,
         global_contact_reduction_imperfect_quarantine=None
         ):
@@ -1008,7 +999,6 @@ class uk_model(household_sim_contact_tracing):
                   "asymptomatic_prob": asymptomatic_prob,
                   "asymptomatic_relative_infectivity": asymptomatic_relative_infectivity,
                   "infection_reporting_prob": infection_reporting_prob,
-                  "contact_trace": contact_trace,
                   "household_pairwise_survival_prob": household_pairwise_survival_prob,
                   "do_2_step": False,
                   "reduce_contacts_by": reduce_contacts_by,
@@ -1019,7 +1009,6 @@ class uk_model(household_sim_contact_tracing):
                   "node_will_uptake_isolation_prob": node_will_uptake_isolation_prob,
                   "self_isolation_duration": self_isolation_duration,
                   "quarantine_duration": quarantine_duration,
-                  "transmission_probability_multiplier": transmission_probability_multiplier,
                   "propensity_imperfect_quarantine": propensity_imperfect_quarantine,
                   "global_contact_reduction_imperfect_quarantine": global_contact_reduction_imperfect_quarantine,
                   "test_delay": test_delay,
@@ -1244,7 +1233,6 @@ class ContactModelTest(uk_model):
         asymptomatic_prob: float,
         asymptomatic_relative_infectivity: float,
         infection_reporting_prob: float,
-        contact_trace: bool,
         test_delay,
         prob_testing_positive_pcr_func,
         prob_testing_positive_lfa_func,
@@ -1267,7 +1255,6 @@ class ContactModelTest(uk_model):
         self_isolation_duration: int = 10,
         quarantine_duration: int = 10,
         lateral_flow_testing_duration: int = 7,
-        transmission_probability_multiplier: float = 1,
         node_will_uptake_isolation_prob: float = 1,
         node_daily_prob_lfa_test: float = 1,
         proportion_with_propensity_miss_lfa_tests: float = 0,
@@ -1298,7 +1285,6 @@ class ContactModelTest(uk_model):
             asymptomatic_prob=asymptomatic_prob,
             asymptomatic_relative_infectivity=asymptomatic_relative_infectivity,
             infection_reporting_prob=infection_reporting_prob,
-            contact_trace=contact_trace,
             test_delay=test_delay,
             prob_testing_positive_pcr_func=prob_testing_positive_pcr_func,
             contact_trace_delay=contact_trace_delay,
@@ -1317,7 +1303,6 @@ class ContactModelTest(uk_model):
             recall_probability_fall_off=recall_probability_fall_off,
             self_isolation_duration=self_isolation_duration,
             quarantine_duration=quarantine_duration,
-            transmission_probability_multiplier=transmission_probability_multiplier,
             propensity_imperfect_quarantine=propensity_imperfect_quarantine,
             global_contact_reduction_imperfect_quarantine=global_contact_reduction_imperfect_quarantine
         )

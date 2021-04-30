@@ -18,7 +18,6 @@ def main():
         asymptomatic_relative_infectivity=0.35,         # Asymptomatic people are less infective
         infection_reporting_prob=0.5,                   # Proportion that report symptoms - how many tracing attempts start
         reduce_contacts_by=0.5,                         # Social distancing parameter - can use to change level of social distancing
-        contact_trace=True,
         prob_testing_positive_pcr_func = prob_testing_positive_function,  # Prevents people testing positive as soon as they get it
         prob_testing_positive_lfa_func = prob_testing_positive_function,
         test_delay=1,                                   # How long people have to wait for a pcr test results (lateral flow is instant)
