@@ -1,4 +1,3 @@
-import pathlib
 from typing import List, Optional, Callable
 import numpy as np
 import numpy.random as npr
@@ -6,7 +5,7 @@ import numpy.random as npr
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
 from household_contact_tracing.network import Network, Household, Node, EdgeType
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
-from household_contact_tracing.parameters import validate_parameters, load_yaml
+from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
 
 
@@ -1190,85 +1189,45 @@ class uk_model(household_sim_contact_tracing):
 
 class ContactModelTest(uk_model):
 
-    def __init__(self,
-        outside_household_infectivity_scaling: float,
-        contact_tracing_success_prob: float,
-        overdispersion: float,
-        asymptomatic_prob: float,
-        asymptomatic_relative_infectivity: float,
-        infection_reporting_prob: float,
-        test_delay,
-        prob_testing_positive_pcr_func,
-        prob_testing_positive_lfa_func,
-        contact_trace_delay,
-        incubation_period_delay,
-        symptom_reporting_delay,
-        household_pairwise_survival_prob: float,
-        LFA_testing_requires_confirmatory_PCR: bool,
-        policy_for_household_contacts_of_a_positive_case: str,
-        number_of_days_to_trace_backwards: int = 2,
-        number_of_days_to_trace_forwards: int = 7,
-        number_of_days_prior_to_LFA_result_to_trace: int = 2,
-        reduce_contacts_by: float = 0,
-        prob_has_trace_app: float = 0,
-        hh_propensity_to_use_trace_app: float = 1,
-        test_before_propagate_tracing: bool = True,
-        probable_infections_need_test: bool = True,
-        starting_infections: int = 1,
-        recall_probability_fall_off: float = 1,
-        self_isolation_duration: int = 10,
-        quarantine_duration: int = 10,
-        lateral_flow_testing_duration: int = 7,
-        node_will_uptake_isolation_prob: float = 1,
-        node_daily_prob_lfa_test: float = 1,
-        proportion_with_propensity_miss_lfa_tests: float = 0,
-        node_prob_will_take_up_lfa_testing: float = 1,
-        propensity_risky_behaviour_lfa_testing: float = 0,
-        propensity_imperfect_quarantine: float = 0,
-        global_contact_reduction_imperfect_quarantine: float = 0,
-        global_contact_reduction_risky_behaviour: float = None,
-        lfa_tested_nodes_book_pcr_on_symptom_onset: bool = True
-    ):
-
-        params = {"outside_household_infectivity_scaling": outside_household_infectivity_scaling,
-                  "contact_tracing_success_prob": contact_tracing_success_prob,
-                  "overdispersion": overdispersion,
-                  "asymptomatic_prob": asymptomatic_prob,
-                  "asymptomatic_relative_infectivity": asymptomatic_relative_infectivity,
-                  "infection_reporting_prob": infection_reporting_prob,
-                  "household_pairwise_survival_prob": household_pairwise_survival_prob,
-                  "reduce_contacts_by": reduce_contacts_by,
-                  "prob_has_trace_app": prob_has_trace_app,
-                  "hh_propensity_to_use_trace_app": hh_propensity_to_use_trace_app,
-                  "test_before_propagate_tracing": test_before_propagate_tracing,
-                  "starting_infections": starting_infections,
-                  "node_will_uptake_isolation_prob": node_will_uptake_isolation_prob,
-                  "self_isolation_duration": self_isolation_duration,
-                  "quarantine_duration": quarantine_duration,
-                  "propensity_imperfect_quarantine": propensity_imperfect_quarantine,
-                  "global_contact_reduction_imperfect_quarantine": global_contact_reduction_imperfect_quarantine,
-                  "test_delay": test_delay,
-                  "contact_trace_delay": contact_trace_delay,
-                  "incubation_period_delay": incubation_period_delay,
-                  "symptom_reporting_delay": symptom_reporting_delay,
-
-                  "number_of_days_to_trace_backwards": number_of_days_to_trace_backwards,
-                  "number_of_days_to_trace_forwards": number_of_days_to_trace_forwards,
-                  "probable_infections_need_test": probable_infections_need_test,
-                  "recall_probability_fall_off": recall_probability_fall_off
-                  }
+    def __init__(self, params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func):
 
         self.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
-        self.number_of_days_prior_to_LFA_result_to_trace = number_of_days_prior_to_LFA_result_to_trace
-        self.LFA_testing_requires_confirmatory_PCR = LFA_testing_requires_confirmatory_PCR
-        self.propensity_risky_behaviour_lfa_testing = propensity_risky_behaviour_lfa_testing
-        self.global_contact_reduction_risky_behaviour = global_contact_reduction_risky_behaviour
-        self.policy_for_household_contacts_of_a_positive_case = policy_for_household_contacts_of_a_positive_case
-        self.node_daily_prob_lfa_test = node_daily_prob_lfa_test
-        self.proportion_with_propensity_miss_lfa_tests = proportion_with_propensity_miss_lfa_tests
-        self.node_prob_will_take_up_lfa_testing = node_prob_will_take_up_lfa_testing
-        self.lateral_flow_testing_duration = lateral_flow_testing_duration
-        self.lfa_tested_nodes_book_pcr_on_symptom_onset = lfa_tested_nodes_book_pcr_on_symptom_onset
+
+        self.LFA_testing_requires_confirmatory_PCR = params["LFA_testing_requires_confirmatory_PCR"]
+        self.policy_for_household_contacts_of_a_positive_case = params["policy_for_household_contacts_of_a_positive_case"]
+
+        if "number_of_days_prior_to_LFA_result_to_trace" in params:
+            self.number_of_days_prior_to_LFA_result_to_trace = params["number_of_days_prior_to_LFA_result_to_trace"]
+        else:
+            self.number_of_days_prior_to_LFA_result_to_trace = 2
+        if "propensity_risky_behaviour_lfa_testing" in params:
+            self.propensity_risky_behaviour_lfa_testing = params["propensity_risky_behaviour_lfa_testing"]
+        else:
+            self.propensity_risky_behaviour_lfa_testing = 0
+        if "global_contact_reduction_risky_behaviour" in params:
+            self.global_contact_reduction_risky_behaviour = params["global_contact_reduction_risky_behaviour"]
+        else:
+            self.global_contact_reduction_risky_behaviour = 0
+        if "node_daily_prob_lfa_test" in params:
+            self.node_daily_prob_lfa_test = params["node_daily_prob_lfa_test"]
+        else:
+            self.node_daily_prob_lfa_test = 1
+        if "proportion_with_propensity_miss_lfa_tests" in params:
+            self.proportion_with_propensity_miss_lfa_tests = params["proportion_with_propensity_miss_lfa_tests"]
+        else:
+            self.proportion_with_propensity_miss_lfa_tests = 0
+        if "node_prob_will_take_up_lfa_testing" in params:
+            self.node_prob_will_take_up_lfa_testing = params["node_prob_will_take_up_lfa_testing"]
+        else:
+            self.node_prob_will_take_up_lfa_testing = 1
+        if "lateral_flow_testing_duration" in params:
+            self.lateral_flow_testing_duration = params["lateral_flow_testing_duration"]
+        else:
+            self.lateral_flow_testing_duration = 7
+        if "lfa_tested_nodes_book_pcr_on_symptom_onset" in params:
+            self.lfa_tested_nodes_book_pcr_on_symptom_onset = params["lfa_tested_nodes_book_pcr_on_symptom_onset"]
+        else:
+            self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
 
         super().__init__(params, prob_testing_positive_pcr_func)
 

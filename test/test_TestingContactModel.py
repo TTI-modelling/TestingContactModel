@@ -1,6 +1,25 @@
+import copy
+
 from household_contact_tracing.BranchingProcessSimulation import ContactModelTest
 from household_contact_tracing.simulation_controller import SimulationController
 import pytest
+
+default_params = {"outside_household_infectivity_scaling": 0.3,
+                  "contact_tracing_success_prob": 0.7,
+                  "overdispersion": 0.32,
+                  "asymptomatic_prob": 0.2,
+                  "asymptomatic_relative_infectivity": 0.35,
+                  "infection_reporting_prob": 0.3,
+                  "LFA_testing_requires_confirmatory_PCR": False,
+                  "test_delay": 1,
+                  "contact_trace_delay": 1,
+                  "incubation_period_delay": 5,
+                  "symptom_reporting_delay": 1,
+                  "household_pairwise_survival_prob": 0.2,
+                  "propensity_risky_behaviour_lfa_testing": 0,
+                  "global_contact_reduction_risky_behaviour": 0,
+                  "policy_for_household_contacts_of_a_positive_case": 'lfa testing no quarantine'
+                  }
 
 
 @pytest.fixture
@@ -18,25 +37,8 @@ def simple_model():
         else:
             return 0
 
-    model = ContactModelTest(
-        outside_household_infectivity_scaling=0.3,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=0.2,
-        asymptomatic_relative_infectivity=0.35,
-        infection_reporting_prob=0.3,
-        prob_testing_positive_lfa_func=prob_testing_positive_lfa_func,
-        prob_testing_positive_pcr_func=prob_testing_positive_pcr_func,
-        LFA_testing_requires_confirmatory_PCR=False,
-        test_delay=1,
-        contact_trace_delay=1,
-        incubation_period_delay=5,
-        symptom_reporting_delay=1,
-        household_pairwise_survival_prob=0.2,
-        propensity_risky_behaviour_lfa_testing=0,
-        global_contact_reduction_risky_behaviour=0,
-        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
-    )
+    model = ContactModelTest(default_params, prob_testing_positive_pcr_func,
+                             prob_testing_positive_lfa_func)
 
     return model
 
@@ -58,23 +60,8 @@ def simple_model_high_test_prob():
         else:
             return 0
 
-    model = ContactModelTest(
-        outside_household_infectivity_scaling=0.3,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=0.2,
-        asymptomatic_relative_infectivity=0.35,
-        infection_reporting_prob=0.3,
-        prob_testing_positive_lfa_func=prob_testing_positive_lfa_func,
-        prob_testing_positive_pcr_func=prob_testing_positive_pcr_func,
-        LFA_testing_requires_confirmatory_PCR=False,
-        test_delay=1,
-        contact_trace_delay=1,
-        incubation_period_delay=5,
-        symptom_reporting_delay=1,
-        household_pairwise_survival_prob=0.2,
-        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
-    )
+    model = ContactModelTest(default_params, prob_testing_positive_pcr_func,
+                             prob_testing_positive_lfa_func)
 
     return model
 
@@ -100,24 +87,11 @@ def simple_model_risky_behaviour():
         else:
             return 0
 
-    model = ContactModelTest(
-        outside_household_infectivity_scaling=0.3,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=0.2,
-        asymptomatic_relative_infectivity=0.35,
-        infection_reporting_prob=0.3,
-        prob_testing_positive_lfa_func=prob_testing_positive_lfa_func,
-        prob_testing_positive_pcr_func=prob_testing_positive_pcr_func,
-        LFA_testing_requires_confirmatory_PCR=False,
-        test_delay=1,
-        contact_trace_delay=1,
-        incubation_period_delay=5,
-        symptom_reporting_delay=1,
-        household_pairwise_survival_prob=0.2,
-        propensity_risky_behaviour_lfa_testing=1,  # all lfa tested nodes engage in risky behaviour
-        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
-    )
+    params = copy.deepcopy(default_params)
+    # all lfa tested nodes engage in risky behaviour
+    params["propensity_risky_behaviour_lfa_testing"] = 1
+
+    model = ContactModelTest(params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func)
 
     return model
 
@@ -142,23 +116,10 @@ def test_pseudo_symptom_onset_asymptomatics():
         else:
             return 0
 
-    model = ContactModelTest(
-        outside_household_infectivity_scaling=0.3,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=1,  # all asymptomatic
-        asymptomatic_relative_infectivity=0.35,
-        infection_reporting_prob=0.3,
-        prob_testing_positive_pcr_func=prob_testing_positive_pcr_func,
-        prob_testing_positive_lfa_func=prob_testing_positive_lfa_func,
-        LFA_testing_requires_confirmatory_PCR=False,
-        test_delay=1,
-        contact_trace_delay=1,
-        incubation_period_delay=5,
-        symptom_reporting_delay=1,
-        household_pairwise_survival_prob=0.2,
-        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
-    )
+    params = copy.deepcopy(default_params)
+    params["asymptomatic_prob"] = 1
+
+    model = ContactModelTest(params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func)
 
     assert model.network.nodes.node(1).pseudo_symptom_onset_time == 5
 
@@ -166,7 +127,6 @@ def test_pseudo_symptom_onset_asymptomatics():
 def test_pseudo_symptom_onset(simple_model):
     """Checks that it is also working for symptomatics
     """
-
     assert simple_model.network.nodes.node(1).pseudo_symptom_onset_time == 5
 
 
@@ -324,25 +284,10 @@ def simple_model_lfa_testing_and_quarantine():
         else:
             return 0
 
-    model = ContactModelTest(
-        outside_household_infectivity_scaling=0.3,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=0.2,
-        asymptomatic_relative_infectivity=0.35,
-        infection_reporting_prob=0.3,
-        prob_testing_positive_lfa_func=prob_testing_positive_lfa_func,
-        prob_testing_positive_pcr_func=prob_testing_positive_pcr_func,
-        LFA_testing_requires_confirmatory_PCR=False,
-        test_delay=1,
-        contact_trace_delay=1,
-        incubation_period_delay=5,
-        symptom_reporting_delay=1,
-        household_pairwise_survival_prob=0.2,
-        propensity_risky_behaviour_lfa_testing=0,
-        global_contact_reduction_risky_behaviour=0,
-        policy_for_household_contacts_of_a_positive_case='lfa testing and quarantine'
-    )
+    params = copy.deepcopy(default_params)
+    params["policy_for_household_contacts_of_a_positive_case"] = 'lfa testing and quarantine'
+
+    model = ContactModelTest(params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func)
 
     return model
 
@@ -398,25 +343,11 @@ def simple_model_no_lfa_testing_only_quarantine():
         else:
             return 0
 
-    model = ContactModelTest(
-        outside_household_infectivity_scaling=0.3,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=0.2,
-        asymptomatic_relative_infectivity=0.35,
-        infection_reporting_prob=0.3,
-        prob_testing_positive_lfa_func=prob_testing_positive_lfa_func,
-        prob_testing_positive_pcr_func=prob_testing_positive_pcr_func,
-        LFA_testing_requires_confirmatory_PCR=False,
-        test_delay=1,
-        contact_trace_delay=1,
-        incubation_period_delay=5,
-        symptom_reporting_delay=1,
-        household_pairwise_survival_prob=0.2,
-        propensity_risky_behaviour_lfa_testing=0,
-        global_contact_reduction_risky_behaviour=0,
-        policy_for_household_contacts_of_a_positive_case='no lfa testing only quarantine'
-    )
+    params = copy.deepcopy(default_params)
+
+    params["policy_for_household_contacts_of_a_positive_case"] = 'no lfa testing only quarantine'
+
+    model = ContactModelTest(params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func)
 
     return model
 
@@ -487,27 +418,14 @@ def simple_model_risky_behaviour_2_infections():
         else:
             return 0
 
-    model = ContactModelTest(
-        outside_household_infectivity_scaling=0.3,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=0.2,
-        asymptomatic_relative_infectivity=0.35,
-        infection_reporting_prob=0.3,
-        starting_infections=2,
-        reduce_contacts_by=1,
-        prob_testing_positive_lfa_func=prob_testing_positive_lfa_func,
-        prob_testing_positive_pcr_func=prob_testing_positive_pcr_func,
-        LFA_testing_requires_confirmatory_PCR=False,
-        test_delay=1,
-        contact_trace_delay=1,
-        incubation_period_delay=5,
-        symptom_reporting_delay=1,
-        household_pairwise_survival_prob=0.2,
-        propensity_risky_behaviour_lfa_testing=1,  # all lfa tested nodes engage in risky behaviour
-        global_contact_reduction_risky_behaviour=0,  # they resume all contacts
-        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
-    )
+    params = copy.deepcopy(default_params)
+
+    params["starting_infections"] = 2
+    params["reduce_contacts_by"] = 1
+    params["propensity_risky_behaviour_lfa_testing"] = 1
+
+
+    model = ContactModelTest(params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func)
 
     return model
 
