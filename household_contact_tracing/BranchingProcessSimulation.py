@@ -1191,6 +1191,8 @@ class ContactModelTest(uk_model):
 
     def __init__(self, params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func):
 
+        validate_parameters(params, "household_contact_tracing/schemas/contact_model_test.json")
+
         self.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
 
         self.LFA_testing_requires_confirmatory_PCR = params["LFA_testing_requires_confirmatory_PCR"]
