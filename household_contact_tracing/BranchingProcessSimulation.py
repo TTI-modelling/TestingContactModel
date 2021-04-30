@@ -1,4 +1,4 @@
-from types import FunctionType
+import pathlib
 from typing import List, Optional
 import numpy as np
 import numpy.random as npr
@@ -6,6 +6,7 @@ import numpy.random as npr
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
 from household_contact_tracing.network import Network, Household, Node, EdgeType
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
+from household_contact_tracing.parameters import parse_parameters, load_yaml
 from household_contact_tracing.simulation_states import RunningState
 
 
@@ -27,6 +28,12 @@ class household_sim_contact_tracing(BPSimulationModel):
 
         # Call parent init
         BPSimulationModel.__init__(self)
+
+        # Load parameter schema
+        schema = load_yaml(
+            pathlib.Path("household_contact_tracing/schemas/household_sim_contact_tracing.json"))
+        # Parse parameters against schema to check they are valid
+        parse_parameters(params, schema)
 
         self.network = Network()
 
@@ -1267,7 +1274,7 @@ class ContactModelTest(uk_model):
         node_prob_will_take_up_lfa_testing: float = 1,
         propensity_risky_behaviour_lfa_testing: float = 0,
         propensity_imperfect_quarantine: float = 0,
-        global_contact_reduction_imperfect_quarantine: float = None,
+        global_contact_reduction_imperfect_quarantine: float = 0,
         global_contact_reduction_risky_behaviour: float = None,
         lfa_tested_nodes_book_pcr_on_symptom_onset: bool = True
     ):

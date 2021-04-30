@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameter schema",
+  "description": "A schema for validating the parameters used as a simulation input",
+  "type": "object",
+  "properties": {
+    "outside_household_infectivity_scaling": {
+      "description": "Controls how likely an outside household contact is to infect",
+      "type": "number"
+    },
+    "overdispersion": {
+      "description": "The overdispersion in the social contact distribution",
+      "type": "number"
+    },
+    "asymptomatic_prob": {
+      "description": "The probability that an infection is asymptomatic",
+      "type": "number"
+    },
+    "asymptomatic_relative_infectivity": {
+      "description": "How infectious an asymptomatic is relative to a symptomatic per contact",
+      "type": "number"
+    },
+    "infection_reporting_prob": {
+      "description": " The probability that a symptomatic case reports their infection and tries to get tested",
+      "type": "number"
+    },
+    "household_pairwise_survival_prob": {
+      "description": "The per edge probability of transmission within a household",
+      "type": "number"
+    },
+    "reduce_contacts_by": {
+      "description": " Apply some level of social distancing.",
+      "type": "number"
+    },
+    "prob_has_trace_app": {
+      "description": "What proportion of the population have the contact tracing app, if their household has the propensity to use the app.",
+      "type": "number"
+    },
+    "hh_propensity_to_use_trace_app": {
+      "description": "What proportion of households are likely to use the contact tracing app.",
+      "type": "number"
+    },
+    "test_before_propagate_tracing": {
+      "description": "Whether testing is done on symptom onset (False) or after a test result (True).",
+      "type": "boolean"
+    },
+    "starting_infections": {
+      "description": "The number of infections at time = 0",
+      "type": "number"
+    },
+    "transmission_probability_multiplier": {
+      "description": "multiplier to reflect increased probability of transmission of new variant(s) relative to parameters estimated with early/mid 2020 data",
+      "type": "number"
+    },
+    "incubation_period_delay": {
+      "description": "The length of time between infection and presentation of symptoms",
+      "type": "number"
+    },
+    "symptom_reporting_delay": {
+      "description": "the time between people experiencing symptoms and reporting them",
+      "type": "number"
+    },
+    "test_delay": {
+      "description": "How long in days people have to wait for a pcr test result",
+      "type": "number"
+    },
+    "quarantine_duration": {
+      "description": "number of days that contacts will quarantine (also referred to as 'isolation' in the UK) if they are contacts of a case.",
+      "type": "number"
+    },
+    "self_isolation_duration": {
+      "description": "number of days a case will self-isolate post symptom onset if they report their infection.",
+      "type": "number"
+    },
+    "node_will_uptake_isolation_prob": {
+      "description": "Probability that a node will adhere and uptake isolation when required.",
+      "type": "number"
+    },
+    "propensity_imperfect_quarantine": {
+      "description": "",
+      "type": "number"
+    },
+    "global_contact_reduction_imperfect_quarantine": {
+      "description": "",
+      "type": "number"
+    },
+    "house_size_probs": {
+      "description": "Probability of each household size",
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "contact_tracing_success_prob": {
+      "description": "The probability that a contact tracing attempt succeeds",
+      "type": "number"
+    },
+    "contact_trace": {
+      "description": "Whether to contact trace or not",
+      "type": "boolean"
+    },
+    "do_2_step": {
+      "description": "Whether to use two step tracing on the households",
+      "type": "boolean"
+    },
+    "contact_trace_delay": {
+      "description": "",
+      "type": "number"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "outside_household_infectivity_scaling",
+    "overdispersion",
+    "asymptomatic_prob",
+    "asymptomatic_relative_infectivity",
+    "infection_reporting_prob",
+    "household_pairwise_survival_prob",
+    "incubation_period_delay",
+    "symptom_reporting_delay",
+    "test_delay",
+    "contact_tracing_success_prob"
+  ]
+}
+
