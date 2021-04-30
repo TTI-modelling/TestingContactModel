@@ -23,10 +23,6 @@ class SimulationController(SimulationControllerInterface):
         """ Run the simulation."""
         self._model.run_simulation(num_steps, infection_threshold)
 
-    def simulate_one_step(self):
-        """ Run the simulation."""
-        self._model.simulate_one_step()
-
     def set_params(self, params):
         """ Set parameters for the simulation."""
         self._model.set_params(params)

@@ -222,12 +222,7 @@ class household_sim_contact_tracing(BPSimulationModel):
     def has_contact_tracing_app(self) -> bool:
         return npr.binomial(1, self.prob_has_trace_app) == 1
 
-    def count_non_recovered_nodes(self) -> int:
-        """Returns the number of nodes not in the recovered state.
-        Returns:
-            [int] -- Number of non-recovered nodes.
-        """
-        return len([node for node in self.network.nodes.all_nodes() if not node.recovered])
+
 
     def new_infection(
         self,
@@ -348,30 +343,6 @@ class household_sim_contact_tracing(BPSimulationModel):
             additional_attributes=additional_attributes
         )
 
-    def get_edge_between_household(self, house1: Household, house2: Household):
-        for node1 in house1.nodes():
-            for node2 in house2.nodes():
-                if self.network.graph.has_edge(node1.node_id, node2.node_id):
-                    return (node1.node_id, node2.node_id)
-
-    def is_edge_app_traced(self, edge):
-        """Returns whether both ends of an edge have the app, and the app does the tracing.
-        """
-        return self.network.nodes.node(edge[0]).has_contact_tracing_app and self.network.nodes.node(edge[1]).has_contact_tracing_app
-
-    @property
-    def active_infections(self):
-        """
-        Returns a list of nodes who have not yet recovered, and can still infect.
-        These nodes may be isolated and not able to infect globally however.
-
-        Returns:
-            list: list of nodes able to infect
-        """
-        return [
-            node for node in self.network.nodes.all_nodes()
-            if not node.recovered
-        ]
 
     def get_contact_rate_reduction(self, node: Node):
         """Returns a contact rate reduction, depending upon a nodes current status and various isolation
@@ -431,7 +402,7 @@ class household_sim_contact_tracing(BPSimulationModel):
         Creates a new days worth of infections
         """
 
-        for node in self.active_infections:
+        for node in self.network.active_infections:
             household = node.household()
 
             # Extracting useful parameters from the node
@@ -662,7 +633,7 @@ class household_sim_contact_tracing(BPSimulationModel):
 
         # work out which was the traced node
         tracing_household = self.network.houses.household(household.being_contact_traced_from)
-        traced_node_id = self.get_edge_between_household(household, tracing_household)[0]
+        traced_node_id = self.network.get_edge_between_household(household, tracing_household)[0]
         traced_node = self.network.nodes.node(traced_node_id)
 
         # the traced node should go into quarantine
@@ -683,12 +654,12 @@ class household_sim_contact_tracing(BPSimulationModel):
         # Annoying bit of logic to find the edge and label it
         for node_1 in house_to.nodes():
             for node_2 in house_from.nodes():
-                if self.network.nodes.G.has_edge(node_1.node_id, node_2.node_id):
-                    self.network.nodes.G.edges[node_1.node_id, node_2.node_id].update({"edge_type": new_edge_type})
+                if self.network.graph.has_edge(node_1.node_id, node_2.node_id):
+                    self.network.graph.edges[node_1.node_id, node_2.node_id].update({"edge_type": new_edge_type})
 
     def attempt_contact_trace_of_household(self, house_to: Household, house_from: Household, contact_trace_delay: int = 0):
         # Decide if the edge was traced by the app
-        app_traced = self.is_edge_app_traced(self.get_edge_between_household(house_from, house_to))
+        app_traced = self.network.is_edge_app_traced(self.network.get_edge_between_household(house_from, house_to))
 
         # Get the success probability
         if app_traced:
@@ -762,7 +733,7 @@ class household_sim_contact_tracing(BPSimulationModel):
                 house_which_contact_traced = self.network.houses.household(household.being_contact_traced_from)
                 
                 # Initially the edge is assigned the contact tracing label, may be updated if the contact tracing does not succeed
-                if self.is_edge_app_traced(self.get_edge_between_household(household, house_which_contact_traced)):
+                if self.network.is_edge_app_traced(self.network.get_edge_between_household(household, house_which_contact_traced)):
                     self.label_node_edges_between_houses(household, house_which_contact_traced, EdgeType.app_traced.name)
                 else:
                     self.label_node_edges_between_houses(household, house_which_contact_traced, EdgeType.between_house.name)
@@ -820,7 +791,6 @@ class household_sim_contact_tracing(BPSimulationModel):
         who will not uptake isolation
         """
         for node in self.network.nodes.all_nodes():
-
             if node.will_uptake_isolation:
                  if node.time_of_reporting == self.time:
                     node.isolated = True
@@ -884,11 +854,8 @@ class household_sim_contact_tracing(BPSimulationModel):
                         node.completed_isolation_time = self.time
                         node.completed_isolation_reason = 'completed_isolation'
 
-    def simulate_one_step(self):
-        """Simulates one day of the epidemic and contact tracing."""
-
-        prev_graph = self.network.graph.copy()
-
+    def _simulate_one_step(self):
+        """ Private method: Simulates one day of the epidemic and contact tracing."""
         # perform a days worth of infections
         self.increment_infection()
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
@@ -905,13 +872,6 @@ class household_sim_contact_tracing(BPSimulationModel):
         # increment time
         self.time += 1
 
-        new_graph = self.network.graph
-
-        if not self.network.graphs_isophomorphic(prev_graph, new_graph):
-            BPSimulationModel.graph_changed(self)
-
-        # Call parent simulate_one_step
-        BPSimulationModel.completed_step_increment(self)
 
     def initialise_simulation(self):
         """ Initialise the simulation to its starting values. """
@@ -939,24 +899,57 @@ class household_sim_contact_tracing(BPSimulationModel):
 
 
     def run_simulation(self, num_steps: int, infection_threshold: int = 100000) -> None:
+        """ Runs the simulation:
+                Sets model state,
+                Announces start/stopped and step increments to observers
+
+        Arguments:
+            node: num steps -- The number of step increments to perform
+            infection_threshold -- The maximum number of infectious nodes allowed, befure stopping stimulation
+
+        Returns:
+            None
+        """
 
         # Tell parent simulation started
         BPSimulationModel.simulation_started(self)
 
         while type(self.state) is RunningState:
+            prev_graph = self.network.graph.copy()
+
             # This chunk of code executes one step (a days worth of infections and contact tracings)
-            self.simulate_one_step()
+            self._simulate_one_step()
+
+            # If graph changed, tell parent
+            new_graph = self.network.graph
+            if not self.network.graphs_isophomorphic(prev_graph, new_graph):
+                BPSimulationModel.graph_changed(self)
+
+            # Call parent completed step
+            BPSimulationModel.completed_step_increment(self)
 
             # Simulation ends if num_steps is reached
             if self.time == num_steps:
                 self.state.timed_out()
-            elif self.count_non_recovered_nodes() == 0:
+            elif self.network.count_non_recovered_nodes() == 0:
                 self.state.go_extinct()
-            elif self.count_non_recovered_nodes() > infection_threshold:
+            elif self.network.count_non_recovered_nodes() > infection_threshold:
                 self.state.max_nodes_infectious()
 
-        BPSimulationModel.notify_observers_simulation_stopped(self)
+        # Tell parent simulation stopped
+        BPSimulationModel.simulation_stopped(self)
 
+    def node_type(self, node: Node):
+        """ Returns a node type, given the current status of the node.
+
+        Arguments:
+            node: Node -- The node
+
+        Returns:
+            str -- The status assigned
+        """
+
+        return node.node_type()
 
 class uk_model(household_sim_contact_tracing):
 
@@ -1098,7 +1091,7 @@ class uk_model(household_sim_contact_tracing):
 
         # work out which was the traced node
         tracing_household = self.network.houses.household(household.being_contact_traced_from)
-        traced_node_id = self.get_edge_between_household(household, tracing_household)[0]
+        traced_node_id = self.network.get_edge_between_household(household, tracing_household)[0]
         traced_node = self.network.nodes.node(traced_node_id)
 
         # the traced node should go into quarantine
@@ -1151,7 +1144,7 @@ class uk_model(household_sim_contact_tracing):
 
     def attempt_contact_trace_of_household(self, house_to: Household, house_from: Household, days_since_contact_occurred: int, contact_trace_delay: int = 0):
         # Decide if the edge was traced by the app
-        app_traced = self.is_edge_app_traced(self.get_edge_between_household(house_from, house_to))
+        app_traced = self.network.is_edge_app_traced(self.network.get_edge_between_household(house_from, house_to))
 
         # Get the success probability
         if app_traced:
@@ -1435,7 +1428,7 @@ class ContactModelTest(uk_model):
 
         # work out which was the traced node
         tracing_household = self.network.houses.household(household.being_contact_traced_from)
-        traced_node_id = self.get_edge_between_household(household, tracing_household)[0]
+        traced_node_id = self.network.get_edge_between_household(household, tracing_household)[0]
         traced_node = self.network.nodes.node(traced_node_id)
 
         # the traced node is now being lateral flow tested
@@ -1927,7 +1920,7 @@ class ContactModelTest(uk_model):
         """Returns a node type, given the current status of the node.
 
         Arguments:
-            node {int} -- The node id
+            node: Node -- The node
 
         Returns:
             str -- The status assigned

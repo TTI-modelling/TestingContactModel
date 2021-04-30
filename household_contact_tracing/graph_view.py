@@ -33,11 +33,17 @@ class GraphView(SimulationViewInterface):
         Graph View
     '''
 
-    edge_type_colours = {'within_house': "blue", 'between_house': "magenta", 'default': "black",
-                         'failed_contact_tracing': "red", 'app_traced': "green"}
+    edge_type_colours = {'within_house': "blue",
+                         'between_house': "magenta",
+                         'default': "black",
+                         'failed_contact_tracing': "red",
+                         'app_traced': "green"}
 
-    node_type_colours = {'default': 'white', 'isolated_only': 'yellow', 'had_contacts_traced': 'orange',
-                         'symptomatic_will_report_infection': 'lime', 'symptomatic_will_not_report_infection': 'green',
+    node_type_colours = {'default': 'white',
+                         'isolated': 'yellow',
+                         'had_contacts_traced': 'orange',
+                         'symptomatic_will_report_infection': 'lime',
+                         'symptomatic_will_not_report_infection': 'green',
 
                          'received_pos_test_pcr': 'grey', 'received_neg_test_pcr': 'deeppink',
                          'confirmatory_pos_pcr_test': 'turquoise', 'confirmatory_neg_pcr_test': 'tomato',

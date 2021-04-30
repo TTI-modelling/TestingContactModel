@@ -59,7 +59,6 @@ class BPSimulationModel(SimulationModelInterface):
     def simulation_initialised(self):
         """ Initialise/Reset the simulation to starting values."""
         # NOTIFY OF STATE CHANGE
-        print('Initialised simulation, so set simulator state to Ready')
         self._state.reset()
 
     def updated_parameters(self):
@@ -69,7 +68,6 @@ class BPSimulationModel(SimulationModelInterface):
     def simulation_started(self):
         """ Start the simulation running."""
         # NOTIFY OF STATE CHANGE
-        print('Started simulation, so set simulator state to Running')
         self._state.start_run()
 
     def simulation_stopped(self):
