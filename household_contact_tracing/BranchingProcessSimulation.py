@@ -7,6 +7,8 @@ from household_contact_tracing.network import Network, Household, Node, EdgeType
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
+from household_contact_tracing.infection import *
+from household_contact_tracing.contact_tracing import *
 
 
 class household_sim_contact_tracing(BPSimulationModel):
@@ -31,7 +33,9 @@ class household_sim_contact_tracing(BPSimulationModel):
         # Parse parameters against schema to check they are valid
         validate_parameters(params, "./schemas/household_sim_contact_tracing.json")
 
-        self.network = Network()
+        self._network = Network()
+        self._infection = Infection(self._network)
+        self._contact_tracing = ContactTracing(self._network)
 
         # Probability of each household size
         if "house_size_probs" in params:
@@ -141,6 +145,26 @@ class household_sim_contact_tracing(BPSimulationModel):
 
         # Calls the simulation reset function, which creates all the required dictionaries
         self.initialise_simulation()
+
+    @property
+    def network(self):
+        return self._network
+
+    @property
+    def infection(self) -> InfectionBehaviourInterface:
+        return self._infection
+
+    @infection.setter
+    def infection(self, infection: InfectionBehaviourInterface):
+        self._infection = infection
+
+    @property
+    def contact_tracing(self) -> ContactTracingBehaviourInterface:
+        return self._contact_tracing
+
+    @contact_tracing.setter
+    def contact_tracing(self, contact_tracing: ContactTracingBehaviourInterface):
+        self._contact_tracing = contact_tracing
 
     def compute_hh_infection_probs(self, pairwise_survival_prob: float) -> list:
         # Precomputing the infection probabilities for the within household epidemics.
