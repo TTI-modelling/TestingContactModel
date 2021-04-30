@@ -11,21 +11,27 @@ hh_propensity_to_use_trace_app: (float, optional) What proportion of households 
 test_before_propagate_tracing: (bool, Optional) Whether testing is done on symptom onset (False) or after a test result (True). Defaults to True.
 starting_infections: (int, optional) The number of infections at time = 0. Defaults to 1.
 transmission_probability_multiplier: (float, optional) multiplier to reflect increased probability of transmission of new variant(s) relative to parameers estimated with early/mid 2020 data ]
+incubation_period_delay: (float) the length of time between infection and presentation of symptoms
+symptom_reporting_delay: (float) the time between people experiencing symptoms and reporting them
 
-#Isolation parameters
+# Testing parameters
+test_delay: (int) How long people have to wait for a pcr test result
+
+
+# Isolation parameters
 quarantine_duration: (int, optional) number of days that contacts will quarantine (also referred to as 'isolation' in the UK) if they are contacts of a case.
 self_isolation_duration: (int, optional) number of days a case will self-isolate post symptom onset if they report their infection.
 
-#Adherence parameters
+# Adherence parameters
 node_will_uptake_isolation_prob: (float, optional) Probability that a node will adhere and uptake isolation when required. Defaults to 1.
 propensity_imperfect_quarantine: (float, optional)
 global_contact_reduction_imperfect_quarantine: (float, optional)
 
-#Household parameters
+# Household parameters
 house_size_probs: (Optional) Probability of each household size
 
 # contact tracing parameters
 contact_tracing_success_prob: (float) The probability that a contact tracing attempt succeeds
 contact_trace: (bool) Whether to contact trace or not
 do_2_step: (bool, optional) Whether to use two step tracing on the households. Defaults to False.
-
+contact_trace_delay: (float)

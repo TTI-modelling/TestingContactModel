@@ -9,22 +9,6 @@ def prob_testing_positive_function(time_relative_to_symptom_onset):
         return 0
 
 
-def test_delay_dist():
-    return 1
-
-
-def contact_trace_delay_dist():
-    return 1
-
-
-def incubation_period_delay_dist():
-    return 5
-
-
-def symptom_reporting_delay_dist():
-    return 1
-
-
 def main():
     model = ContactModelTest(
         outside_household_infectivity_scaling=0.3,      # How likely an outside contact is to spread
@@ -37,13 +21,13 @@ def main():
         contact_trace=True,
         prob_testing_positive_pcr_func = prob_testing_positive_function,  # Prevents people testing positive as soon as they get it
         prob_testing_positive_lfa_func = prob_testing_positive_function,
-        test_delay_dist=test_delay_dist,                # How long people have to wait for a pcr test results (lateral flow is instant)
-        contact_trace_delay_dist=contact_trace_delay_dist,  # How long before someone is reached by contact tracing
-        incubation_period_delay_dist=incubation_period_delay_dist, # how long between getting it and showing symptoms
-        symptom_reporting_delay_dist=symptom_reporting_delay_dist, # how long people wait between getting symptoms and reporting them
-        household_pairwise_survival_prob=0.2,               # Probability of infection between household members in household
-        lateral_flow_testing_duration=14,                   # How many days people lft for when they are traced
-        self_isolation_duration=10,                         # How long people must isolate for when traced
+        test_delay=1,                                   # How long people have to wait for a pcr test results (lateral flow is instant)
+        contact_trace_delay=1,                          # How long before someone is reached by contact tracing
+        incubation_period_delay=5,                      # how long between getting it and showing symptoms
+        symptom_reporting_delay=1,                      # how long people wait between getting symptoms and reporting them
+        household_pairwise_survival_prob=0.2,           # Probability of infection between household members in household
+        lateral_flow_testing_duration=14,               # How many days people lft for when they are traced
+        self_isolation_duration=10,                     # How long people must isolate for when traced
         LFA_testing_requires_confirmatory_PCR=False,
         policy_for_household_contacts_of_a_positive_case='no lfa testing only quarantine'
     )

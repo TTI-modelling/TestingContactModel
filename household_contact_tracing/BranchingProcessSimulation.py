@@ -16,21 +16,13 @@ class household_sim_contact_tracing(BPSimulationModel):
     # The mean number of contacts made by each household
     total_contact_means = [7.238, 10.133, 11.419, 12.844, 14.535, 15.844]
 
-    def __init__(self, params: dict,
-                 test_delay_dist: FunctionType,
-                 contact_trace_delay_dist: FunctionType,
-                 incubation_period_delay_dist: FunctionType,
-                 symptom_reporting_delay_dist: FunctionType,
-                 ):
+    def __init__(self, params: dict):
 
         """Initializes a household branching process epidemic. Various contact tracing strategies can be utilized
         in an attempt to control the epidemic.
 
         Args:
-            test_delay_dist (function): A function that returns a (random) testing delay
-            contact_trace_delay_dist (function): A function that returns a (random) contact tracing delay
-            incubation_period_delay_dist (function): A function that returns a (random) incubation period 
-            symptom_reporting_delay_dist (function): A function that returns a (random) symptom reporting delay
+            params (dict): A dictionary of parameters that are used in the model.
         """
 
         # Call parent init
@@ -76,8 +68,8 @@ class household_sim_contact_tracing(BPSimulationModel):
             self.transmission_probability_multiplier = params["transmission_probability_multiplier"]
         else:
             self.transmission_probability_multiplier = 1
-        self.symptom_reporting_delay_dist = symptom_reporting_delay_dist
-        self.incubation_period_delay_dist = incubation_period_delay_dist
+        self.symptom_reporting_delay = params["symptom_reporting_delay"]
+        self.incubation_period_delay = params["incubation_period_delay"]
 
         # contact tracing parameters
         self.contact_tracing_success_prob = params["contact_tracing_success_prob"]
@@ -98,8 +90,8 @@ class household_sim_contact_tracing(BPSimulationModel):
             self.test_before_propagate_tracing = params["test_before_propagate_tracing"]
         else:
             self.test_before_propagate_tracing = True
-        self.test_delay_dist = test_delay_dist
-        self.contact_trace_delay_dist = contact_trace_delay_dist
+        self.test_delay = params["test_delay"]
+        self.contact_trace_delay = params["contact_trace_delay"]
 
         # isolation or quarantine parameters
         if "quarantine_duration" in params:
@@ -170,19 +162,19 @@ class household_sim_contact_tracing(BPSimulationModel):
         if app_traced_edge:
             return 0
         else:
-            return round(self.contact_trace_delay_dist())
+            return round(self.contact_trace_delay)
 
     def incubation_period(self, asymptomatic: bool) -> int:
         if asymptomatic:
             return float('Inf')
         else:
-            return round(self.incubation_period_delay_dist())
+            return round(self.incubation_period_delay)
 
     def testing_delay(self) -> int:
         if self.test_before_propagate_tracing is False:
             return 0
         else:
-            return round(self.test_delay_dist())
+            return round(self.test_delay)
 
     def is_asymptomatic_infection(self) -> bool:
         return npr.binomial(1, self.asymptomatic_prob) == 1
@@ -191,7 +183,7 @@ class household_sim_contact_tracing(BPSimulationModel):
         if asymptomatic:
             return float('Inf')
         else:
-            return round(self.symptom_reporting_delay_dist())
+            return round(self.symptom_reporting_delay)
 
     def hh_propensity_use_trace_app(self) -> bool:
         if npr.binomial(1, self.hh_propensity_to_use_trace_app) == 1:
@@ -980,11 +972,11 @@ class uk_model(household_sim_contact_tracing):
         asymptomatic_relative_infectivity,
         infection_reporting_prob,
         contact_trace,
-        test_delay_dist,
+        test_delay,
         prob_testing_positive_pcr_func,
-        contact_trace_delay_dist,
-        incubation_period_delay_dist,
-        symptom_reporting_delay_dist,
+        contact_trace_delay,
+        incubation_period_delay,
+        symptom_reporting_delay,
         household_pairwise_survival_prob,
         number_of_days_to_trace_backwards=2,
         number_of_days_to_trace_forwards=7,
@@ -1023,15 +1015,13 @@ class uk_model(household_sim_contact_tracing):
                   "transmission_probability_multiplier": transmission_probability_multiplier,
                   "propensity_imperfect_quarantine": propensity_imperfect_quarantine,
                   "global_contact_reduction_imperfect_quarantine": global_contact_reduction_imperfect_quarantine,
+                  "test_delay": test_delay,
+                  "contact_trace_delay": contact_trace_delay,
+                  "incubation_period_delay": incubation_period_delay,
+                  "symptom_reporting_delay": symptom_reporting_delay
                   }
 
-        super().__init__(params,
-                         test_delay_dist=test_delay_dist,
-                         contact_trace_delay_dist=contact_trace_delay_dist,
-                         incubation_period_delay_dist=incubation_period_delay_dist,
-                         symptom_reporting_delay_dist=symptom_reporting_delay_dist,
-
-        )
+        super().__init__(params)
 
         self.probable_infections_need_test = probable_infections_need_test
         self.number_of_days_to_trace_backwards = number_of_days_to_trace_backwards
@@ -1220,7 +1210,6 @@ class uk_model(household_sim_contact_tracing):
             house_to.contact_tracing_index = house_from.contact_tracing_index + 1
 
             # work out the time delay
-            contact_trace_delay = contact_trace_delay + self.contact_trace_delay(app_traced)
             proposed_time_until_contact_trace = self.time + contact_trace_delay
 
             # Get the current time until contact trace, and compare against the proposed time until contact trace
@@ -1249,12 +1238,12 @@ class ContactModelTest(uk_model):
         asymptomatic_relative_infectivity: float,
         infection_reporting_prob: float,
         contact_trace: bool,
-        test_delay_dist,
+        test_delay,
         prob_testing_positive_pcr_func,
         prob_testing_positive_lfa_func,
-        contact_trace_delay_dist,
-        incubation_period_delay_dist,
-        symptom_reporting_delay_dist,
+        contact_trace_delay,
+        incubation_period_delay,
+        symptom_reporting_delay,
         household_pairwise_survival_prob: float,
         LFA_testing_requires_confirmatory_PCR: bool,
         policy_for_household_contacts_of_a_positive_case: str,
@@ -1303,11 +1292,11 @@ class ContactModelTest(uk_model):
             asymptomatic_relative_infectivity=asymptomatic_relative_infectivity,
             infection_reporting_prob=infection_reporting_prob,
             contact_trace=contact_trace,
-            test_delay_dist=test_delay_dist,
+            test_delay=test_delay,
             prob_testing_positive_pcr_func=prob_testing_positive_pcr_func,
-            contact_trace_delay_dist=contact_trace_delay_dist,
-            incubation_period_delay_dist=incubation_period_delay_dist,
-            symptom_reporting_delay_dist=symptom_reporting_delay_dist,
+            contact_trace_delay=contact_trace_delay,
+            incubation_period_delay=incubation_period_delay,
+            symptom_reporting_delay=symptom_reporting_delay,
             household_pairwise_survival_prob=household_pairwise_survival_prob,
             number_of_days_to_trace_backwards=number_of_days_to_trace_backwards,
             number_of_days_to_trace_forwards=number_of_days_to_trace_forwards,
