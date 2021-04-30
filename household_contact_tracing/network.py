@@ -97,6 +97,25 @@ class Network:
         self._graph = self.nodes.G
 
 
+    def count_non_recovered_nodes(self) -> int:
+        """Returns the number of nodes not in the recovered state.
+        Returns:
+            [int] -- Number of non-recovered nodes.
+        """
+        return len([node for node in self.nodes.all_nodes() if not node.recovered])
+
+    def get_edge_between_household(self, house1: 'Household', house2: 'Household'):
+        for node1 in house1.nodes():
+            for node2 in house2.nodes():
+                if self.network.graph.has_edge(node1.node_id, node2.node_id):
+                    return node1.node_id, node2.node_id
+
+    def is_edge_app_traced(self, edge):
+        """Returns whether both ends of an edge have the app, and the app does the tracing.
+        """
+        return self.nodes.node(edge[0]).has_contact_tracing_app and self.nodes.node(edge[1]).has_contact_tracing_app
+
+
 
 class Node:
     def __init__(

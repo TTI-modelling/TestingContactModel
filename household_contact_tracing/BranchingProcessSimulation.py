@@ -237,12 +237,7 @@ class household_sim_contact_tracing(BPSimulationModel):
     def has_contact_tracing_app(self) -> bool:
         return npr.binomial(1, self.prob_has_trace_app) == 1
 
-    def count_non_recovered_nodes(self) -> int:
-        """Returns the number of nodes not in the recovered state.
-        Returns:
-            [int] -- Number of non-recovered nodes.
-        """
-        return len([node for node in self.network.nodes.all_nodes() if not node.recovered])
+
 
     def new_infection(
         self,
@@ -362,17 +357,6 @@ class household_sim_contact_tracing(BPSimulationModel):
             propensity_trace_app=propensity_trace_app,
             additional_attributes=additional_attributes
         )
-
-    def get_edge_between_household(self, house1: Household, house2: Household):
-        for node1 in house1.nodes():
-            for node2 in house2.nodes():
-                if self.network.graph.has_edge(node1.node_id, node2.node_id):
-                    return (node1.node_id, node2.node_id)
-
-    def is_edge_app_traced(self, edge):
-        """Returns whether both ends of an edge have the app, and the app does the tracing.
-        """
-        return self.network.nodes.node(edge[0]).has_contact_tracing_app and self.network.nodes.node(edge[1]).has_contact_tracing_app
 
 
     def get_contact_rate_reduction(self, node: Node):
@@ -664,7 +648,7 @@ class household_sim_contact_tracing(BPSimulationModel):
 
         # work out which was the traced node
         tracing_household = self.network.houses.household(household.being_contact_traced_from)
-        traced_node_id = self.get_edge_between_household(household, tracing_household)[0]
+        traced_node_id = self.network.get_edge_between_household(household, tracing_household)[0]
         traced_node = self.network.nodes.node(traced_node_id)
 
         # the traced node should go into quarantine
@@ -685,12 +669,12 @@ class household_sim_contact_tracing(BPSimulationModel):
         # Annoying bit of logic to find the edge and label it
         for node_1 in house_to.nodes():
             for node_2 in house_from.nodes():
-                if self.network.nodes.G.has_edge(node_1.node_id, node_2.node_id):
-                    self.network.nodes.G.edges[node_1.node_id, node_2.node_id].update({"edge_type": new_edge_type})
+                if self.network.graph.has_edge(node_1.node_id, node_2.node_id):
+                    self.network.graph.edges[node_1.node_id, node_2.node_id].update({"edge_type": new_edge_type})
 
     def attempt_contact_trace_of_household(self, house_to: Household, house_from: Household, contact_trace_delay: int = 0):
         # Decide if the edge was traced by the app
-        app_traced = self.is_edge_app_traced(self.get_edge_between_household(house_from, house_to))
+        app_traced = self.network.is_edge_app_traced(self.network.get_edge_between_household(house_from, house_to))
 
         # Get the success probability
         if app_traced:
@@ -764,7 +748,7 @@ class household_sim_contact_tracing(BPSimulationModel):
                 house_which_contact_traced = self.network.houses.household(household.being_contact_traced_from)
                 
                 # Initially the edge is assigned the contact tracing label, may be updated if the contact tracing does not succeed
-                if self.is_edge_app_traced(self.get_edge_between_household(household, house_which_contact_traced)):
+                if self.network.is_edge_app_traced(self.network.get_edge_between_household(household, house_which_contact_traced)):
                     self.label_node_edges_between_houses(household, house_which_contact_traced, EdgeType.app_traced.name)
                 else:
                     self.label_node_edges_between_houses(household, house_which_contact_traced, EdgeType.between_house.name)
@@ -822,7 +806,6 @@ class household_sim_contact_tracing(BPSimulationModel):
         who will not uptake isolation
         """
         for node in self.network.nodes.all_nodes():
-
             if node.will_uptake_isolation:
                  if node.time_of_reporting == self.time:
                     node.isolated = True
@@ -963,9 +946,9 @@ class household_sim_contact_tracing(BPSimulationModel):
             # Simulation ends if num_steps is reached
             if self.time == num_steps:
                 self.state.timed_out()
-            elif self.count_non_recovered_nodes() == 0:
+            elif self.network.count_non_recovered_nodes() == 0:
                 self.state.go_extinct()
-            elif self.count_non_recovered_nodes() > infection_threshold:
+            elif self.network.count_non_recovered_nodes() > infection_threshold:
                 self.state.max_nodes_infectious()
 
         # Tell parent simulation stopped
@@ -1160,7 +1143,7 @@ class uk_model(household_sim_contact_tracing):
 
         # work out which was the traced node
         tracing_household = self.network.houses.household(household.being_contact_traced_from)
-        traced_node_id = self.get_edge_between_household(household, tracing_household)[0]
+        traced_node_id = self.network.get_edge_between_household(household, tracing_household)[0]
         traced_node = self.network.nodes.node(traced_node_id)
 
         # the traced node should go into quarantine
@@ -1213,7 +1196,7 @@ class uk_model(household_sim_contact_tracing):
 
     def attempt_contact_trace_of_household(self, house_to: Household, house_from: Household, days_since_contact_occurred: int, contact_trace_delay: int = 0):
         # Decide if the edge was traced by the app
-        app_traced = self.is_edge_app_traced(self.get_edge_between_household(house_from, house_to))
+        app_traced = self.network.is_edge_app_traced(self.network.get_edge_between_household(house_from, house_to))
 
         # Get the success probability
         if app_traced:
@@ -1539,7 +1522,7 @@ class ContactModelTest(uk_model):
 
         # work out which was the traced node
         tracing_household = self.network.houses.household(household.being_contact_traced_from)
-        traced_node_id = self.get_edge_between_household(household, tracing_household)[0]
+        traced_node_id = self.network.get_edge_between_household(household, tracing_household)[0]
         traced_node = self.network.nodes.node(traced_node_id)
 
         # the traced node is now being lateral flow tested
