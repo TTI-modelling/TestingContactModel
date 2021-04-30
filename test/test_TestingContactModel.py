@@ -1,6 +1,26 @@
+import copy
+
 from household_contact_tracing.BranchingProcessSimulation import ContactModelTest
 from household_contact_tracing.simulation_controller import SimulationController
 import pytest
+
+default_params = {"outside_household_infectivity_scaling": 0.3,
+                  "contact_tracing_success_prob": 0.7,
+                  "overdispersion": 0.32,
+                  "asymptomatic_prob": 0.2,
+                  "asymptomatic_relative_infectivity": 0.35,
+                  "infection_reporting_prob": 0.3,
+                  "LFA_testing_requires_confirmatory_PCR": False,
+                  "test_delay": 1,
+                  "contact_trace_delay": 1,
+                  "incubation_period_delay": 5,
+                  "symptom_reporting_delay": 1,
+                  "household_pairwise_survival_prob": 0.2,
+                  "propensity_risky_behaviour_lfa_testing": 0,
+                  "global_contact_reduction_risky_behaviour": 0,
+                  "policy_for_household_contacts_of_a_positive_case": 'lfa testing no quarantine'
+                  }
+
 
 @pytest.fixture
 def simple_model():
@@ -17,40 +37,11 @@ def simple_model():
         else:
             return 0
 
-    def test_delay_dist():
-        return 1
-
-    def contact_trace_delay_dist():
-        return 1
-
-    def incubation_period_delay_dist():
-        return 5
-
-    def symptom_reporting_delay_dist():
-        return 1
-
-    model = ContactModelTest(
-        outside_household_infectivity_scaling=0.3,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=0.2,
-        asymptomatic_relative_infectivity=0.35,
-        infection_reporting_prob=0.3,
-        contact_trace=True,
-        prob_testing_positive_lfa_func = prob_testing_positive_lfa_func,
-        prob_testing_positive_pcr_func = prob_testing_positive_pcr_func,
-        LFA_testing_requires_confirmatory_PCR=False,
-        test_delay_dist=test_delay_dist,
-        contact_trace_delay_dist=contact_trace_delay_dist,
-        incubation_period_delay_dist=incubation_period_delay_dist,
-        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
-        household_pairwise_survival_prob=0.2,
-        propensity_risky_behaviour_lfa_testing=0,
-        global_contact_reduction_risky_behaviour=0,
-        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
-    )
+    model = ContactModelTest(default_params, prob_testing_positive_pcr_func,
+                             prob_testing_positive_lfa_func)
 
     return model
+
 
 @pytest.fixture
 def simple_model_high_test_prob():
@@ -69,38 +60,11 @@ def simple_model_high_test_prob():
         else:
             return 0
 
-    def test_delay_dist():
-        return 1
-
-    def contact_trace_delay_dist():
-        return 1
-
-    def incubation_period_delay_dist():
-        return 5
-
-    def symptom_reporting_delay_dist():
-        return 1
-
-    model = ContactModelTest(
-        outside_household_infectivity_scaling=0.3,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=0.2,
-        asymptomatic_relative_infectivity=0.35,
-        infection_reporting_prob=0.3,
-        contact_trace=True,
-        prob_testing_positive_lfa_func = prob_testing_positive_lfa_func,
-        prob_testing_positive_pcr_func = prob_testing_positive_pcr_func,
-        LFA_testing_requires_confirmatory_PCR=False,
-        test_delay_dist=test_delay_dist,
-        contact_trace_delay_dist=contact_trace_delay_dist,
-        incubation_period_delay_dist=incubation_period_delay_dist,
-        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
-        household_pairwise_survival_prob=0.2,
-        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
-    )
+    model = ContactModelTest(default_params, prob_testing_positive_pcr_func,
+                             prob_testing_positive_lfa_func)
 
     return model
+
 
 @pytest.fixture
 def simple_model_risky_behaviour():
@@ -123,39 +87,14 @@ def simple_model_risky_behaviour():
         else:
             return 0
 
-    def test_delay_dist():
-        return 1
+    params = copy.deepcopy(default_params)
+    # all lfa tested nodes engage in risky behaviour
+    params["propensity_risky_behaviour_lfa_testing"] = 1
 
-    def contact_trace_delay_dist():
-        return 1
-
-    def incubation_period_delay_dist():
-        return 5
-
-    def symptom_reporting_delay_dist():
-        return 1
-
-    model = ContactModelTest(
-        outside_household_infectivity_scaling=0.3,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=0.2,
-        asymptomatic_relative_infectivity=0.35,
-        infection_reporting_prob=0.3,
-        contact_trace=True,
-        prob_testing_positive_lfa_func = prob_testing_positive_lfa_func,
-        prob_testing_positive_pcr_func = prob_testing_positive_pcr_func,
-        LFA_testing_requires_confirmatory_PCR=False,
-        test_delay_dist=test_delay_dist,
-        contact_trace_delay_dist=contact_trace_delay_dist,
-        incubation_period_delay_dist=incubation_period_delay_dist,
-        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
-        household_pairwise_survival_prob=0.2,
-        propensity_risky_behaviour_lfa_testing=1, # all lfa tested nodes engage in risky behaviour
-        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
-    )
+    model = ContactModelTest(params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func)
 
     return model
+
 
 def test_pseudo_symptom_onset_asymptomatics():
     """Tests that asymptomatics have a pseudo_symptom_onset_time
@@ -176,44 +115,20 @@ def test_pseudo_symptom_onset_asymptomatics():
             return 1
         else:
             return 0
-    def test_delay_dist():
-        return 1
 
-    def contact_trace_delay_dist():
-        return 1
+    params = copy.deepcopy(default_params)
+    params["asymptomatic_prob"] = 1
 
-    def incubation_period_delay_dist():
-        return 5
-
-    def symptom_reporting_delay_dist():
-        return 1
-
-    model = ContactModelTest(
-        outside_household_infectivity_scaling=0.3,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=1, # all asymptomatic
-        asymptomatic_relative_infectivity=0.35,
-        infection_reporting_prob=0.3,
-        contact_trace=True,
-        prob_testing_positive_pcr_func=prob_testing_positive_pcr_func,
-        prob_testing_positive_lfa_func = prob_testing_positive_lfa_func,
-        LFA_testing_requires_confirmatory_PCR=False,
-        test_delay_dist=test_delay_dist,
-        contact_trace_delay_dist=contact_trace_delay_dist,
-        incubation_period_delay_dist=incubation_period_delay_dist,
-        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
-        household_pairwise_survival_prob=0.2,
-        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
-    )
+    model = ContactModelTest(params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func)
 
     assert model.network.nodes.node(1).pseudo_symptom_onset_time == 5
+
 
 def test_pseudo_symptom_onset(simple_model):
     """Checks that it is also working for symptomatics
     """
-
     assert simple_model.network.nodes.node(1).pseudo_symptom_onset_time == 5
+
 
 def test_time_relative_to_symptom_onset(simple_model):
     """Tests that nodes return the correct time relative to symptom onset
@@ -222,6 +137,7 @@ def test_time_relative_to_symptom_onset(simple_model):
     assert simple_model.network.nodes.node(1).time_relative_to_symptom_onset(5) == 0
     assert simple_model.network.nodes.node(1).time_relative_to_symptom_onset(6) == 1
     assert simple_model.network.nodes.node(1).time_relative_to_symptom_onset(4) == -1
+
 
 def test_lfa_test_node(simple_model_high_test_prob):
 
@@ -238,11 +154,13 @@ def test_lfa_test_node(simple_model_high_test_prob):
 
     assert model.lfa_test_node(node_of_interest)
 
+
 def test_being_lateral_flow_tested_attribute(simple_model):
     """Check nodes are generated with the lateral flow testing attribute
     """
 
     assert not simple_model.network.nodes.node(1).being_lateral_flow_tested
+
 
 def test_get_positive_lateral_flow_nodes_default_exclusion(simple_model_high_test_prob):
     """Check that nodes are automatically being tested for some reason
@@ -251,7 +169,8 @@ def test_get_positive_lateral_flow_nodes_default_exclusion(simple_model_high_tes
     model = simple_model_high_test_prob
 
     assert model.get_positive_lateral_flow_nodes() == []
-    
+
+
 def test_get_positive_lateral_flow_nodes_timings(simple_model_high_test_prob):
     """Check model is taking timings correctly into account
     """
@@ -263,6 +182,7 @@ def test_get_positive_lateral_flow_nodes_timings(simple_model_high_test_prob):
     node_of_interest.being_lateral_flow_tested = True
 
     assert model.get_positive_lateral_flow_nodes() == []
+
 
 def test_get_positive_lateral_flow_nodes(simple_model_high_test_prob):
     """Check the node tests positive and is returned by the function
@@ -277,6 +197,7 @@ def test_get_positive_lateral_flow_nodes(simple_model_high_test_prob):
     model.time = 5
 
     assert model.get_positive_lateral_flow_nodes() == [node_of_interest]
+
 
 def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
     """Checks that a node who is traced is placed under lateral flow testing.
@@ -294,13 +215,13 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
     model.contact_tracing_success_prob = 1
 
     model.new_outside_household_infection(
-        infecting_node = model.network.nodes.node(1),
+        infecting_node=model.network.nodes.node(1),
         serial_interval=0
     )
     
     model.attempt_contact_trace_of_household(
-        house_to = model.network.houses.household(2),
-        house_from = model.network.houses.household(1),
+        house_to=model.network.houses.household(2),
+        house_from=model.network.houses.household(1),
         days_since_contact_occurred=0,
         contact_trace_delay=0
     )
@@ -311,7 +232,8 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
 
     controller.simulate_one_step()
 
-    assert model.network.nodes.node(2).being_lateral_flow_tested == True
+    assert model.network.nodes.node(2).being_lateral_flow_tested is True
+
 
 def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: ContactModelTest):
 
@@ -327,12 +249,11 @@ def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: Contac
 
     model.isolate_positive_lateral_flow_tests()
 
-
     # add another infection to the household, so we can check that they are not quarantining
     # but they are lfa testing
     model.new_within_household_infection(
-        infecting_node = model.network.nodes.node(1),
-        serial_interval = 0
+        infecting_node=model.network.nodes.node(1),
+        serial_interval=0
     )
 
     assert model.network.nodes.node(1).isolated
@@ -340,6 +261,7 @@ def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: Contac
     assert model.network.nodes.node(1).received_positive_test_result
     assert not model.network.nodes.node(2).isolated
     assert model.network.nodes.node(2).being_lateral_flow_tested
+
 
 @pytest.fixture
 def simple_model_lfa_testing_and_quarantine():
@@ -362,38 +284,10 @@ def simple_model_lfa_testing_and_quarantine():
         else:
             return 0
 
-    def test_delay_dist():
-        return 1
+    params = copy.deepcopy(default_params)
+    params["policy_for_household_contacts_of_a_positive_case"] = 'lfa testing and quarantine'
 
-    def contact_trace_delay_dist():
-        return 1
-
-    def incubation_period_delay_dist():
-        return 5
-
-    def symptom_reporting_delay_dist():
-        return 1
-
-    model = ContactModelTest(
-        outside_household_infectivity_scaling=0.3,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=0.2,
-        asymptomatic_relative_infectivity=0.35,
-        infection_reporting_prob=0.3,
-        contact_trace=True,
-        prob_testing_positive_lfa_func = prob_testing_positive_lfa_func,
-        prob_testing_positive_pcr_func = prob_testing_positive_pcr_func,
-        LFA_testing_requires_confirmatory_PCR=False,
-        test_delay_dist=test_delay_dist,
-        contact_trace_delay_dist=contact_trace_delay_dist,
-        incubation_period_delay_dist=incubation_period_delay_dist,
-        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
-        household_pairwise_survival_prob=0.2,
-        propensity_risky_behaviour_lfa_testing=0,
-        global_contact_reduction_risky_behaviour=0,
-        policy_for_household_contacts_of_a_positive_case='lfa testing and quarantine'
-    )
+    model = ContactModelTest(params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func)
 
     return model
 
@@ -417,8 +311,8 @@ def test_start_lateral_flow_testing_household_and_quarantine(
     model.isolate_positive_lateral_flow_tests()
 
     model.new_within_household_infection(
-        infecting_node = model.network.nodes.node(1),
-        serial_interval = 0
+        infecting_node=model.network.nodes.node(1),
+        serial_interval=0
     )
 
     assert model.network.nodes.node(1).isolated
@@ -449,38 +343,11 @@ def simple_model_no_lfa_testing_only_quarantine():
         else:
             return 0
 
-    def test_delay_dist():
-        return 1
+    params = copy.deepcopy(default_params)
 
-    def contact_trace_delay_dist():
-        return 1
+    params["policy_for_household_contacts_of_a_positive_case"] = 'no lfa testing only quarantine'
 
-    def incubation_period_delay_dist():
-        return 5
-
-    def symptom_reporting_delay_dist():
-        return 1
-
-    model = ContactModelTest(
-        outside_household_infectivity_scaling=0.3,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=0.2,
-        asymptomatic_relative_infectivity=0.35,
-        infection_reporting_prob=0.3,
-        contact_trace=True,
-        prob_testing_positive_lfa_func = prob_testing_positive_lfa_func,
-        prob_testing_positive_pcr_func = prob_testing_positive_pcr_func,
-        LFA_testing_requires_confirmatory_PCR=False,
-        test_delay_dist=test_delay_dist,
-        contact_trace_delay_dist=contact_trace_delay_dist,
-        incubation_period_delay_dist=incubation_period_delay_dist,
-        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
-        household_pairwise_survival_prob=0.2,
-        propensity_risky_behaviour_lfa_testing=0,
-        global_contact_reduction_risky_behaviour=0,
-        policy_for_household_contacts_of_a_positive_case='no lfa testing only quarantine'
-    )
+    model = ContactModelTest(params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func)
 
     return model
 
@@ -504,8 +371,8 @@ def test_household_contacts_quarantine_only(
     model.isolate_positive_lateral_flow_tests()
 
     model.new_within_household_infection(
-        infecting_node = model.network.nodes.node(1),
-        serial_interval = 0
+        infecting_node=model.network.nodes.node(1),
+        serial_interval=0
     )
 
     assert model.network.nodes.node(1).isolated
@@ -514,11 +381,13 @@ def test_household_contacts_quarantine_only(
     assert model.network.nodes.node(2).isolated
     assert model.network.nodes.node(2).being_lateral_flow_tested
 
+
 def test_risky_behaviour_attributes_default(simple_model: simple_model):
     """Tests that the default behaviour is no more risky behaviour
     """
 
     assert not simple_model.network.nodes.node(1).propensity_risky_behaviour_lfa_testing
+
 
 def test_risky_behaviour_attributes(simple_model_risky_behaviour: simple_model_risky_behaviour):
     """Tests that nodes are created with the propensity for risky behaviour while they are
@@ -526,6 +395,7 @@ def test_risky_behaviour_attributes(simple_model_risky_behaviour: simple_model_r
     """
 
     assert simple_model_risky_behaviour.network.nodes.node(1).propensity_risky_behaviour_lfa_testing
+
 
 @pytest.fixture
 def simple_model_risky_behaviour_2_infections():
@@ -548,40 +418,14 @@ def simple_model_risky_behaviour_2_infections():
         else:
             return 0
 
-    def test_delay_dist():
-        return 1
+    params = copy.deepcopy(default_params)
 
-    def contact_trace_delay_dist():
-        return 1
+    params["starting_infections"] = 2
+    params["reduce_contacts_by"] = 1
+    params["propensity_risky_behaviour_lfa_testing"] = 1
 
-    def incubation_period_delay_dist():
-        return 5
 
-    def symptom_reporting_delay_dist():
-        return 1
-
-    model = ContactModelTest(
-        outside_household_infectivity_scaling=0.3,
-        contact_tracing_success_prob=0.7,
-        overdispersion=0.32,
-        asymptomatic_prob=0.2,
-        asymptomatic_relative_infectivity=0.35,
-        infection_reporting_prob=0.3,
-        contact_trace=True,
-        starting_infections=2,
-        reduce_contacts_by=1,
-        prob_testing_positive_lfa_func = prob_testing_positive_lfa_func,
-        prob_testing_positive_pcr_func = prob_testing_positive_pcr_func,
-        LFA_testing_requires_confirmatory_PCR=False,
-        test_delay_dist=test_delay_dist,
-        contact_trace_delay_dist=contact_trace_delay_dist,
-        incubation_period_delay_dist=incubation_period_delay_dist,
-        symptom_reporting_delay_dist=symptom_reporting_delay_dist,
-        household_pairwise_survival_prob=0.2,
-        propensity_risky_behaviour_lfa_testing=1, # all lfa tested nodes engage in risky behaviour
-        global_contact_reduction_risky_behaviour=0, # they resume all contacts
-        policy_for_household_contacts_of_a_positive_case='lfa testing no quarantine'
-    )
+    model = ContactModelTest(params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func)
 
     return model
 
@@ -621,5 +465,3 @@ def test_lfa_tested_nodes_make_more_contacts_if_risky(
     # node 1 does not engage in risky behaviour and should not make any global contacts
     assert model.network.nodes.node(1).outside_house_contacts_made == 0
     assert model.network.nodes.node(2).outside_house_contacts_made != 0
-
-

@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameter schema",
+  "description": "A schema for validating the parameters used as a simulation input",
+  "type": "object",
+  "allOf": [{"$ref": "schemas/household_sim_contact_tracing.json#/properties"}],
+
+  "properties": {
+    "number_of_days_to_trace_backwards": {
+      "description": "",
+      "type": "number"
+    },
+    "number_of_days_to_trace_forwards": {
+      "description": "",
+      "type": "number"
+    },
+    "probable_infections_need_test": {
+      "description": "",
+      "type": "boolean"
+    },
+    "recall_probability_fall_off": {
+      "description": "",
+      "type": "number"
+    }
+  }
+}
