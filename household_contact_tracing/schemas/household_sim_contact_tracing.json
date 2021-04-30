@@ -100,7 +100,6 @@
       "type": "number"
     }
   },
-  "additionalProperties": false,
   "required": [
     "outside_household_infectivity_scaling",
     "overdispersion",

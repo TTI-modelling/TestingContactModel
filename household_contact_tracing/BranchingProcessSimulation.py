@@ -1,12 +1,12 @@
 import pathlib
-from typing import List, Optional
+from typing import List, Optional, Callable
 import numpy as np
 import numpy.random as npr
 
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
 from household_contact_tracing.network import Network, Household, Node, EdgeType
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
-from household_contact_tracing.parameters import parse_parameters, load_yaml
+from household_contact_tracing.parameters import validate_parameters, load_yaml
 from household_contact_tracing.simulation_states import RunningState
 
 
@@ -29,11 +29,9 @@ class household_sim_contact_tracing(BPSimulationModel):
         # Call parent init
         BPSimulationModel.__init__(self)
 
-        # Load parameter schema
-        schema = load_yaml(
-            pathlib.Path("household_contact_tracing/schemas/household_sim_contact_tracing.json"))
         # Parse parameters against schema to check they are valid
-        parse_parameters(params, schema)
+        validate_parameters(params,
+                            "household_contact_tracing/schemas/household_sim_contact_tracing.json")
 
         self.network = Network()
 
@@ -964,69 +962,34 @@ class household_sim_contact_tracing(BPSimulationModel):
 
 class uk_model(household_sim_contact_tracing):
 
-    def __init__(self,
-        outside_household_infectivity_scaling,
-        contact_tracing_success_prob,
-        overdispersion,
-        asymptomatic_prob,
-        asymptomatic_relative_infectivity,
-        infection_reporting_prob,
-        test_delay,
-        prob_testing_positive_pcr_func,
-        contact_trace_delay,
-        incubation_period_delay,
-        symptom_reporting_delay,
-        household_pairwise_survival_prob,
-        number_of_days_to_trace_backwards=2,
-        number_of_days_to_trace_forwards=7,
-        reduce_contacts_by=0,
-        prob_has_trace_app=0,
-        hh_propensity_to_use_trace_app=1,
-        test_before_propagate_tracing=True,
-        probable_infections_need_test=True,
-        starting_infections=1,
-        node_will_uptake_isolation_prob=1,
-        recall_probability_fall_off=1,
-        self_isolation_duration=10,
-        quarantine_duration=10,
-        propensity_imperfect_quarantine=0,
-        global_contact_reduction_imperfect_quarantine=None
-        ):
+    def __init__(self, params: dict, prob_testing_positive_pcr_func: Callable[[int], float]):
 
-        params = {"outside_household_infectivity_scaling": outside_household_infectivity_scaling,
-                  "contact_tracing_success_prob": contact_tracing_success_prob,
-                  "overdispersion": overdispersion,
-                  "asymptomatic_prob": asymptomatic_prob,
-                  "asymptomatic_relative_infectivity": asymptomatic_relative_infectivity,
-                  "infection_reporting_prob": infection_reporting_prob,
-                  "household_pairwise_survival_prob": household_pairwise_survival_prob,
-                  "do_2_step": False,
-                  "reduce_contacts_by": reduce_contacts_by,
-                  "prob_has_trace_app": prob_has_trace_app,
-                  "hh_propensity_to_use_trace_app": hh_propensity_to_use_trace_app,
-                  "test_before_propagate_tracing": test_before_propagate_tracing,
-                  "starting_infections": starting_infections,
-                  "node_will_uptake_isolation_prob": node_will_uptake_isolation_prob,
-                  "self_isolation_duration": self_isolation_duration,
-                  "quarantine_duration": quarantine_duration,
-                  "propensity_imperfect_quarantine": propensity_imperfect_quarantine,
-                  "global_contact_reduction_imperfect_quarantine": global_contact_reduction_imperfect_quarantine,
-                  "test_delay": test_delay,
-                  "contact_trace_delay": contact_trace_delay,
-                  "incubation_period_delay": incubation_period_delay,
-                  "symptom_reporting_delay": symptom_reporting_delay
-                  }
+        validate_parameters(params, "household_contact_tracing/schemas/uk_model.json")
 
         super().__init__(params)
 
-        self.probable_infections_need_test = probable_infections_need_test
-        self.number_of_days_to_trace_backwards = number_of_days_to_trace_backwards
-        self.number_of_days_to_trace_forwards = number_of_days_to_trace_forwards
-        self.recall_probability_fall_off = recall_probability_fall_off
         self.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
 
+        if "number_of_days_to_trace_backwards" in params:
+            self.number_of_days_to_trace_backwards = params["number_of_days_to_trace_backwards"]
+        else:
+            self.number_of_days_to_trace_backwards = 2
+        if "number_of_days_to_trace_forwards" in params:
+            self.number_of_days_to_trace_forwards = params["number_of_days_to_trace_forwards"]
+        else:
+            self.number_of_days_to_trace_forwards = 7
+        if "probable_infections_need_test" in params:
+            self.probable_infections_need_test = params["probable_infections_need_test"]
+        else:
+            self.probable_infections_need_test = True
+        if "recall_probability_fall_off" in params:
+            self.recall_probability_fall_off = params["recall_probability_fall_off"]
+        else:
+            self.recall_probability_fall_off = 1
+
     def update_isolation(self):
-        # Update the contact traced status for all households that have had the contact tracing process get there
+        # Update the contact traced status for all households that have had the contact
+        # tracing process get there
         [
             self.contact_trace_household(household)
             for household in self.network.houses.all_households()
@@ -1034,7 +997,8 @@ class uk_model(household_sim_contact_tracing):
             and not household.contact_traced
         ]
 
-        # Isolate all non isolated households where the infection has been reported (excludes those who will not take up isolation if prob <1)
+        # Isolate all non isolated households where the infection has been reported
+        # (excludes those who will not take up isolation if prob <1)
         [
             self.isolate_household(node.household())
             for node in self.network.nodes.all_nodes()
@@ -1143,7 +1107,7 @@ class uk_model(household_sim_contact_tracing):
         if not traced_node.isolated:
             if node.will_uptake_isolation:
                 traced_node.isolated = True
-    
+
     def propagate_contact_tracing(self, node: Node):
         """
         To be called after a node in a household either reports their symptoms, and gets tested, when a household that is under surveillance develops symptoms + gets tested.
@@ -1172,7 +1136,7 @@ class uk_model(household_sim_contact_tracing):
         # spread_to_global_node_time_tuples stores a list of tuples, where the first element is the node_id
         # of a node who was globally infected by the node, and the second element is the time of transmission
         for global_infection in node.spread_to_global_node_time_tuples:
-            
+
             # Get the child node_id and the time of transmission/time of contact
             child_node_id, time = global_infection
 
@@ -1266,6 +1230,34 @@ class ContactModelTest(uk_model):
         lfa_tested_nodes_book_pcr_on_symptom_onset: bool = True
     ):
 
+        params = {"outside_household_infectivity_scaling": outside_household_infectivity_scaling,
+                  "contact_tracing_success_prob": contact_tracing_success_prob,
+                  "overdispersion": overdispersion,
+                  "asymptomatic_prob": asymptomatic_prob,
+                  "asymptomatic_relative_infectivity": asymptomatic_relative_infectivity,
+                  "infection_reporting_prob": infection_reporting_prob,
+                  "household_pairwise_survival_prob": household_pairwise_survival_prob,
+                  "reduce_contacts_by": reduce_contacts_by,
+                  "prob_has_trace_app": prob_has_trace_app,
+                  "hh_propensity_to_use_trace_app": hh_propensity_to_use_trace_app,
+                  "test_before_propagate_tracing": test_before_propagate_tracing,
+                  "starting_infections": starting_infections,
+                  "node_will_uptake_isolation_prob": node_will_uptake_isolation_prob,
+                  "self_isolation_duration": self_isolation_duration,
+                  "quarantine_duration": quarantine_duration,
+                  "propensity_imperfect_quarantine": propensity_imperfect_quarantine,
+                  "global_contact_reduction_imperfect_quarantine": global_contact_reduction_imperfect_quarantine,
+                  "test_delay": test_delay,
+                  "contact_trace_delay": contact_trace_delay,
+                  "incubation_period_delay": incubation_period_delay,
+                  "symptom_reporting_delay": symptom_reporting_delay,
+
+                  "number_of_days_to_trace_backwards": number_of_days_to_trace_backwards,
+                  "number_of_days_to_trace_forwards": number_of_days_to_trace_forwards,
+                  "probable_infections_need_test": probable_infections_need_test,
+                  "recall_probability_fall_off": recall_probability_fall_off
+                  }
+
         self.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
         self.number_of_days_prior_to_LFA_result_to_trace = number_of_days_prior_to_LFA_result_to_trace
         self.LFA_testing_requires_confirmatory_PCR = LFA_testing_requires_confirmatory_PCR
@@ -1278,34 +1270,7 @@ class ContactModelTest(uk_model):
         self.lateral_flow_testing_duration = lateral_flow_testing_duration
         self.lfa_tested_nodes_book_pcr_on_symptom_onset = lfa_tested_nodes_book_pcr_on_symptom_onset
 
-        super().__init__(
-            outside_household_infectivity_scaling=outside_household_infectivity_scaling,
-            contact_tracing_success_prob=contact_tracing_success_prob,
-            overdispersion=overdispersion,
-            asymptomatic_prob=asymptomatic_prob,
-            asymptomatic_relative_infectivity=asymptomatic_relative_infectivity,
-            infection_reporting_prob=infection_reporting_prob,
-            test_delay=test_delay,
-            prob_testing_positive_pcr_func=prob_testing_positive_pcr_func,
-            contact_trace_delay=contact_trace_delay,
-            incubation_period_delay=incubation_period_delay,
-            symptom_reporting_delay=symptom_reporting_delay,
-            household_pairwise_survival_prob=household_pairwise_survival_prob,
-            number_of_days_to_trace_backwards=number_of_days_to_trace_backwards,
-            number_of_days_to_trace_forwards=number_of_days_to_trace_forwards,
-            reduce_contacts_by=reduce_contacts_by,
-            prob_has_trace_app=prob_has_trace_app,
-            hh_propensity_to_use_trace_app=hh_propensity_to_use_trace_app,
-            test_before_propagate_tracing=test_before_propagate_tracing,
-            probable_infections_need_test=probable_infections_need_test,
-            starting_infections=starting_infections,
-            node_will_uptake_isolation_prob=node_will_uptake_isolation_prob,
-            recall_probability_fall_off=recall_probability_fall_off,
-            self_isolation_duration=self_isolation_duration,
-            quarantine_duration=quarantine_duration,
-            propensity_imperfect_quarantine=propensity_imperfect_quarantine,
-            global_contact_reduction_imperfect_quarantine=global_contact_reduction_imperfect_quarantine
-        )
+        super().__init__(params, prob_testing_positive_pcr_func)
 
     def pcr_test_node(self, node: Node):
         """Given a the time relative to a nodes symptom onset, will that node test positive

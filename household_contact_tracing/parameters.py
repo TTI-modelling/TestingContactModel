@@ -11,8 +11,15 @@ def load_yaml(path: pathlib.Path) -> dict:
     return data
 
 
-def parse_parameters(params: dict, schema: dict):
-    """Parse a dictionary of parameters against a schema."""
+def validate_parameters(params: dict, schema_path: str):
+    """Validate a dictionary of parameters against a schema."""
     logger.debug("Validating input parameters.")
-    jsonschema.validate(params, schema)
+
+    schema_path = pathlib.Path(schema_path)
+    schema = load_yaml(schema_path)
+
+    schema_dir = schema_path.parent.absolute()
+
+    resolver = jsonschema.RefResolver(schema_dir.as_uri(), None)
+    jsonschema.validate(params, schema, resolver=resolver)
     logger.debug("Input parameters successfully validated.")
