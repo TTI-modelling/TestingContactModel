@@ -14,14 +14,14 @@ class EdgeType(Enum):
 
 class NodeTypeDetailed(Enum):
     default = 0
-    received_pos_test_pcr= 1
-    received_neg_test_pcr = 2
-    confirmatory_pos_pcr_test = 3
-    confirmatory_neg_pcr_test = 4
-    received_pos_test_lfa = 5
-    being_lateral_flow_tested_isolated = 6
-    being_lateral_flow_tested_not_isolated = 7
-    isolated_only = 8
+    isolated = 1
+    received_pos_test_pcr= 2
+    received_neg_test_pcr = 3
+    confirmatory_pos_pcr_test = 4
+    confirmatory_neg_pcr_test = 5
+    received_pos_test_lfa = 6
+    being_lateral_flow_tested_isolated = 7
+    being_lateral_flow_tested_not_isolated = 8
     symptomatic_will_report_infection = 9
     symptomatic_will_not_report_infection = 10
 
@@ -31,7 +31,7 @@ class NodeType(Enum):
     isolated = 1
     had_contacts_traced = 2
     symptomatic_will_report_infection = 3
-    symptomatic_wont_report_infection = 4
+    symptomatic_will_not_report_infection = 4
 
 
 class Network:
@@ -67,6 +67,20 @@ class Network:
     @property
     def node_count(self):
         return nx.number_of_nodes(self.graph)
+
+    @property
+    def active_infections(self):
+        """
+        Returns a list of nodes who have not yet recovered, and can still infect.
+        These nodes may be isolated and not able to infect globally however.
+
+        Returns:
+            list: list of nodes able to infect
+        """
+        return [
+            node for node in self.nodes.all_nodes()
+            if not node.recovered
+        ]
 
     def graphs_isophomorphic(self, graph1, graph2):
         return nx.is_isomorphic(graph1, graph2)
@@ -213,7 +227,7 @@ class Node:
         elif not self.asymptomatic and self.will_report_infection:
             return NodeType.symptomatic_will_report_infection.name
         elif not self.asymptomatic and not self.will_report_infection:
-            return NodeType.symptomatic_wont_report_infection.name
+            return NodeType.symptomatic_will_not_report_infection.name
         else:
             return NodeType.default.name
 
@@ -235,7 +249,7 @@ class Node:
         elif self.being_lateral_flow_tested and not self.isolated:
             return NodeTypeDetailed.being_lateral_flow_tested_not_isolated.name
         elif self.isolated:
-            return NodeTypeDetailed.isolated_only.name
+            return NodeTypeDetailed.isolated.name
         elif not self.asymptomatic and self.will_report_infection:
             return NodeTypeDetailed.symptomatic_will_report_infection.name
         elif not self.asymptomatic and not self.will_report_infection:

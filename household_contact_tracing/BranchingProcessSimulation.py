@@ -374,19 +374,6 @@ class household_sim_contact_tracing(BPSimulationModel):
         """
         return self.network.nodes.node(edge[0]).has_contact_tracing_app and self.network.nodes.node(edge[1]).has_contact_tracing_app
 
-    @property
-    def active_infections(self):
-        """
-        Returns a list of nodes who have not yet recovered, and can still infect.
-        These nodes may be isolated and not able to infect globally however.
-
-        Returns:
-            list: list of nodes able to infect
-        """
-        return [
-            node for node in self.network.nodes.all_nodes()
-            if not node.recovered
-        ]
 
     def get_contact_rate_reduction(self, node: Node):
         """Returns a contact rate reduction, depending upon a nodes current status and various isolation
@@ -446,7 +433,7 @@ class household_sim_contact_tracing(BPSimulationModel):
         Creates a new days worth of infections
         """
 
-        for node in self.active_infections:
+        for node in self.network.active_infections:
             household = node.household()
 
             # Extracting useful parameters from the node
@@ -899,11 +886,8 @@ class household_sim_contact_tracing(BPSimulationModel):
                         node.completed_isolation_time = self.time
                         node.completed_isolation_reason = 'completed_isolation'
 
-    def simulate_one_step(self):
-        """Simulates one day of the epidemic and contact tracing."""
-
-        prev_graph = self.network.graph.copy()
-
+    def _simulate_one_step(self):
+        """ Private method: Simulates one day of the epidemic and contact tracing."""
         # perform a days worth of infections
         self.increment_infection()
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
@@ -920,13 +904,6 @@ class household_sim_contact_tracing(BPSimulationModel):
         # increment time
         self.time += 1
 
-        new_graph = self.network.graph
-
-        if not self.network.graphs_isophomorphic(prev_graph, new_graph):
-            BPSimulationModel.graph_changed(self)
-
-        # Call parent simulate_one_step
-        BPSimulationModel.completed_step_increment(self)
 
     def initialise_simulation(self):
         """ Initialise the simulation to its starting values. """
@@ -954,13 +931,34 @@ class household_sim_contact_tracing(BPSimulationModel):
 
 
     def run_simulation(self, num_steps: int, infection_threshold: int = 100000) -> None:
+        """ Runs the simulation:
+                Sets model state,
+                Announces start/stopped and step increments to observers
+
+        Arguments:
+            node: num steps -- The number of step increments to perform
+            infection_threshold -- The maximum number of infectious nodes allowed, befure stopping stimulation
+
+        Returns:
+            None
+        """
 
         # Tell parent simulation started
         BPSimulationModel.simulation_started(self)
 
         while type(self.state) is RunningState:
+            prev_graph = self.network.graph.copy()
+
             # This chunk of code executes one step (a days worth of infections and contact tracings)
-            self.simulate_one_step()
+            self._simulate_one_step()
+
+            # If graph changed, tell parent
+            new_graph = self.network.graph
+            if not self.network.graphs_isophomorphic(prev_graph, new_graph):
+                BPSimulationModel.graph_changed(self)
+
+            # Call parent completed step
+            BPSimulationModel.completed_step_increment(self)
 
             # Simulation ends if num_steps is reached
             if self.time == num_steps:
@@ -970,8 +968,20 @@ class household_sim_contact_tracing(BPSimulationModel):
             elif self.count_non_recovered_nodes() > infection_threshold:
                 self.state.max_nodes_infectious()
 
-        BPSimulationModel.notify_observers_simulation_stopped(self)
+        # Tell parent simulation stopped
+        BPSimulationModel.simulation_stopped(self)
 
+    def node_type(self, node: Node):
+        """ Returns a node type, given the current status of the node.
+
+        Arguments:
+            node: Node -- The node
+
+        Returns:
+            str -- The status assigned
+        """
+
+        return node.node_type()
 
 class uk_model(household_sim_contact_tracing):
 
@@ -2021,7 +2031,7 @@ class ContactModelTest(uk_model):
         """Returns a node type, given the current status of the node.
 
         Arguments:
-            node {int} -- The node id
+            node: Node -- The node
 
         Returns:
             str -- The status assigned
