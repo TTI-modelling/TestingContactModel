@@ -1416,14 +1416,76 @@ class ContactModelTest(uk_model):
         else:
             additional_attributes_with_defaults = default_additional_attributes
 
-        super().new_infection(
-            node_count=node_count,
+        asymptomatic = self.is_asymptomatic_infection()
+
+        # Symptom onset time
+        symptom_onset_time = self.time + self.incubation_period(asymptomatic)
+
+        # If the node is asymptomatic, we need to generate a pseudo symptom onset time
+        if asymptomatic:
+            pseudo_symptom_onset_time = self.incubation_period(asymptomatic=False)
+        else:
+            pseudo_symptom_onset_time = symptom_onset_time
+
+        # When a node reports its infection
+        if not asymptomatic and npr.binomial(1, self.infection_reporting_prob) == 1:
+            will_report_infection = True
+            time_of_reporting = symptom_onset_time + self.reporting_delay(asymptomatic)
+        else:
+            will_report_infection = False
+            time_of_reporting = float('Inf')
+
+        # We assign each node a recovery period of 21 days, after 21 days the probability of
+        # causing a new infections is 0, due to the generation time distribution
+        recovery_time = self.time + 14
+
+        household = self.network.houses.household(household_id)
+
+        # If the household has the propensity to use the contact tracing app, decide
+        # if the node uses the app.
+        if household.propensity_trace_app:
+            has_trace_app = self.has_contact_tracing_app()
+        else:
+            has_trace_app = False
+
+        # in case you want to add non-default additional attributes
+        default_additional_attributes = {}
+
+        if additional_attributes_with_defaults:
+            default_additional_attributes = {**default_additional_attributes, **additional_attributes_with_defaults}
+
+        isolation_uptake = self.will_uptake_isolation()
+
+        if household.isolated and isolation_uptake:
+            node_is_isolated = True
+        else:
+            node_is_isolated = False
+
+        self.network.add_node(
+            node_id=node_count,
+            time=self.time,
             generation=generation,
-            household_id=household_id,
+            household=household_id,
+            isolated=node_is_isolated,
+            will_uptake_isolation=isolation_uptake,
+            propensity_imperfect_isolation=self.get_propensity_imperfect_isolation(),
+            asymptomatic=asymptomatic,
+            contact_traced=household.contact_traced,
+            symptom_onset_time=symptom_onset_time,
+            pseudo_symptom_onset_time=pseudo_symptom_onset_time,
             serial_interval=serial_interval,
+            recovery_time=recovery_time,
+            will_report_infection=will_report_infection,
+            time_of_reporting=time_of_reporting,
+            has_contact_tracing_app=has_trace_app,
+            testing_delay=self.testing_delay(),
+            additional_attributes=default_additional_attributes,
             infecting_node=infecting_node,
-            additional_attributes = additional_attributes_with_defaults
         )
+
+        # Each house now stores the ID's of which nodes are stored inside the house,
+        # so that quarantining can be done at the household level
+        household.node_ids.append(node_count)
     
     def will_take_up_lfa_testing(self) -> bool:
         return npr.binomial(1, self.node_prob_will_take_up_lfa_testing) == 1
