@@ -143,6 +143,58 @@ class Network:
     def symptomatic_nodes(self) -> Iterator['Node']:
         return [self.node(n) for n in self.graph if not self.node(n).asymptomatic]
 
+class NetworkContractModel(Network):
+    def add_node(
+        self,
+        node_id,
+        time,
+        generation,
+        household,
+        isolated,
+        will_uptake_isolation,
+        propensity_imperfect_isolation,
+        asymptomatic,
+        symptom_onset_time,
+        pseudo_symptom_onset_time,
+        serial_interval,
+        recovery_time,
+        will_report_infection,
+        time_of_reporting,
+        has_contact_tracing_app,
+        testing_delay,
+        contact_traced,
+        additional_attributes: Optional[dict] = None,
+        infecting_node: Optional['Node']=None,
+        completed_isolation=False,
+    ) -> 'NodeContactModel':
+        self.graph.add_node(node_id)
+        node = NodeContactModel(
+            nodes=self,
+            houses=self.houses,
+            node_id=node_id,
+            time_infected=time,
+            generation=generation,
+            household=household,
+            isolated=isolated,
+            will_uptake_isolation=will_uptake_isolation,
+            propensity_imperfect_isolation=propensity_imperfect_isolation,
+            asymptomatic=asymptomatic,
+            symptom_onset_time=symptom_onset_time,
+            pseudo_symptom_onset_time=pseudo_symptom_onset_time,
+            serial_interval=serial_interval,
+            recovery_time=recovery_time,
+            will_report_infection=will_report_infection,
+            time_of_reporting=time_of_reporting,
+            has_contact_tracing_app=has_contact_tracing_app,
+            testing_delay=testing_delay,
+            contact_traced=contact_traced,
+            additional_attributes=additional_attributes,
+            infecting_node=infecting_node,
+            completed_isolation=completed_isolation,
+        )
+        self.graph.nodes[node_id]['node_obj'] = node
+        return node
+
 
 class Node:
     class NodeType(Enum):

@@ -4,7 +4,8 @@ import numpy.random as npr
 import os
 
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
-from household_contact_tracing.network import Network, Household, Node, NodeContactModel, EdgeType, graphs_isomorphic
+from household_contact_tracing.network import Network, NetworkContractModel, Household, Node, NodeContactModel, \
+    EdgeType, graphs_isomorphic
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
@@ -34,7 +35,7 @@ class household_sim_contact_tracing(BPSimulationModel):
         # Parse parameters against schema to check they are valid
         validate_parameters(params, os.path.join(self.ROOT_DIR, "schemas/household_sim_contact_tracing.json"))
 
-        self._network = Network()
+        self._network = self.instantiate_network()
         self._infection = Infection(self._network)
         self._contact_tracing = ContactTracing(self._network)
 
@@ -166,6 +167,9 @@ class household_sim_contact_tracing(BPSimulationModel):
     @contact_tracing.setter
     def contact_tracing(self, contact_tracing: ContactTracingBehaviourInterface):
         self._contact_tracing = contact_tracing
+
+    def instantiate_network(self):
+        return Network()
 
     def compute_hh_infection_probs(self, pairwise_survival_prob: float) -> list:
         # Precomputing the infection probabilities for the within household epidemics.
@@ -1253,6 +1257,9 @@ class ContactModelTest(uk_model):
             self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
 
         super().__init__(params, prob_testing_positive_pcr_func)
+
+    def instantiate_network(self):
+        return NetworkContractModel()
 
     def pcr_test_node(self, node: NodeContactModel):
         """Given a the time relative to a nodes symptom onset, will that node test positive
