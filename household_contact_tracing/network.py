@@ -107,7 +107,7 @@ class Network:
     def get_edge_between_household(self, house1: 'Household', house2: 'Household'):
         for node1 in house1.nodes():
             for node2 in house2.nodes():
-                if self.network.graph.has_edge(node1.node_id, node2.node_id):
+                if self.graph.has_edge(node1.node_id, node2.node_id):
                     return node1.node_id, node2.node_id
 
     def is_edge_app_traced(self, edge):

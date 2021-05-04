@@ -1,6 +1,7 @@
 from typing import List, Optional, Callable
 import numpy as np
 import numpy.random as npr
+import os
 
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
 from household_contact_tracing.network import Network, Household, Node, EdgeType
@@ -29,7 +30,7 @@ class household_sim_contact_tracing(BPSimulationModel):
         BPSimulationModel.__init__(self)
 
         # Parse parameters against schema to check they are valid
-        validate_parameters(params, "./schemas/household_sim_contact_tracing.json")
+        validate_parameters(params, os.path.join(self.ROOT_DIR, "schemas/household_sim_contact_tracing.json"))
 
         self.network = Network()
 
