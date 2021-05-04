@@ -1,7 +1,9 @@
 from typing import List, Optional, Callable
+import os
+import math
+
 import numpy as np
 import numpy.random as npr
-import os
 
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
 from household_contact_tracing.network import Network, Household, Node, EdgeType
@@ -107,7 +109,7 @@ class household_sim_contact_tracing(BPSimulationModel):
         # Calls the simulation reset function, which creates all the required dictionaries
         self.initialise_simulation()
 
-    def compute_hh_infection_probs(self, pairwise_survival_prob: float) -> list:
+    def compute_hh_infection_probs(self, pairwise_survival_prob: float) -> np.ndarray:
         # Precomputing the infection probabilities for the within household epidemics.
         contact_prob = 0.8
         day_0_infection_prob = current_hazard_rate(0, pairwise_survival_prob) / contact_prob
@@ -127,7 +129,7 @@ class household_sim_contact_tracing(BPSimulationModel):
 
     def incubation_period(self, asymptomatic: bool) -> int:
         if asymptomatic:
-            return float('Inf')
+            return round(math.inf)
         else:
             return round(self.incubation_period_delay)
 
@@ -140,9 +142,9 @@ class household_sim_contact_tracing(BPSimulationModel):
     def is_asymptomatic_infection(self) -> bool:
         return npr.binomial(1, self.asymptomatic_prob) == 1
 
-    def reporting_delay(self, asymptomatic: bool):
+    def reporting_delay(self, asymptomatic: bool) -> int:
         if asymptomatic:
-            return float('Inf')
+            return round(math.inf)
         else:
             return round(self.symptom_reporting_delay)
 
@@ -308,7 +310,6 @@ class household_sim_contact_tracing(BPSimulationModel):
             additional_attributes=additional_attributes
         )
 
-
     def get_contact_rate_reduction(self, node: Node):
         """Returns a contact rate reduction, depending upon a nodes current status and various isolation
         parameters
@@ -322,23 +323,6 @@ class household_sim_contact_tracing(BPSimulationModel):
         else:
             return self.reduce_contacts_by
             
-
-    def get_hh_infection_prob(self, infectious_age: int, asymptomatic: bool) -> float:
-        """Returns the current probability per local infectious contact.
-
-        Args:
-            infectious_age (int): The current infectious age
-            asymptomatic (bool): Whether or not the node is asymptomatic
-
-        Returns:
-            float: The probability the contact spreads the infection
-        """
-
-        if asymptomatic:
-            self.asymptomatic_hh_infection_probs[infectious_age]
-        else:
-            self.symptomatic_hh_infection_probs[infectious_age]
-
     def get_infection_prob(self, local: bool, infectious_age: int, asymptomatic: bool) -> float:
         """Get the current probability per global infectious contact
 
