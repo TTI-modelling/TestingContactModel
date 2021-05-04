@@ -677,7 +677,7 @@ class household_sim_contact_tracing(BPSimulationModel):
             house_to.contact_tracing_index = house_from.contact_tracing_index + 1
 
             # work out the time delay
-            contact_trace_delay = contact_trace_delay + self.contact_trace_delay(app_traced)
+            contact_trace_delay = contact_trace_delay + self.contact_trace_delay
             proposed_time_until_contact_trace = self.time + contact_trace_delay
 
             # Get the current time until contact trace, and compare against the proposed time until contact trace
