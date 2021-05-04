@@ -11,34 +11,65 @@ from household_contact_tracing.simulation_states import RunningState
 
 
 class household_sim_contact_tracing(BPSimulationModel):
-    # Local contact probability:
-    local_contact_probs = [0, 0.826, 0.795, 0.803, 0.787, 0.819]
-
-    # The mean number of contacts made by each household
-    total_contact_means = [7.238, 10.133, 11.419, 12.844, 14.535, 15.844]
 
     def __init__(self, params: dict):
-
-        """Initializes a household branching process epidemic. Various contact tracing strategies can be utilized
-        in an attempt to control the epidemic.
+        """Initializes a household branching process epidemic. Various contact tracing strategies
+        can be utilized in an attempt to control the epidemic.
 
         Args:
-            params (dict): A dictionary of parameters that are used in the model.
+            params (dict): A dictionary of parameters that override the default values.
         """
 
         # Call parent init
         BPSimulationModel.__init__(self)
 
         # Parse parameters against schema to check they are valid
-        validate_parameters(params, os.path.join(self.ROOT_DIR, "schemas/household_sim_contact_tracing.json"))
+        validate_parameters(params, os.path.join(self.ROOT_DIR,
+                                                 "schemas/household_sim_contact_tracing.json"))
 
         self.network = Network()
 
         # Probability of each household size
-        if "house_size_probs" in params:
-            self.house_size_probs = params["house_size_probs"]
-        else:
-            self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886, 0.045067385, 0.021455526]
+        self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886, 0.045067385,
+                                 0.021455526]
+        # Local contact probability, one value for each household size:
+        self.local_contact_probs = [0, 0.826, 0.795, 0.803, 0.787, 0.819]
+        # The mean number of contacts made by each household
+        self.total_contact_means = [7.238, 10.133, 11.419, 12.844, 14.535, 15.844]
+
+        # infection parameters
+        self.outside_household_infectivity_scaling = 1.0
+        self.overdispersion = 0.32
+        self.asymptomatic_prob = 0.5
+        self.asymptomatic_relative_infectivity = 0.5
+        self.infection_reporting_prob = 1.0
+        self.reduce_contacts_by = 0
+        self.starting_infections = 1
+        self.symptom_reporting_delay = 1
+        self.incubation_period_delay = 5
+
+        # contact tracing parameters
+        self.contact_tracing_success_prob = 0.7
+        self.do_2_step = False
+        self.prob_has_trace_app = 0
+        self.hh_propensity_to_use_trace_app = 1.0
+        self.test_before_propagate_tracing = True
+        self.test_delay = 1
+        self.contact_trace_delay = 1
+
+        # isolation or quarantine parameters
+        self.quarantine_duration = 14
+        self.self_isolation_duration = 7
+
+        # adherence parameters
+        self.node_will_uptake_isolation_prob = 1.0
+        self.propensity_imperfect_quarantine = 0.0
+        self.global_contact_reduction_imperfect_quarantine = 0.0
+
+        # Update instance variables with anything in params
+        for param_name in self.__dict__:
+            if param_name in params:
+                self.__dict__[param_name] = params[param_name]
 
         # Calculate the expected local contacts
         expected_local_contacts = [self.local_contact_probs[i] * i for i in range(6)]
@@ -51,70 +82,6 @@ class household_sim_contact_tracing(BPSimulationModel):
         size_mean_contacts_biased_distribution = [(i + 1) * self.house_size_probs[i] * expected_global_contacts[i] for i in range(6)]
         total = sum(size_mean_contacts_biased_distribution)
         self.size_mean_contacts_biased_distribution = [prob / total for prob in size_mean_contacts_biased_distribution]
-
-        # Parameter Inputs:
-
-        # infection parameters
-        self.outside_household_infectivity_scaling = params["outside_household_infectivity_scaling"]
-        self.overdispersion = params["overdispersion"]
-        self.asymptomatic_prob = params["asymptomatic_prob"]
-        self.asymptomatic_relative_infectivity = params["asymptomatic_relative_infectivity"]
-        self.infection_reporting_prob = params["infection_reporting_prob"]
-        if "reduce_contacts_by" in params:
-            self.reduce_contacts_by = params["reduce_contacts_by"]
-        else:
-            self.reduce_contacts_by = 0
-        if "starting_infections" in params:
-            self.starting_infections = params["starting_infections"]
-        else:
-            self.starting_infections = 1
-        self.symptom_reporting_delay = params["symptom_reporting_delay"]
-        self.incubation_period_delay = params["incubation_period_delay"]
-
-        # contact tracing parameters
-        self.contact_tracing_success_prob = params["contact_tracing_success_prob"]
-        if "do_2_step" in params:
-            self.do_2_step = params["do_2_step"]
-        else:
-            self.do_2_step = False
-        if "prob_has_trace_app" in params:
-            self.prob_has_trace_app = params["prob_has_trace_app"]
-        else:
-            self.prob_has_trace_app = 0
-        if "hh_propensity_to_use_trace_app" in params:
-            self.hh_propensity_to_use_trace_app = params["hh_propensity_to_use_trace_app"]
-        else:
-            self.hh_propensity_to_use_trace_app = 1
-        if "test_before_propagate_tracing" in params:
-            self.test_before_propagate_tracing = params["test_before_propagate_tracing"]
-        else:
-            self.test_before_propagate_tracing = True
-        self.test_delay = params["test_delay"]
-        self.contact_trace_delay = params["contact_trace_delay"]
-
-        # isolation or quarantine parameters
-        if "quarantine_duration" in params:
-            self.quarantine_duration = params["quarantine_duration"]
-        else:
-            self.quarantine_duration = 14
-        if "self_isolation_duration" in params:
-            self.self_isolation_duration = params["self_isolation_duration"]
-        else:
-            self.self_isolation_duration = 7
-
-        # adherence parameters
-        if "node_will_uptake_isolation_prob" in params:
-            self.node_will_uptake_isolation_prob = params["node_will_uptake_isolation_prob"]
-        else:
-            self.node_will_uptake_isolation_prob = 1
-        if "propensity_imperfect_quarantine" in params:
-            self.propensity_imperfect_quarantine = params["propensity_imperfect_quarantine"]
-        else:
-            self.propensity_imperfect_quarantine = 0
-        if "global_contact_reduction_imperfect_quarantine" in params:
-            self.global_contact_reduction_imperfect_quarantine = params["global_contact_reduction_imperfect_quarantine"]
-        else:
-            self.global_contact_reduction_imperfect_quarantine = 0
 
         self.symptomatic_local_infection_probs = self.compute_hh_infection_probs(params["household_pairwise_survival_prob"])
         asymptomatic_household_pairwise_survival_prob = 1 - self.asymptomatic_relative_infectivity + self.asymptomatic_relative_infectivity * params["household_pairwise_survival_prob"]
@@ -201,8 +168,8 @@ class household_sim_contact_tracing(BPSimulationModel):
         return npr.choice([True, False], p = (self.propensity_imperfect_quarantine, 1 - self.propensity_imperfect_quarantine))
     
     def contacts_made_today(self, household_size) -> int:
-        """Generates the number of contacts made today by a node, given the house size of the node. Uses an
-        overdispersed negative binomial distribution.
+        """Generates the number of contacts made today by a node, given the house size of the node.
+        Uses an overdispersed negative binomial distribution.
 
         Arguments:
             house_size {int} -- size of the nodes household
@@ -952,6 +919,7 @@ class household_sim_contact_tracing(BPSimulationModel):
 
         return node.node_type()
 
+
 class uk_model(household_sim_contact_tracing):
 
     def __init__(self, params: dict, prob_testing_positive_pcr_func: Callable[[int], float]):
@@ -962,22 +930,15 @@ class uk_model(household_sim_contact_tracing):
 
         self.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
 
-        if "number_of_days_to_trace_backwards" in params:
-            self.number_of_days_to_trace_backwards = params["number_of_days_to_trace_backwards"]
-        else:
-            self.number_of_days_to_trace_backwards = 2
-        if "number_of_days_to_trace_forwards" in params:
-            self.number_of_days_to_trace_forwards = params["number_of_days_to_trace_forwards"]
-        else:
-            self.number_of_days_to_trace_forwards = 7
-        if "probable_infections_need_test" in params:
-            self.probable_infections_need_test = params["probable_infections_need_test"]
-        else:
-            self.probable_infections_need_test = True
-        if "recall_probability_fall_off" in params:
-            self.recall_probability_fall_off = params["recall_probability_fall_off"]
-        else:
-            self.recall_probability_fall_off = 1
+        self.number_of_days_to_trace_backwards = 2
+        self.number_of_days_to_trace_forwards = 7
+        self.probable_infections_need_test = True
+        self.recall_probability_fall_off = 1
+
+        # Update instance variables with anything in params
+        for param_name in self.__dict__:
+            if param_name in params:
+                self.__dict__[param_name] = params[param_name]
 
     def update_isolation(self):
         # Update the contact traced status for all households that have had the contact
@@ -1188,42 +1149,23 @@ class ContactModelTest(uk_model):
 
         self.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
 
-        self.LFA_testing_requires_confirmatory_PCR = params["LFA_testing_requires_confirmatory_PCR"]
-        self.policy_for_household_contacts_of_a_positive_case = params["policy_for_household_contacts_of_a_positive_case"]
+        self.LFA_testing_requires_confirmatory_PCR = True
+        self.policy_for_household_contacts_of_a_positive_case = 'lfa testing no quarantine'
+        self.number_of_days_prior_to_LFA_result_to_trace = 2
+        self.propensity_risky_behaviour_lfa_testing = 0
+        self.global_contact_reduction_risky_behaviour = 0
+        self.node_daily_prob_lfa_test = 1
+        self.proportion_with_propensity_miss_lfa_tests = 0
+        self.node_prob_will_take_up_lfa_testing = 1
+        self.lateral_flow_testing_duration = 7
+        self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
 
-        if "number_of_days_prior_to_LFA_result_to_trace" in params:
-            self.number_of_days_prior_to_LFA_result_to_trace = params["number_of_days_prior_to_LFA_result_to_trace"]
-        else:
-            self.number_of_days_prior_to_LFA_result_to_trace = 2
-        if "propensity_risky_behaviour_lfa_testing" in params:
-            self.propensity_risky_behaviour_lfa_testing = params["propensity_risky_behaviour_lfa_testing"]
-        else:
-            self.propensity_risky_behaviour_lfa_testing = 0
-        if "global_contact_reduction_risky_behaviour" in params:
-            self.global_contact_reduction_risky_behaviour = params["global_contact_reduction_risky_behaviour"]
-        else:
-            self.global_contact_reduction_risky_behaviour = 0
-        if "node_daily_prob_lfa_test" in params:
-            self.node_daily_prob_lfa_test = params["node_daily_prob_lfa_test"]
-        else:
-            self.node_daily_prob_lfa_test = 1
-        if "proportion_with_propensity_miss_lfa_tests" in params:
-            self.proportion_with_propensity_miss_lfa_tests = params["proportion_with_propensity_miss_lfa_tests"]
-        else:
-            self.proportion_with_propensity_miss_lfa_tests = 0
-        if "node_prob_will_take_up_lfa_testing" in params:
-            self.node_prob_will_take_up_lfa_testing = params["node_prob_will_take_up_lfa_testing"]
-        else:
-            self.node_prob_will_take_up_lfa_testing = 1
-        if "lateral_flow_testing_duration" in params:
-            self.lateral_flow_testing_duration = params["lateral_flow_testing_duration"]
-        else:
-            self.lateral_flow_testing_duration = 7
-        if "lfa_tested_nodes_book_pcr_on_symptom_onset" in params:
-            self.lfa_tested_nodes_book_pcr_on_symptom_onset = params["lfa_tested_nodes_book_pcr_on_symptom_onset"]
-        else:
-            self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
+        # Update instance variables with anything in params
+        for param_name in self.__dict__:
+            if param_name in params:
+                self.__dict__[param_name] = params[param_name]
 
+        # Need to call super init last as it calls new_infection which requires the above parameters
         super().__init__(params, prob_testing_positive_pcr_func)
 
     def pcr_test_node(self, node: Node):
