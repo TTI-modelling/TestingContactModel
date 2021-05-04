@@ -22,7 +22,7 @@ def test_asymptomatic_nodes_attributes():
     # everyone's asymptomatic
     test_model = hct.household_sim_contact_tracing(default_params)
 
-    lfa_test_node = test_model.network.nodes.node(1)
+    lfa_test_node = test_model.network.node(1)
 
     assert lfa_test_node.asymptomatic is True
     assert lfa_test_node.symptom_onset_time == float('Inf')
@@ -38,7 +38,7 @@ def test_symptomatic_nodes_attributes():
     # no asymptomatics
     test_model = hct.household_sim_contact_tracing(params)
 
-    lfa_test_node = test_model.network.nodes.node(1)
+    lfa_test_node = test_model.network.node(1)
 
     assert lfa_test_node.asymptomatic is False
     assert lfa_test_node.symptom_onset_time == 5

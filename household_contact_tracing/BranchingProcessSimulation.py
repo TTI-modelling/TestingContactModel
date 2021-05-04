@@ -4,7 +4,7 @@ import numpy.random as npr
 import os
 
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
-from household_contact_tracing.network import Network, Household, Node, EdgeType, graphs_isomorphic
+from household_contact_tracing.network import Network, Household, Node, NodeContactModel, EdgeType, graphs_isomorphic
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
@@ -865,10 +865,14 @@ class household_sim_contact_tracing(BPSimulationModel):
         
     def release_nodes_who_completed_isolation(self):
         """
-        Nodes leave self-isolation, rather than quarantine, when their infection status is either known (ie tested) or when they are in a 
-        contact traced household and they develop symptoms (they might then go on to get a test, but they isolate regardless). Nodes in contact traced households do not have a will_report_infection probability: if they develop symptoms, they are a self-recognised infection who might or might not go on to test and become a known infection.
+        Nodes leave self-isolation, rather than quarantine, when their infection status is either known (ie tested) or
+        when they are in a         contact traced household and they develop symptoms (they might then go on to get a
+        test, but they isolate regardless).
+        Nodes in contact traced households do not have a will_report_infection probability: if they develop symptoms,
+        they are a self-recognised infection who might or might not go on to test and become a known infection.
 
-        If it has been isolation_duration since these individuals have had symptom onset, then they are released from isolation.
+        If it has been isolation_duration since these individuals have had symptom onset, then they are released
+        from isolation.
         """
         for node in self.network.all_nodes():
             if node.isolated:
@@ -1250,11 +1254,11 @@ class ContactModelTest(uk_model):
 
         super().__init__(params, prob_testing_positive_pcr_func)
 
-    def pcr_test_node(self, node: Node):
+    def pcr_test_node(self, node: NodeContactModel):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
-            node (Node): The node to be tested today
+            node (NodeContactModel): The node to be tested today
         """
         node.received_result = True
         
@@ -1270,11 +1274,11 @@ class ContactModelTest(uk_model):
             node.received_positive_test_result = False
             node.avenue_of_testing = 'PCR'
 
-    def lfa_test_node(self, node: Node):
+    def lfa_test_node(self, node: NodeContactModel):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
-            node (Node): The node to be tested today
+            node (NodeContactModel): The node to be tested today
         """
 
         infectious_age = self.time - node.time_infected
@@ -1286,7 +1290,7 @@ class ContactModelTest(uk_model):
         else:
             return False
 
-    def will_lfa_test_today(self, node: Node) -> bool:
+    def will_lfa_test_today(self, node: NodeContactModel) -> bool:
 
         if node.propensity_to_miss_lfa_tests:
 
@@ -1308,7 +1312,7 @@ class ContactModelTest(uk_model):
     def will_take_up_lfa_testing(self) -> bool:
         return npr.binomial(1, self.node_prob_will_take_up_lfa_testing) == 1
 
-    def get_contact_rate_reduction(self, node: Node):
+    def get_contact_rate_reduction(self, node: NodeContactModel):
         """This method overides the default behaviour. Previously the overide behaviour allowed the global
         contact reduction to vary by household size.
 
@@ -1361,7 +1365,7 @@ class ContactModelTest(uk_model):
         generation: int,
         household_id: int,
         serial_interval=None,
-        infecting_node: Optional[Node]=None,
+        infecting_node: Optional[NodeContactModel]=None,
         additional_attributes: Optional[dict] = None):
         """Add a new infection to the model and network. Attributes are randomly generated.
 
@@ -1372,7 +1376,7 @@ class ContactModelTest(uk_model):
             generation (int): The generation of the node
             household_id (int): The household id that the node is being added to
             serial_interval ([type]): The serial interval
-            infecting_node (Optional[Node]): The id of the infecting node
+            infecting_node (Optional[NodeContactModel]): The id of the infecting node
             additional_attributes (Optional[dict]): Additional attributes to be passed
         """
 
@@ -1523,7 +1527,7 @@ class ContactModelTest(uk_model):
             traced_node.being_lateral_flow_tested = True
             traced_node.time_started_lfa_testing = self.time
 
-    def propagate_contact_tracing(self, node: Node):
+    def propagate_contact_tracing(self, node: NodeContactModel):
         """
         To be called after a node in a household either reports their symptoms, and gets tested, when a household that is under surveillance develops symptoms + gets tested.
         """
@@ -1725,11 +1729,11 @@ class ContactModelTest(uk_model):
 
                 self.apply_policy_for_household_contacts_of_a_positive_case(node.household())
 
-    def take_confirmatory_pcr_test(self, node: Node):
+    def take_confirmatory_pcr_test(self, node: NodeContactModel):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
-            node (Node): The node to be tested today
+            node (NodeContactModel): The node to be tested today
         """
         
         infectious_age_when_tested = self.time - node.time_infected
@@ -1997,7 +2001,7 @@ class ContactModelTest(uk_model):
 
         new_graph = self.network.graph
 
-        if not self.network.graphs_isophomorphic(prev_graph, new_graph):
+        if not graphs_isomorphic(prev_graph, new_graph):
             BPSimulationModel.graph_changed(self)
 
         # Call parent simulate_one_step
@@ -2013,5 +2017,5 @@ class ContactModelTest(uk_model):
             str -- The status assigned
         """
 
-        return node.node_type_detailed()
+        return node.node_type()
 
