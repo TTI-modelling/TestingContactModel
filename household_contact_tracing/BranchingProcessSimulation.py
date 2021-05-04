@@ -1,6 +1,6 @@
 from typing import List, Optional, Callable
 import os
-import math
+import sys
 
 import numpy as np
 import numpy.random as npr
@@ -129,7 +129,7 @@ class household_sim_contact_tracing(BPSimulationModel):
 
     def incubation_period(self, asymptomatic: bool) -> int:
         if asymptomatic:
-            return round(math.inf)
+            return sys.maxsize
         else:
             return round(self.incubation_period_delay)
 
@@ -144,7 +144,7 @@ class household_sim_contact_tracing(BPSimulationModel):
 
     def reporting_delay(self, asymptomatic: bool) -> int:
         if asymptomatic:
-            return round(math.inf)
+            return sys.maxsize
         else:
             return round(self.symptom_reporting_delay)
 
@@ -189,16 +189,13 @@ class household_sim_contact_tracing(BPSimulationModel):
     def has_contact_tracing_app(self) -> bool:
         return npr.binomial(1, self.prob_has_trace_app) == 1
 
-
-
-    def new_infection(
-        self,
-        node_count: int,
-        generation: int, 
-        household_id: int, 
-        serial_interval=None,
-        infecting_node: Optional[Node] = None,
-        additional_attributes: Optional[dict] = None):
+    def new_infection(self,
+                      node_count: int,
+                      generation: int,
+                      household_id: int,
+                      serial_interval=None,
+                      infecting_node: Optional[Node] = None,
+                      additional_attributes: Optional[dict] = None):
         """
         Adds a new infection to the graph along with the following attributes:
         t - when they were infected
