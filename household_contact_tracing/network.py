@@ -100,7 +100,7 @@ class Network:
     def is_edge_app_traced(self, edge):
         """Returns whether both ends of an edge have the app, and the app does the tracing.
         """
-        return self.nodes.node(edge[0]).has_contact_tracing_app and self.nodes.node(edge[1]).has_contact_tracing_app
+        return self.node(edge[0]).has_contact_tracing_app and self.node(edge[1]).has_contact_tracing_app
 
     def add_node(
         self,
