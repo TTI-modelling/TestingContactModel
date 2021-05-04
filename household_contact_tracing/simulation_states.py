@@ -89,7 +89,7 @@ class RunningState(SimulationState):
     def max_nodes_infectious(self):
         """  The max number of infectious nodes was reached """
         print('Max infectious nodes threshold met')
-        self._simulation_model.state = self._simulation_model.max_infectious_nodes_state
+        self._simulation_model.state = self._simulation_model.max_nodes_infectious_state
         self._simulation_model.notify_observers_state_change()
 
     def reset(self):
