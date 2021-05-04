@@ -1,6 +1,7 @@
 from typing import List, Optional, Callable
 import numpy as np
 import numpy.random as npr
+import os
 
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
 from household_contact_tracing.network import Network, Household, Node, EdgeType, graphs_isomorphic
@@ -31,7 +32,7 @@ class household_sim_contact_tracing(BPSimulationModel):
         BPSimulationModel.__init__(self)
 
         # Parse parameters against schema to check they are valid
-        validate_parameters(params, "./schemas/household_sim_contact_tracing.json")
+        validate_parameters(params, os.path.join(self.ROOT_DIR, "schemas/household_sim_contact_tracing.json"))
 
         self._network = Network()
         self._infection = Infection(self._network)
@@ -700,7 +701,7 @@ class household_sim_contact_tracing(BPSimulationModel):
             house_to.contact_tracing_index = house_from.contact_tracing_index + 1
 
             # work out the time delay
-            contact_trace_delay = contact_trace_delay + self.contact_trace_delay(app_traced)
+            contact_trace_delay = contact_trace_delay + self.contact_trace_delay
             proposed_time_until_contact_trace = self.time + contact_trace_delay
 
             # Get the current time until contact trace, and compare against the proposed time until contact trace
@@ -979,7 +980,7 @@ class uk_model(household_sim_contact_tracing):
 
     def __init__(self, params: dict, prob_testing_positive_pcr_func: Callable[[int], float]):
 
-        validate_parameters(params, "./schemas/uk_model.json")
+        validate_parameters(params, os.path.join(self.ROOT_DIR, "./schemas/uk_model.json"))
 
         super().__init__(params)
 
@@ -1207,7 +1208,7 @@ class ContactModelTest(uk_model):
 
     def __init__(self, params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func):
 
-        validate_parameters(params, "./schemas/contact_model_test.json")
+        validate_parameters(params, os.path.join(self.ROOT_DIR, "schemas/household_sim_contact_tracing.json"))
 
         self.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
 
