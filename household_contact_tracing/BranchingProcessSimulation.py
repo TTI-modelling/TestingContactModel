@@ -956,7 +956,7 @@ class uk_model(household_sim_contact_tracing):
 
     def __init__(self, params: dict, prob_testing_positive_pcr_func: Callable[[int], float]):
 
-        validate_parameters(params, "./schemas/uk_model.json")
+        validate_parameters(params, os.path.join(self.ROOT_DIR, "./schemas/uk_model.json"))
 
         super().__init__(params)
 
@@ -1184,7 +1184,7 @@ class ContactModelTest(uk_model):
 
     def __init__(self, params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func):
 
-        validate_parameters(params, "./schemas/contact_model_test.json")
+        validate_parameters(params, os.path.join(self.ROOT_DIR, "schemas/household_sim_contact_tracing.json"))
 
         self.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
 

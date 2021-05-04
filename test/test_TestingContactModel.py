@@ -1,7 +1,6 @@
 import copy
 
 from household_contact_tracing.BranchingProcessSimulation import ContactModelTest
-from household_contact_tracing.simulation_controller import SimulationController
 import pytest
 
 default_params = {"outside_household_infectivity_scaling": 0.3,
@@ -226,11 +225,9 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
         contact_trace_delay=0
     )
 
-    controller = SimulationController(model)
+    model._simulate_one_step()
 
-    controller.simulate_one_step()
-
-    controller.simulate_one_step()
+    model._simulate_one_step()
 
     assert model.network.nodes.node(2).being_lateral_flow_tested is True
 
