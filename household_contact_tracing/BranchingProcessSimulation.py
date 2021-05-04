@@ -9,16 +9,11 @@ from household_contact_tracing.network import Network, NetworkContractModel, Hou
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
-from household_contact_tracing.infection import *
-from household_contact_tracing.contact_tracing import *
+from household_contact_tracing.infection import Infection
+from household_contact_tracing.contact_tracing import ContactTracing
 
 
 class household_sim_contact_tracing(BPSimulationModel):
-    # Local contact probability:
-    local_contact_probs = [0, 0.826, 0.795, 0.803, 0.787, 0.819]
-
-    # The mean number of contacts made by each household
-    total_contact_means = [7.238, 10.133, 11.419, 12.844, 14.535, 15.844]
 
     def __init__(self, params: dict):
 
@@ -36,46 +31,17 @@ class household_sim_contact_tracing(BPSimulationModel):
         validate_parameters(params, os.path.join(self.ROOT_DIR, "schemas/household_sim_contact_tracing.json"))
 
         self._network = self.instantiate_network()
-        self._infection = Infection(self._network)
-        self._contact_tracing = ContactTracing(self._network)
 
-        # Probability of each household size
-        if "house_size_probs" in params:
-            self.house_size_probs = params["house_size_probs"]
-        else:
-            self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886, 0.045067385, 0.021455526]
+        self._infection = Infection(self._network, params)
+        self.infection.new_household = self.new_household
+        self.infection.new_infection = self.new_infection
+        self.infection.contact_rate_reduction = self.get_contact_rate_reduction
 
-        # Calculate the expected local contacts
-        expected_local_contacts = [self.local_contact_probs[i] * i for i in range(6)]
+        self._contact_tracing = ContactTracing(self._network, params)
 
-        # Calculate the expected global contacts
-        expected_global_contacts = np.array(self.total_contact_means) - np.array(expected_local_contacts)
 
-        # Size biased distribution of households (choose a node, what is the prob they are in a house size 6, this is
-        # biased by the size of the house)
-        size_mean_contacts_biased_distribution = [(i + 1) * self.house_size_probs[i] * expected_global_contacts[i] for i in range(6)]
-        total = sum(size_mean_contacts_biased_distribution)
-        self.size_mean_contacts_biased_distribution = [prob / total for prob in size_mean_contacts_biased_distribution]
 
         # Parameter Inputs:
-
-        # infection parameters
-        self.outside_household_infectivity_scaling = params["outside_household_infectivity_scaling"]
-        self.overdispersion = params["overdispersion"]
-        self.asymptomatic_prob = params["asymptomatic_prob"]
-        self.asymptomatic_relative_infectivity = params["asymptomatic_relative_infectivity"]
-        self.infection_reporting_prob = params["infection_reporting_prob"]
-        if "reduce_contacts_by" in params:
-            self.reduce_contacts_by = params["reduce_contacts_by"]
-        else:
-            self.reduce_contacts_by = 0
-        if "starting_infections" in params:
-            self.starting_infections = params["starting_infections"]
-        else:
-            self.starting_infections = 1
-        self.symptom_reporting_delay = params["symptom_reporting_delay"]
-        self.incubation_period_delay = params["incubation_period_delay"]
-
         # contact tracing parameters
         self.contact_tracing_success_prob = params["contact_tracing_success_prob"]
         if "do_2_step" in params:
@@ -107,44 +73,6 @@ class household_sim_contact_tracing(BPSimulationModel):
         else:
             self.self_isolation_duration = 7
 
-        # adherence parameters
-        if "node_will_uptake_isolation_prob" in params:
-            self.node_will_uptake_isolation_prob = params["node_will_uptake_isolation_prob"]
-        else:
-            self.node_will_uptake_isolation_prob = 1
-        if "propensity_imperfect_quarantine" in params:
-            self.propensity_imperfect_quarantine = params["propensity_imperfect_quarantine"]
-        else:
-            self.propensity_imperfect_quarantine = 0
-        if "global_contact_reduction_imperfect_quarantine" in params:
-            self.global_contact_reduction_imperfect_quarantine = params["global_contact_reduction_imperfect_quarantine"]
-        else:
-            self.global_contact_reduction_imperfect_quarantine = 0
-
-        self.symptomatic_local_infection_probs = self.compute_hh_infection_probs(params["household_pairwise_survival_prob"])
-        asymptomatic_household_pairwise_survival_prob = 1 - self.asymptomatic_relative_infectivity + self.asymptomatic_relative_infectivity * params["household_pairwise_survival_prob"]
-        self.asymptomatic_local_infection_probs = self.compute_hh_infection_probs(asymptomatic_household_pairwise_survival_prob)
-
-        # Precomputing the cdf's for generating the overdispersed contact data
-        self.cdf_dict = {
-            1: compute_negbin_cdf(self.total_contact_means[0], self.overdispersion, 100),
-            2: compute_negbin_cdf(self.total_contact_means[1], self.overdispersion, 100),
-            3: compute_negbin_cdf(self.total_contact_means[2], self.overdispersion, 100),
-            4: compute_negbin_cdf(self.total_contact_means[3], self.overdispersion, 100),
-            5: compute_negbin_cdf(self.total_contact_means[4], self.overdispersion, 100),
-            6: compute_negbin_cdf(self.total_contact_means[5], self.overdispersion, 100)
-        }
-
-        # Precomputing the global infection probabilities
-        self.symptomatic_global_infection_probs = []
-        self.asymptomatic_global_infection_probs = []
-        for day in range(15):
-            self.symptomatic_global_infection_probs.append(self.outside_household_infectivity_scaling *
-                                                           current_rate_infection(day))
-            self.asymptomatic_global_infection_probs.append(self.outside_household_infectivity_scaling *
-                                                            self.asymptomatic_relative_infectivity *
-                                                            current_rate_infection(day))
-
         # Calls the simulation reset function, which creates all the required dictionaries
         self.initialise_simulation()
 
@@ -153,35 +81,23 @@ class household_sim_contact_tracing(BPSimulationModel):
         return self._network
 
     @property
-    def infection(self) -> InfectionBehaviourInterface:
+    def infection(self) -> Infection:
         return self._infection
 
     @infection.setter
-    def infection(self, infection: InfectionBehaviourInterface):
+    def infection(self, infection: Infection):
         self._infection = infection
 
     @property
-    def contact_tracing(self) -> ContactTracingBehaviourInterface:
+    def contact_tracing(self) -> ContactTracing:
         return self._contact_tracing
 
     @contact_tracing.setter
-    def contact_tracing(self, contact_tracing: ContactTracingBehaviourInterface):
+    def contact_tracing(self, contact_tracing: ContactTracing):
         self._contact_tracing = contact_tracing
 
     def instantiate_network(self):
         return Network()
-
-    def compute_hh_infection_probs(self, pairwise_survival_prob: float) -> list:
-        # Precomputing the infection probabilities for the within household epidemics.
-        contact_prob = 0.8
-        day_0_infection_prob = current_hazard_rate(0, pairwise_survival_prob) / contact_prob
-        infection_probs = np.array(day_0_infection_prob) 
-        for day in range(1, 15):
-            survival_function = (1 - infection_probs*contact_prob).prod()
-            hazard = current_hazard_rate(day, pairwise_survival_prob)
-            current_prob_infection = hazard * (survival_function / contact_prob)
-            infection_probs = np.append(infection_probs, current_prob_infection)
-        return infection_probs
 
     def contact_trace_delay(self, app_traced_edge) -> int:
         if app_traced_edge:
@@ -189,64 +105,17 @@ class household_sim_contact_tracing(BPSimulationModel):
         else:
             return round(self.contact_trace_delay)
 
-    def incubation_period(self, asymptomatic: bool) -> int:
-        if asymptomatic:
-            return float('Inf')
-        else:
-            return round(self.incubation_period_delay)
-
     def testing_delay(self) -> int:
         if self.test_before_propagate_tracing is False:
             return 0
         else:
             return round(self.test_delay)
 
-    def is_asymptomatic_infection(self) -> bool:
-        return npr.binomial(1, self.asymptomatic_prob) == 1
-
-    def reporting_delay(self, asymptomatic: bool):
-        if asymptomatic:
-            return float('Inf')
-        else:
-            return round(self.symptom_reporting_delay)
-
     def hh_propensity_use_trace_app(self) -> bool:
         if npr.binomial(1, self.hh_propensity_to_use_trace_app) == 1:
             return True
         else:
             return False
-
-    def will_uptake_isolation(self) -> bool:
-        """Based on the node_will_uptake_isolation_prob, return a bool
-        where True implies they do take up isolation and False implies they do not uptake isolation
-
-        Returns:
-            bool: If True they uptake isolation, if False they do not uptake isolation
-        """
-        return npr.choice([True, False], p = (self.node_will_uptake_isolation_prob, 1 - self.node_will_uptake_isolation_prob))
-
-    def get_propensity_imperfect_isolation(self) -> bool:
-        return npr.choice([True, False], p = (self.propensity_imperfect_quarantine, 1 - self.propensity_imperfect_quarantine))
-    
-    def contacts_made_today(self, household_size) -> int:
-        """Generates the number of contacts made today by a node, given the house size of the node. Uses an
-        overdispersed negative binomial distribution.
-
-        Arguments:
-            house_size {int} -- size of the nodes household
-        """
-        random = npr.uniform()
-        cdf = self.cdf_dict[household_size]
-        obs = sum([int(cdf[i] < random) for i in range(100)])
-        return obs
-
-    def size_of_household(self) -> int:
-        """Generates a random household size
-
-        Returns:
-        household_size {int}
-        """
-        return npr.choice([1, 2, 3, 4, 5, 6], p=self.size_mean_contacts_biased_distribution)
 
     def has_contact_tracing_app(self) -> bool:
         return npr.binomial(1, self.prob_has_trace_app) == 1
@@ -271,21 +140,21 @@ class household_sim_contact_tracing(BPSimulationModel):
         time - the time when the new infection happens
         node_count - how many nodes are currently in the network
         """
-        asymptomatic = self.is_asymptomatic_infection()
+        asymptomatic = self.infection.is_asymptomatic_infection()
 
         # Symptom onset time
-        symptom_onset_time = self.time + self.incubation_period(asymptomatic)
+        symptom_onset_time = self.time + self.infection.incubation_period(asymptomatic)
 
         # If the node is asymptomatic, we need to generate a pseudo symptom onset time
         if asymptomatic:
-            pseudo_symptom_onset_time = self.incubation_period(asymptomatic=False)
+            pseudo_symptom_onset_time = self.infection.incubation_period(asymptomatic=False)
         else:
             pseudo_symptom_onset_time = symptom_onset_time
 
         # When a node reports its infection
-        if not asymptomatic and npr.binomial(1, self.infection_reporting_prob) == 1:
+        if not asymptomatic and npr.binomial(1, self.infection.infection_reporting_prob) == 1:
             will_report_infection = True
-            time_of_reporting = symptom_onset_time + self.reporting_delay(asymptomatic)
+            time_of_reporting = symptom_onset_time + self.infection.reporting_delay(asymptomatic)
         else:
             will_report_infection = False
             time_of_reporting = float('Inf')
@@ -309,7 +178,7 @@ class household_sim_contact_tracing(BPSimulationModel):
         if additional_attributes:
             default_additional_attributes = {**default_additional_attributes, **additional_attributes}
 
-        isolation_uptake = self.will_uptake_isolation()
+        isolation_uptake = self.infection.will_uptake_isolation()
 
         if household.isolated and isolation_uptake:
             node_is_isolated = True
@@ -323,7 +192,7 @@ class household_sim_contact_tracing(BPSimulationModel):
             household=household_id,
             isolated=node_is_isolated,
             will_uptake_isolation=isolation_uptake,
-            propensity_imperfect_isolation=self.get_propensity_imperfect_isolation(),
+            propensity_imperfect_isolation=self.infection.get_propensity_imperfect_isolation(),
             asymptomatic=asymptomatic,
             contact_traced=household.contact_traced,
             symptom_onset_time=symptom_onset_time,
@@ -342,6 +211,19 @@ class household_sim_contact_tracing(BPSimulationModel):
         # so that quarantining can be done at the household level
         household.node_ids.append(node_count)
 
+    def get_contact_rate_reduction(self, node):
+        """Returns a contact rate reduction, depending upon a nodes current status and various isolation
+        parameters
+        """
+
+        if node.isolated and node.propensity_imperfect_isolation:
+            return self.infection.global_contact_reduction_imperfect_quarantine
+        elif node.isolated and not node.propensity_imperfect_isolation:
+            # return 1 means 100% of contacts are stopped
+            return 1
+        else:
+            return self.infection.reduce_contacts_by
+
     def new_household(
         self,
         new_household_number: int,
@@ -357,7 +239,7 @@ class household_sim_contact_tracing(BPSimulationModel):
             infected_by {int} -- Which household spread the infection to this household
             infected_by_node {int} -- Which node spread the infection to this household
         """
-        house_size = self.size_of_household()
+        house_size = self.infection.size_of_household()
 
         propensity_trace_app = self.hh_propensity_use_trace_app()
 
@@ -371,20 +253,6 @@ class household_sim_contact_tracing(BPSimulationModel):
             propensity_trace_app=propensity_trace_app,
             additional_attributes=additional_attributes
         )
-
-
-    def get_contact_rate_reduction(self, node: Node):
-        """Returns a contact rate reduction, depending upon a nodes current status and various isolation
-        parameters
-        """
-
-        if node.isolated and node.propensity_imperfect_isolation:
-            return self.global_contact_reduction_imperfect_quarantine
-        elif node.isolated and not node.propensity_imperfect_isolation:
-            # return 1 means 100% of contacts are stopped
-            return 1
-        else:
-            return self.reduce_contacts_by
             
 
     def get_hh_infection_prob(self, infectious_age: int, asymptomatic: bool) -> float:
@@ -403,165 +271,6 @@ class household_sim_contact_tracing(BPSimulationModel):
         else:
             self.symptomatic_hh_infection_probs[infectious_age]
 
-    def get_infection_prob(self, local: bool, infectious_age: int, asymptomatic: bool) -> float:
-        """Get the current probability per global infectious contact
-
-        Args:
-            local (bool): Is the contact a local contact or a global contact?
-            infectious_age (int): The current infectious age of the potential infector
-            asymptomatic (bool): Whether or not the node is asymptomatic
-
-        Returns:
-            float: The probability the contact spreads the infection
-        """
-
-        if local:
-            if asymptomatic:
-                return self.asymptomatic_local_infection_probs[infectious_age]
-            else:
-                return self.symptomatic_local_infection_probs[infectious_age]
-        else:
-            if asymptomatic:
-                return self.asymptomatic_global_infection_probs[infectious_age]
-            else:
-                return self.symptomatic_global_infection_probs[infectious_age]
-
-    def increment_infection(self):
-        """
-        Creates a new days worth of infections
-        """
-
-        for node in self.network.active_infections:
-            household = node.household()
-
-            # Extracting useful parameters from the node
-            days_since_infected = self.time - node.time_infected
-
-            outside_household_contacts = -1
-            local_contacts = -1
-
-            while outside_household_contacts < 0:
-
-                # The number of contacts made that day
-                contacts_made = self.contacts_made_today(household.size)
-
-                # How many of the contacts are within the household
-                local_contacts = npr.binomial(household.size - 1, self.local_contact_probs[household.size - 1])
-
-                # How many of the contacts are outside household contacts
-                outside_household_contacts = contacts_made - local_contacts
-
-            outside_household_contacts = npr.binomial(
-                outside_household_contacts,
-                1 - self.get_contact_rate_reduction(node = node)
-            )
-
-            # Within household, how many of the infections would cause new infections
-            # These contacts may be made with someone who is already infected, and so they will again be thinned
-            local_infection_probs = self.get_infection_prob(local = True, infectious_age = days_since_infected, asymptomatic =  node.asymptomatic)
-
-            local_infective_contacts = npr.binomial(
-                local_contacts,
-                local_infection_probs
-            )
-
-            for _ in range(local_infective_contacts):
-                # A further thinning has to happen since each attempt may choose an already infected person
-                # That is to say, if everyone in your house is infected, you have 0 chance to infect a new person in your house
-
-                # A one represents a susceptibles node in the household
-                # A 0 represents an infected member of the household
-                # We choose a random subset of this vector of length local_infective_contacts to determine infections
-                # i.e we are choosing without replacement
-                household_composition = [1]*household.susceptibles + [0]*(household.size - 1 - household.susceptibles)
-                within_household_new_infections = sum(npr.choice(household_composition, local_infective_contacts, replace=False))
-
-                # If the within household infection is successful:
-                for _ in range(within_household_new_infections):
-                    self.new_within_household_infection(
-                        infecting_node=node,
-                        serial_interval=days_since_infected
-                    )
-
-            # Update how many contacts the node made
-            node.outside_house_contacts_made += outside_household_contacts
-
-            # How many outside household contacts cause new infections
-            global_infection_probs = self.get_infection_prob(local = False, infectious_age = days_since_infected, asymptomatic =  node.asymptomatic)
-            outside_household_new_infections = npr.binomial(
-                outside_household_contacts,
-                global_infection_probs
-            )
-
-            for _ in range(outside_household_new_infections):
-                self.new_outside_household_infection(
-                    infecting_node=node,
-                    serial_interval=days_since_infected)
-
-                node_time_tuple = (self.network.node_count, self.time)
-
-                node.spread_to_global_node_time_tuples.append(node_time_tuple)
-
-    def new_within_household_infection(self, infecting_node: Node, serial_interval: Optional[int]):
-        # Add a new node to the network, it will be a member of the same household that the node that infected it was
-        node_count = self.network.node_count + 1
-
-        # We record which node caused this infection
-        infecting_node.spread_to.append(node_count)
-
-        infecting_node_household = infecting_node.household()
-
-        # Adds the new infection to the network
-        self.new_infection(node_count=node_count,
-                           generation=infecting_node.generation + 1,
-                           household_id=infecting_node_household.house_id,
-                           serial_interval=serial_interval,
-                           infecting_node=infecting_node)
-
-        # Add the edge to the graph and give it the default label if the house is not traced/isolated
-        self.network.graph.add_edge(infecting_node.node_id, node_count)
-
-        if self.network.node(node_count).household().isolated:
-            self.network.graph.edges[infecting_node.node_id, node_count].update({"edge_type": EdgeType.within_house.name})
-        else:
-            self.network.graph.edges[infecting_node.node_id, node_count].update({"edge_type": EdgeType.default.name})
-
-        # Decrease the number of susceptibles in that house by 1
-        infecting_node_household.susceptibles -= 1
-
-        # We record which edges are within this household for visualisation later on
-        infecting_node_household.within_house_edges.append((infecting_node.node_id, node_count))
-
-    def new_outside_household_infection(self, infecting_node: Node, serial_interval: Optional[int]):
-        # We assume all new outside household infections are in a new household
-        # i.e: You do not infect 2 people in a new household
-        # you do not spread the infection to a household that already has an infection
-        house_id = self.network.house_count + 1
-        node_count = self.network.node_count + 1
-        infecting_household = infecting_node.household()
-
-        # We record which node caused this infection
-        infecting_node.spread_to.append(node_count)
-
-        # We record which house spread to which other house
-        infecting_household.spread_to_ids.append(house_id)
-
-        # Create a new household, since the infection was outside the household
-        self.new_household(new_household_number=house_id,
-                           generation=infecting_household.generation + 1,
-                           infected_by=infecting_node.household_id,
-                           infected_by_node=infecting_node.node_id)
-
-        # add a new infection in the house just created
-        self.new_infection(node_count=node_count,
-                           generation=infecting_node.generation + 1,
-                           household_id=house_id,
-                           serial_interval=serial_interval,
-                           infecting_node=infecting_node)
-
-        # Add the edge to the graph and give it the default label
-        self.network.graph.add_edge(infecting_node.node_id, node_count)
-        self.network.graph.edges[infecting_node.node_id, node_count].update({"edge_type": EdgeType.default.name})
 
     def update_isolation(self):
         # Update the contact traced status for all households that have had the contact tracing process get there
@@ -887,10 +596,10 @@ class household_sim_contact_tracing(BPSimulationModel):
                         node.completed_isolation_time = self.time
                         node.completed_isolation_reason = 'completed_isolation'
 
-    def _simulate_one_step(self):
+    def simulate_one_step(self):
         """ Private method: Simulates one day of the epidemic and contact tracing."""
         # perform a days worth of infections
-        self.increment_infection()
+        self.infection.increment(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         self.isolate_self_reporting_cases()
         # isolate self-reporting-nodes while they wait for tests
@@ -914,18 +623,7 @@ class household_sim_contact_tracing(BPSimulationModel):
 
         # Reset the network (nodes, houses and graph)
         self.network.reset()
-
-        # Create first household
-        # Initial values
-        house_id = 0
-        generation = 0
-
-        # Create the starting infectives
-        for _ in range(self.starting_infections):
-            house_id += 1
-            node_id = self.network.node_count + 1
-            self.new_household(house_id, 1, None, None)
-            self.new_infection(node_id, generation, house_id)
+        self.infection.reset()
 
         # Call parent initialised_simulation
         BPSimulationModel.simulation_initialised(self)
@@ -951,7 +649,7 @@ class household_sim_contact_tracing(BPSimulationModel):
             prev_graph = self.network.graph.copy()
 
             # This chunk of code executes one step (a days worth of infections and contact tracings)
-            self._simulate_one_step()
+            self.simulate_one_step()
 
             # If graph changed, tell parent
             new_graph = self.network.graph
@@ -1231,10 +929,7 @@ class ContactModelTest(uk_model):
             self.propensity_risky_behaviour_lfa_testing = params["propensity_risky_behaviour_lfa_testing"]
         else:
             self.propensity_risky_behaviour_lfa_testing = 0
-        if "global_contact_reduction_risky_behaviour" in params:
-            self.global_contact_reduction_risky_behaviour = params["global_contact_reduction_risky_behaviour"]
-        else:
-            self.global_contact_reduction_risky_behaviour = 0
+
         if "node_daily_prob_lfa_test" in params:
             self.node_daily_prob_lfa_test = params["node_daily_prob_lfa_test"]
         else:
@@ -1257,6 +952,11 @@ class ContactModelTest(uk_model):
             self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
 
         super().__init__(params, prob_testing_positive_pcr_func)
+
+        if "global_contact_reduction_risky_behaviour" in params:
+            self.infection.global_contact_reduction_risky_behaviour = params["global_contact_reduction_risky_behaviour"]
+        else:
+            self.infection.global_contact_reduction_risky_behaviour = 0
 
     def instantiate_network(self):
         return NetworkContractModel()
@@ -1319,7 +1019,7 @@ class ContactModelTest(uk_model):
     def will_take_up_lfa_testing(self) -> bool:
         return npr.binomial(1, self.node_prob_will_take_up_lfa_testing) == 1
 
-    def get_contact_rate_reduction(self, node: NodeContactModel):
+    def get_contact_rate_reduction(self, node):
         """This method overides the default behaviour. Previously the overide behaviour allowed the global
         contact reduction to vary by household size.
 
@@ -1336,21 +1036,22 @@ class ContactModelTest(uk_model):
 
         elif node.isolated and node.propensity_imperfect_isolation:
             # imperfect isolation
-            return self.global_contact_reduction_imperfect_quarantine
+            return self.infection.global_contact_reduction_imperfect_quarantine
 
         elif node.being_lateral_flow_tested and node.propensity_risky_behaviour_lfa_testing:
             # engaging in risky behaviour while testing negative
-            return self.global_contact_reduction_risky_behaviour
+            return self.infection.global_contact_reduction_risky_behaviour
 
         else:
             # normal levels of social distancing
-            return self.reduce_contacts_by
+            return self.infection.reduce_contacts_by
+
 
     def new_household(
         self,
-        new_household_number: int, 
-        generation: int, 
-        infected_by: int, 
+        new_household_number: int,
+        generation: int,
+        infected_by: int,
         infected_by_node: int,
         additional_attributes: Optional[dict] = None):
 
@@ -1368,7 +1069,7 @@ class ContactModelTest(uk_model):
 
     def new_infection(
         self,
-        node_count: int, 
+        node_count: int,
         generation: int,
         household_id: int,
         serial_interval=None,
@@ -1428,21 +1129,21 @@ class ContactModelTest(uk_model):
         else:
             additional_attributes_with_defaults = default_additional_attributes
 
-        asymptomatic = self.is_asymptomatic_infection()
+        asymptomatic = self.infection.is_asymptomatic_infection()
 
         # Symptom onset time
-        symptom_onset_time = self.time + self.incubation_period(asymptomatic)
+        symptom_onset_time = self.time + self.infection.incubation_period(asymptomatic)
 
         # If the node is asymptomatic, we need to generate a pseudo symptom onset time
         if asymptomatic:
-            pseudo_symptom_onset_time = self.incubation_period(asymptomatic=False)
+            pseudo_symptom_onset_time = self.infection.incubation_period(asymptomatic=False)
         else:
             pseudo_symptom_onset_time = symptom_onset_time
 
         # When a node reports its infection
-        if not asymptomatic and npr.binomial(1, self.infection_reporting_prob) == 1:
+        if not asymptomatic and npr.binomial(1, self.infection.infection_reporting_prob) == 1:
             will_report_infection = True
-            time_of_reporting = symptom_onset_time + self.reporting_delay(asymptomatic)
+            time_of_reporting = symptom_onset_time + self.infection.reporting_delay(asymptomatic)
         else:
             will_report_infection = False
             time_of_reporting = float('Inf')
@@ -1466,7 +1167,7 @@ class ContactModelTest(uk_model):
         if additional_attributes_with_defaults:
             default_additional_attributes = {**default_additional_attributes, **additional_attributes_with_defaults}
 
-        isolation_uptake = self.will_uptake_isolation()
+        isolation_uptake = self.infection.will_uptake_isolation()
 
         if household.isolated and isolation_uptake:
             node_is_isolated = True
@@ -1480,7 +1181,7 @@ class ContactModelTest(uk_model):
             household=household_id,
             isolated=node_is_isolated,
             will_uptake_isolation=isolation_uptake,
-            propensity_imperfect_isolation=self.get_propensity_imperfect_isolation(),
+            propensity_imperfect_isolation=self.infection.get_propensity_imperfect_isolation(),
             asymptomatic=asymptomatic,
             contact_traced=household.contact_traced,
             symptom_onset_time=symptom_onset_time,
@@ -1995,7 +1696,7 @@ class ContactModelTest(uk_model):
         if self.LFA_testing_requires_confirmatory_PCR:
             self.act_on_confirmatory_pcr_results()
         # perform a days worth of infections
-        self.increment_infection()
+        self.infection.increment(self.time)
         # propagate contact tracing
         for _ in range(5):
             self.increment_contact_tracing()

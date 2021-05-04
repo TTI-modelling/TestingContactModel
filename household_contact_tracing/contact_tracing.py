@@ -1,15 +1,12 @@
-class ContactTracingBehaviourInterface:
-    """ Interface for simulation contact tracing """
-
-    def increment_contact_tracing(self):
-        pass
-
-
-class ContactTracing(ContactTracingBehaviourInterface):
+class ContactTracing:
     """ Class for contract tracing  """
 
-    def __init__(self, network):
+    def __init__(self, network, params):
         self._network = network
 
-    def increment_contact_tracing(self):
+    @property
+    def network(self):
+        return self._network
+
+    def increment(self):
         pass

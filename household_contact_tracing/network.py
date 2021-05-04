@@ -377,7 +377,6 @@ class NodeContactModel(Node):
         else:
             return self.NodeType.default.name
 
-
 class Household:
 
     def __init__(

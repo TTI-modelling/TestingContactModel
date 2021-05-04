@@ -60,14 +60,16 @@ def simple_branching_process():
 
 def test_global_relative_infectivity(simple_branching_process):
 
-    global_relative_infectivity = simple_branching_process.asymptomatic_global_infection_probs[0] / simple_branching_process.symptomatic_global_infection_probs[0]
+    global_relative_infectivity = simple_branching_process.infection.asymptomatic_global_infection_probs[0] / \
+                                  simple_branching_process.infection.symptomatic_global_infection_probs[0]
 
     assert global_relative_infectivity == 0.5
 
 
 def test_get_asymptomatic_infection_prob(simple_branching_process):
     
-    local_relative_infectivity = simple_branching_process.asymptomatic_local_infection_probs[1] / simple_branching_process.symptomatic_local_infection_probs[1]
+    local_relative_infectivity = simple_branching_process.infection.asymptomatic_local_infection_probs[1] / \
+                                 simple_branching_process.infection.symptomatic_local_infection_probs[1]
 
     assert local_relative_infectivity < 0.51
     assert local_relative_infectivity > 0.49
