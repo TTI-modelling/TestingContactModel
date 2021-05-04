@@ -1,3 +1,5 @@
+import os
+
 from household_contact_tracing.simulation_model_interface import SimulationModelInterface
 from household_contact_tracing.simulation_view_interface import SimulationViewInterface
 from household_contact_tracing.simulation_states import SimulationStateInterface, ReadyState, RunningState, \
@@ -8,6 +10,8 @@ class BPSimulationModel(SimulationModelInterface):
     """
         Branching Process Simulation Controller
     """
+
+    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
     def __init__(self):
         # Set observer lists
