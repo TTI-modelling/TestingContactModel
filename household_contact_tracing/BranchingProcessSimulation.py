@@ -87,15 +87,12 @@ class household_sim_contact_tracing(BPSimulationModel):
         asymptomatic_household_pairwise_survival_prob = 1 - self.asymptomatic_relative_infectivity + self.asymptomatic_relative_infectivity * params["household_pairwise_survival_prob"]
         self.asymptomatic_local_infection_probs = self.compute_hh_infection_probs(asymptomatic_household_pairwise_survival_prob)
 
+        max_household_size = len(self.house_size_probs)
+
         # Precomputing the cdf's for generating the overdispersed contact data
-        self.cdf_dict = {
-            1: compute_negbin_cdf(self.total_contact_means[0], self.overdispersion, 100),
-            2: compute_negbin_cdf(self.total_contact_means[1], self.overdispersion, 100),
-            3: compute_negbin_cdf(self.total_contact_means[2], self.overdispersion, 100),
-            4: compute_negbin_cdf(self.total_contact_means[3], self.overdispersion, 100),
-            5: compute_negbin_cdf(self.total_contact_means[4], self.overdispersion, 100),
-            6: compute_negbin_cdf(self.total_contact_means[5], self.overdispersion, 100)
-        }
+        self.cdf_dict = {index: compute_negbin_cdf(self.total_contact_means[index],
+                                                   self.overdispersion, 100)
+                         for index in range(max_household_size)}
 
         # Precomputing the global infection probabilities
         self.symptomatic_global_infection_probs = []
