@@ -31,47 +31,7 @@ class household_sim_contact_tracing(BPSimulationModel):
 
         self.network = Network()
 
-        # Probability of each household size
-        self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886, 0.045067385,
-                                 0.021455526]
-        # Local contact probability, one value for each household size:
-        self.local_contact_probs = [0, 0.826, 0.795, 0.803, 0.787, 0.819]
-        # The mean number of contacts made by each household
-        self.total_contact_means = [7.238, 10.133, 11.419, 12.844, 14.535, 15.844]
-
-        # infection parameters
-        self.outside_household_infectivity_scaling = 1.0
-        self.overdispersion = 0.32
-        self.asymptomatic_prob = 0.5
-        self.asymptomatic_relative_infectivity = 0.5
-        self.infection_reporting_prob = 1.0
-        self.reduce_contacts_by = 0
-        self.starting_infections = 1
-        self.symptom_reporting_delay = 1
-        self.incubation_period_delay = 5
-
-        # contact tracing parameters
-        self.contact_tracing_success_prob = 0.7
-        self.do_2_step = False
-        self.prob_has_trace_app = 0
-        self.hh_propensity_to_use_trace_app = 1.0
-        self.test_before_propagate_tracing = True
-        self.test_delay = 1
-        self.contact_trace_delay = 1
-
-        # isolation or quarantine parameters
-        self.quarantine_duration = 14
-        self.self_isolation_duration = 7
-
-        # adherence parameters
-        self.node_will_uptake_isolation_prob = 1.0
-        self.propensity_imperfect_quarantine = 0.0
-        self.global_contact_reduction_imperfect_quarantine = 0.0
-
-        # Update instance variables with anything in params
-        for param_name in self.__dict__:
-            if param_name in params:
-                self.__dict__[param_name] = params[param_name]
+        self.initialise_params(params)
 
         # Calculate the expected local contacts
         expected_local_contacts = [self.local_contact_probs[i] * i for i in range(6)]
@@ -108,6 +68,44 @@ class household_sim_contact_tracing(BPSimulationModel):
 
         # Calls the simulation reset function, which creates all the required dictionaries
         self.initialise_simulation()
+
+    def initialise_params(self, params):
+        # Probability of each household size
+        self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886, 0.045067385,
+                                 0.021455526]
+        # Local contact probability, one value for each household size:
+        self.local_contact_probs = [0, 0.826, 0.795, 0.803, 0.787, 0.819]
+        # The mean number of contacts made by each household
+        self.total_contact_means = [7.238, 10.133, 11.419, 12.844, 14.535, 15.844]
+        # infection parameters
+        self.outside_household_infectivity_scaling = 1.0
+        self.overdispersion = 0.32
+        self.asymptomatic_prob = 0.5
+        self.asymptomatic_relative_infectivity = 0.5
+        self.infection_reporting_prob = 1.0
+        self.reduce_contacts_by = 0
+        self.starting_infections = 1
+        self.symptom_reporting_delay = 1
+        self.incubation_period_delay = 5
+        # contact tracing parameters
+        self.contact_tracing_success_prob = 0.7
+        self.do_2_step = False
+        self.prob_has_trace_app = 0
+        self.hh_propensity_to_use_trace_app = 1.0
+        self.test_before_propagate_tracing = True
+        self.test_delay = 1
+        self.contact_trace_delay = 1
+        # isolation or quarantine parameters
+        self.quarantine_duration = 14
+        self.self_isolation_duration = 7
+        # adherence parameters
+        self.node_will_uptake_isolation_prob = 1.0
+        self.propensity_imperfect_quarantine = 0.0
+        self.global_contact_reduction_imperfect_quarantine = 0.0
+        # Update instance variables with anything in params
+        for param_name in self.__dict__:
+            if param_name in params:
+                self.__dict__[param_name] = params[param_name]
 
     def compute_hh_infection_probs(self, pairwise_survival_prob: float) -> np.ndarray:
         # Precomputing the infection probabilities for the within household epidemics.
@@ -908,11 +906,13 @@ class uk_model(household_sim_contact_tracing):
 
         self.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
 
+        self.initialise_uk_params(params)
+
+    def initialise_uk_params(self, params):
         self.number_of_days_to_trace_backwards = 2
         self.number_of_days_to_trace_forwards = 7
         self.probable_infections_need_test = True
         self.recall_probability_fall_off = 1
-
         # Update instance variables with anything in params
         for param_name in self.__dict__:
             if param_name in params:
@@ -1127,6 +1127,12 @@ class ContactModelTest(uk_model):
 
         self.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
 
+        self.initialise_CMT_params(params)
+
+        # Need to call super init last as it calls new_infection which requires the above parameters
+        super().__init__(params, prob_testing_positive_pcr_func)
+
+    def initialise_CMT_params(self, params):
         self.LFA_testing_requires_confirmatory_PCR = True
         self.policy_for_household_contacts_of_a_positive_case = 'lfa testing no quarantine'
         self.number_of_days_prior_to_LFA_result_to_trace = 2
@@ -1137,14 +1143,10 @@ class ContactModelTest(uk_model):
         self.node_prob_will_take_up_lfa_testing = 1
         self.lateral_flow_testing_duration = 7
         self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
-
         # Update instance variables with anything in params
         for param_name in self.__dict__:
             if param_name in params:
                 self.__dict__[param_name] = params[param_name]
-
-        # Need to call super init last as it calls new_infection which requires the above parameters
-        super().__init__(params, prob_testing_positive_pcr_func)
 
     def pcr_test_node(self, node: Node):
         """Given a the time relative to a nodes symptom onset, will that node test positive
