@@ -205,7 +205,7 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
         * Initialises a model with 100% contact tracing success probability
         * Create a new infection outside the initial household
         * Household 1 traces household 2 with 100% success probability and delay 1
-        * Simulate one day
+        * Simulate one day twice
 
     """
 
@@ -226,7 +226,6 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
     )
 
     model.simulate_one_step()
-
     model.simulate_one_step()
 
     assert model.network.node(2).being_lateral_flow_tested is True

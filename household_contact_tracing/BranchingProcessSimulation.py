@@ -1488,7 +1488,7 @@ class ContactModelTest(uk_model):
             if not node.household().applied_policy_for_household_contacts_of_a_positive_case
         ]
 
-    def increment(self, time):
+    def increment_contact_tracing(self, time):
 
         # TODO update the below - going to hospital is not included in the model
         """
@@ -1696,5 +1696,5 @@ class ContactModelTest(uk_model):
         if not graphs_isomorphic(prev_graph, new_graph):
             BPSimulationModel.graph_changed(self)
 
-        # Call parent simulate_one_step
+        # Inform parent model that step is completed
         BPSimulationModel.completed_step_increment(self)
