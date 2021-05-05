@@ -616,17 +616,6 @@ class household_sim_contact_tracing(BPSimulationModel):
         # Tell parent simulation stopped
         BPSimulationModel.simulation_stopped(self)
 
-    def node_type(self, node: Node):
-        """ Returns a node type, given the current status of the node.
-
-        Arguments:
-            node: Node -- The node
-
-        Returns:
-            str -- The status assigned
-        """
-
-        return node.node_type()
 
 class uk_model(household_sim_contact_tracing):
 
