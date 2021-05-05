@@ -218,12 +218,12 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
         serial_interval=0
     )
     
-    model.contact_tracing.contact_trace_household(
-        house_to=model.network.houses.household(2),
-        house_from=model.network.houses.household(1),
-        days_since_contact_occurred=0,
-        contact_trace_delay=0
-    )
+    #model.contact_tracing.contact_trace_household(
+    #    house_to=model.network.houses.household(2),
+    #    house_from=model.network.houses.household(1),
+    #    days_since_contact_occurred=0,
+    #    contact_trace_delay=0
+    #)
 
     model.simulate_one_step()
     model.simulate_one_step()
