@@ -1,17 +1,16 @@
 from typing import List, Optional, Callable
-import numpy as np
 import numpy.random as npr
 import os
 
-from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
-from household_contact_tracing.network import Network, NetworkContractModel, Household, Node, NodeContactModel, \
-    EdgeType, graphs_isomorphic
+from household_contact_tracing.network import Network, NetworkContractModel, Household, Node, \
+    NodeContactModel, EdgeType, graphs_isomorphic
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
 from household_contact_tracing.infection import Infection
-from household_contact_tracing.contact_tracing import ContactTracing, ContactTraceHouseholdBehaviour, \
-    ContactTraceHouseholdBP, ContactTraceHouseholdUK, ContactTraceHouseholdContactModelTest
+from household_contact_tracing.contact_tracing import ContactTracing, ContactTraceHouseholdBP, \
+    ContactTraceHouseholdUK, ContactTraceHouseholdContactModelTest
+
 
 class household_sim_contact_tracing(BPSimulationModel):
 
@@ -41,7 +40,6 @@ class household_sim_contact_tracing(BPSimulationModel):
         self.contact_tracing.contact_trace_household = self.instantiate_contact_trace_household()
         self.contact_tracing.increment = self.increment_contact_tracing
 
-
         # isolation or quarantine parameters
         if "quarantine_duration" in params:
             self.quarantine_duration = params["quarantine_duration"]
@@ -51,6 +49,9 @@ class household_sim_contact_tracing(BPSimulationModel):
             self.self_isolation_duration = params["self_isolation_duration"]
         else:
             self.self_isolation_duration = 7
+
+        # The simulation timer
+        self.time = 0
 
         # Calls the simulation reset function, which creates all the required dictionaries
         self.initialise_simulation()
@@ -87,15 +88,9 @@ class household_sim_contact_tracing(BPSimulationModel):
         else:
             return round(self.contact_trace_delay)
 
-
-    def new_infection(
-        self,
-        node_count: int,
-        generation: int, 
-        household_id: int, 
-        serial_interval=None,
-        infecting_node: Optional[Node] = None,
-        additional_attributes: Optional[dict] = None):
+    def new_infection(self, node_count: int, generation: int, household_id: int,
+                      serial_interval=None, infecting_node: Optional[Node] = None,
+                      additional_attributes: Optional[dict] = None):
         """
         Adds a new infection to the graph along with the following attributes:
         t - when they were infected
@@ -178,8 +173,8 @@ class household_sim_contact_tracing(BPSimulationModel):
         household.node_ids.append(node_count)
 
     def get_contact_rate_reduction(self, node):
-        """Returns a contact rate reduction, depending upon a nodes current status and various isolation
-        parameters
+        """Returns a contact rate reduction, depending upon a nodes current status and various
+        isolation parameters
         """
 
         if node.isolated and node.propensity_imperfect_isolation:
@@ -190,13 +185,8 @@ class household_sim_contact_tracing(BPSimulationModel):
         else:
             return self.infection.reduce_contacts_by
 
-    def new_household(
-        self,
-        new_household_number: int,
-        generation: int,
-        infected_by: int,
-        infected_by_node: int,
-        additional_attributes: Optional[dict] = None):
+    def new_household(self, new_household_number: int, generation: int, infected_by: int,
+                      infected_by_node: int, additional_attributes: Optional[dict] = None):
         """Adds a new household to the household dictionary
 
         Arguments:
