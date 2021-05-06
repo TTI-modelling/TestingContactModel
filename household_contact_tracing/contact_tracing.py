@@ -7,7 +7,7 @@ from household_contact_tracing.network import Network, Household, EdgeType
 class ContactTracing:
     """ Class for contract tracing  """
 
-    def __init__(self, network, params):
+    def __init__(self, network: Network, params: dict):
         self._network = network
 
         self._contact_trace_household = None
@@ -16,24 +16,18 @@ class ContactTracing:
         # Parameter Inputs:
         # contact tracing parameters
         self.contact_tracing_success_prob = params["contact_tracing_success_prob"]
-        if "do_2_step" in params:
-            self.do_2_step = params["do_2_step"]
-        else:
-            self.do_2_step = False
-        if "prob_has_trace_app" in params:
-            self.prob_has_trace_app = params["prob_has_trace_app"]
-        else:
-            self.prob_has_trace_app = 0
-        if "hh_propensity_to_use_trace_app" in params:
-            self.hh_propensity_to_use_trace_app = params["hh_propensity_to_use_trace_app"]
-        else:
-            self.hh_propensity_to_use_trace_app = 1
-        if "test_before_propagate_tracing" in params:
-            self.test_before_propagate_tracing = params["test_before_propagate_tracing"]
-        else:
-            self.test_before_propagate_tracing = True
-        self.test_delay = params["test_delay"]
-        self.contact_trace_delay = params["contact_trace_delay"]
+
+        self.do_2_step = False
+        self.prob_has_trace_app = 0
+        self.hh_propensity_to_use_trace_app = 1
+        self.test_before_propagate_tracing = True
+        self.test_delay = 1
+        self.contact_trace_delay = 1
+
+        # Update instance variables with anything in params
+        for param_name in self.__dict__:
+            if param_name in params:
+                self.__dict__[param_name] = params[param_name]
 
     @property
     def network(self):

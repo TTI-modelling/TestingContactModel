@@ -4,17 +4,21 @@ from typing import Optional
 import sys
 
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
-from household_contact_tracing.network import Node, EdgeType
+from household_contact_tracing.network import Node, EdgeType, Network
 
 
 class Infection:
     """ Class for Infection processes """
 
-    def __init__(self, network, params):
+    def __init__(self, network: Network, params: dict):
         self._network = network
         self._new_household = None
         self._new_infection = None
         self._contact_rate_reduction = None
+
+        # Probability of each household size
+        self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886,
+                                 0.045067385, 0.021455526]
 
         # The mean number of contacts made by each household
         self.total_contact_means = [7.238, 10.133, 11.419, 12.844, 14.535, 15.844]
@@ -22,43 +26,26 @@ class Infection:
         # Local contact probability:
         self.local_contact_probs = [0, 0.826, 0.795, 0.803, 0.787, 0.819]
 
-        # Probability of each household size
-        if "house_size_probs" in params:
-            self.house_size_probs = params["house_size_probs"]
-        else:
-            self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886,
-                                     0.045067385, 0.021455526]
-
         # infection parameters
-        self.outside_household_infectivity_scaling = params["outside_household_infectivity_scaling"]
-        self.overdispersion = params["overdispersion"]
-        self.asymptomatic_prob = params["asymptomatic_prob"]
-        self.asymptomatic_relative_infectivity = params["asymptomatic_relative_infectivity"]
-        self.infection_reporting_prob = params["infection_reporting_prob"]
-        if "reduce_contacts_by" in params:
-            self.reduce_contacts_by = params["reduce_contacts_by"]
-        else:
-            self.reduce_contacts_by = 0
-        if "starting_infections" in params:
-            self.starting_infections = params["starting_infections"]
-        else:
-            self.starting_infections = 1
-        self.symptom_reporting_delay = params["symptom_reporting_delay"]
-        self.incubation_period_delay = params["incubation_period_delay"]
+        self.outside_household_infectivity_scaling = 1.0
+        self.overdispersion = 0.32
+        self.asymptomatic_prob = 0.5
+        self.asymptomatic_relative_infectivity = 0.5
+        self.infection_reporting_prob = 1.0
+        self.reduce_contacts_by = 0
+        self.starting_infections = 1
+        self.symptom_reporting_delay = 1
+        self.incubation_period_delay = 5
 
         # adherence parameters
-        if "node_will_uptake_isolation_prob" in params:
-            self.node_will_uptake_isolation_prob = params["node_will_uptake_isolation_prob"]
-        else:
-            self.node_will_uptake_isolation_prob = 1
-        if "propensity_imperfect_quarantine" in params:
-            self.propensity_imperfect_quarantine = params["propensity_imperfect_quarantine"]
-        else:
-            self.propensity_imperfect_quarantine = 0
-        if "global_contact_reduction_imperfect_quarantine" in params:
-            self.global_contact_reduction_imperfect_quarantine = params["global_contact_reduction_imperfect_quarantine"]
-        else:
-            self.global_contact_reduction_imperfect_quarantine = 0
+        self.node_will_uptake_isolation_prob = 1
+        self.propensity_imperfect_quarantine = 0
+        self.global_contact_reduction_imperfect_quarantine = 0
+
+        # Update instance variables with anything in params
+        for param_name in self.__dict__:
+            if param_name in params:
+                self.__dict__[param_name] = params[param_name]
 
         # Precomputing the cdf's for generating the overdispersed contact data
         self.cdf_dict = {
