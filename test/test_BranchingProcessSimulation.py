@@ -22,7 +22,7 @@ def test_asymptomatic_nodes_attributes():
     # everyone's asymptomatic
     test_model = hct.household_sim_contact_tracing(default_params)
 
-    lfa_test_node = test_model.network.nodes.node(1)
+    lfa_test_node = test_model.network.node(1)
 
     assert lfa_test_node.asymptomatic is True
     assert lfa_test_node.symptom_onset_time == float('Inf')
@@ -38,7 +38,7 @@ def test_symptomatic_nodes_attributes():
     # no asymptomatics
     test_model = hct.household_sim_contact_tracing(params)
 
-    lfa_test_node = test_model.network.nodes.node(1)
+    lfa_test_node = test_model.network.node(1)
 
     assert lfa_test_node.asymptomatic is False
     assert lfa_test_node.symptom_onset_time == 5
@@ -60,14 +60,16 @@ def simple_branching_process():
 
 def test_global_relative_infectivity(simple_branching_process):
 
-    global_relative_infectivity = simple_branching_process.asymptomatic_global_infection_probs[0] / simple_branching_process.symptomatic_global_infection_probs[0]
+    global_relative_infectivity = simple_branching_process.infection.asymptomatic_global_infection_probs[0] / \
+                                  simple_branching_process.infection.symptomatic_global_infection_probs[0]
 
     assert global_relative_infectivity == 0.5
 
 
 def test_get_asymptomatic_infection_prob(simple_branching_process):
     
-    local_relative_infectivity = simple_branching_process.asymptomatic_local_infection_probs[1] / simple_branching_process.symptomatic_local_infection_probs[1]
+    local_relative_infectivity = simple_branching_process.infection.asymptomatic_local_infection_probs[1] / \
+                                 simple_branching_process.infection.symptomatic_local_infection_probs[1]
 
     assert local_relative_infectivity < 0.51
     assert local_relative_infectivity > 0.49
