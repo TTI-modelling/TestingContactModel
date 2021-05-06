@@ -1,55 +1,51 @@
 import numpy as np
 import numpy.random as npr
-from typing import List, Optional, Callable
+from typing import Optional
+import sys
 
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
-from household_contact_tracing.network import Node, EdgeType
+from household_contact_tracing.network import Node, EdgeType, Network
 
 
 class Infection:
     """ Class for Infection processes """
-    # The mean number of contacts made by each household
-    total_contact_means = [7.238, 10.133, 11.419, 12.844, 14.535, 15.844]
 
-    # Local contact probability:
-    local_contact_probs = [0, 0.826, 0.795, 0.803, 0.787, 0.819]
-
-    def __init__(self, network, params):
+    def __init__(self, network: Network, params: dict):
         self._network = network
         self._new_household = None
         self._new_infection = None
         self._contact_rate_reduction = None
 
+        # Probability of each household size
+        self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886,
+                                 0.045067385, 0.021455526]
+
+        # The mean number of contacts made by each household
+        self.total_contact_means = [7.238, 10.133, 11.419, 12.844, 14.535, 15.844]
+
+        # Local contact probability:
+        self.local_contact_probs = [0, 0.826, 0.795, 0.803, 0.787, 0.819]
+
         # infection parameters
-        self.outside_household_infectivity_scaling = params["outside_household_infectivity_scaling"]
-        self.overdispersion = params["overdispersion"]
-        self.asymptomatic_prob = params["asymptomatic_prob"]
-        self.asymptomatic_relative_infectivity = params["asymptomatic_relative_infectivity"]
-        self.infection_reporting_prob = params["infection_reporting_prob"]
-        if "reduce_contacts_by" in params:
-            self.reduce_contacts_by = params["reduce_contacts_by"]
-        else:
-            self.reduce_contacts_by = 0
-        if "starting_infections" in params:
-            self.starting_infections = params["starting_infections"]
-        else:
-            self.starting_infections = 1
-        self.symptom_reporting_delay = params["symptom_reporting_delay"]
-        self.incubation_period_delay = params["incubation_period_delay"]
+        self.outside_household_infectivity_scaling = 1.0
+        self.overdispersion = 0.32
+        self.asymptomatic_prob = 0.5
+        self.asymptomatic_relative_infectivity = 0.5
+        self.infection_reporting_prob = 1.0
+        self.reduce_contacts_by = 0
+        self.starting_infections = 1
+        self.symptom_reporting_delay = 1
+        self.incubation_period_delay = 5
 
         # adherence parameters
-        if "node_will_uptake_isolation_prob" in params:
-            self.node_will_uptake_isolation_prob = params["node_will_uptake_isolation_prob"]
-        else:
-            self.node_will_uptake_isolation_prob = 1
-        if "propensity_imperfect_quarantine" in params:
-            self.propensity_imperfect_quarantine = params["propensity_imperfect_quarantine"]
-        else:
-            self.propensity_imperfect_quarantine = 0
-        if "global_contact_reduction_imperfect_quarantine" in params:
-            self.global_contact_reduction_imperfect_quarantine = params["global_contact_reduction_imperfect_quarantine"]
-        else:
-            self.global_contact_reduction_imperfect_quarantine = 0
+        self.node_will_uptake_isolation_prob = 1
+        self.propensity_imperfect_quarantine = 0
+        self.global_contact_reduction_imperfect_quarantine = 0
+
+        # Update instance variables with anything in params
+        for param_name in self.__dict__:
+            if param_name in params:
+                self.__dict__[param_name] = params[param_name]
 
         # Precomputing the cdf's for generating the overdispersed contact data
         self.cdf_dict = {
@@ -66,12 +62,6 @@ class Infection:
 
         # Calculate the expected global contacts
         expected_global_contacts = np.array(self.total_contact_means) - np.array(expected_local_contacts)
-
-        # Probability of each household size
-        if "house_size_probs" in params:
-            self.house_size_probs = params["house_size_probs"]
-        else:
-            self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886, 0.045067385, 0.021455526]
 
         # Size biased distribution of households (choose a node, what is the prob they are in a house size 6, this is
         # biased by the size of the house)
@@ -226,7 +216,7 @@ class Infection:
 
     def incubation_period(self, asymptomatic: bool) -> int:
         if asymptomatic:
-            return float('Inf')
+            return sys.maxsize
         else:
             return round(self.incubation_period_delay)
 
@@ -251,7 +241,7 @@ class Infection:
         obs = sum([int(cdf[i] < random) for i in range(100)])
         return obs
 
-    def compute_hh_infection_probs(self, pairwise_survival_prob: float) -> list:
+    def compute_hh_infection_probs(self, pairwise_survival_prob: float) -> np.ndarray:
         # Precomputing the infection probabilities for the within household epidemics.
         contact_prob = 0.8
         day_0_infection_prob = current_hazard_rate(0, pairwise_survival_prob) / contact_prob
@@ -263,9 +253,9 @@ class Infection:
             infection_probs = np.append(infection_probs, current_prob_infection)
         return infection_probs
 
-    def reporting_delay(self, asymptomatic: bool):
+    def reporting_delay(self, asymptomatic: bool) -> int:
         if asymptomatic:
-            return float('Inf')
+            return sys.maxsize
         else:
             return round(self.symptom_reporting_delay)
 
@@ -276,12 +266,12 @@ class Infection:
         Returns:
             bool: If True they uptake isolation, if False they do not uptake isolation
         """
-        return npr.choice([True, False], p = (self.node_will_uptake_isolation_prob, 1 -
-                                              self.node_will_uptake_isolation_prob))
+        return npr.choice([True, False], p=(self.node_will_uptake_isolation_prob, 1 -
+                                            self.node_will_uptake_isolation_prob))
 
     def get_propensity_imperfect_isolation(self) -> bool:
-        return npr.choice([True, False], p = (self.propensity_imperfect_quarantine, 1 -
-                                              self.propensity_imperfect_quarantine))
+        return npr.choice([True, False], p=(self.propensity_imperfect_quarantine, 1 -
+                                            self.propensity_imperfect_quarantine))
 
     def get_infection_prob(self, local: bool, infectious_age: int, asymptomatic: bool) -> float:
         """Get the current probability per global infectious contact
@@ -306,7 +296,8 @@ class Infection:
             else:
                 return self.symptomatic_global_infection_probs[infectious_age]
 
-    def new_outside_household_infection(self, infecting_node: 'Node', serial_interval: Optional[int]):
+    def new_outside_household_infection(self, infecting_node: 'Node',
+                                        serial_interval: Optional[int]):
         # We assume all new outside household infections are in a new household
         # i.e: You do not infect 2 people in a new household
         # you do not spread the infection to a household that already has an infection
@@ -338,8 +329,11 @@ class Infection:
         self.network.graph.edges[infecting_node.node_id, node_count].update(
             {"edge_type": EdgeType.default.name})
 
-    def new_within_household_infection(self, infecting_node: 'Node', serial_interval: Optional[int]):
-        # Add a new node to the network, it will be a member of the same household that the node that infected it was
+    def new_within_household_infection(self, infecting_node: Node, serial_interval: Optional[int]):
+        """Add a new node to the network.
+
+        The new node will be a member of the same household as the infecting node.
+        """
         node_count = self.network.node_count + 1
 
         # We record which node caused this infection
@@ -354,7 +348,8 @@ class Infection:
                            serial_interval=serial_interval,
                            infecting_node=infecting_node)
 
-        # Add the edge to the graph and give it the default label if the house is not traced/isolated
+        # Add the edge to the graph and give it the default label if the house is not
+        # traced/isolated
         self.network.graph.add_edge(infecting_node.node_id, node_count)
 
         if self.network.node(node_count).household().isolated:
@@ -369,19 +364,3 @@ class Infection:
 
         # We record which edges are within this household for visualisation later on
         infecting_node_household.within_house_edges.append((infecting_node.node_id, node_count))
-
-    def get_hh_infection_prob(self, infectious_age: int, asymptomatic: bool) -> float:
-        """Returns the current probability per local infectious contact.
-
-        Args:
-            infectious_age (int): The current infectious age
-            asymptomatic (bool): Whether or not the node is asymptomatic
-
-        Returns:
-            float: The probability the contact spreads the infection
-        """
-
-        if asymptomatic:
-            self.asymptomatic_hh_infection_probs[infectious_age]
-        else:
-            self.symptomatic_hh_infection_probs[infectious_age]

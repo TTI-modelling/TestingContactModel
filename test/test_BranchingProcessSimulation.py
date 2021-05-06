@@ -1,4 +1,5 @@
 import copy
+import sys
 
 import household_contact_tracing.BranchingProcessSimulation as hct    # The code to test
 import pytest
@@ -25,7 +26,8 @@ def test_asymptomatic_nodes_attributes():
     lfa_test_node = test_model.network.node(1)
 
     assert lfa_test_node.asymptomatic is True
-    assert lfa_test_node.symptom_onset_time == float('Inf')
+    # Symptom onset time is infinite
+    assert lfa_test_node.symptom_onset_time > 10000
     assert lfa_test_node.will_report_infection is False
 
 
