@@ -211,7 +211,7 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
 
     model = simple_model_high_test_prob
 
-    model.contact_tracing_success_prob = 1
+    model.contact_tracing.contact_tracing_success_prob = 1
 
     model.infection.new_outside_household_infection(
         infecting_node=model.network.node(1),
