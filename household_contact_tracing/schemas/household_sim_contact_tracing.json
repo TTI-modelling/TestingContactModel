@@ -98,6 +98,20 @@
     "contact_trace_delay": {
       "description": "",
       "type": "number"
+    },
+    "local_contact_probs": {
+      "description": "Local contact probability, one value for each household size",
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "total_contact_means": {
+      "description": "The mean number of daily contacts made by a household, one value for each household size",
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
     }
   },
   "required": [

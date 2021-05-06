@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.random as npr
-from typing import List, Optional, Callable
+from typing import Optional
+import sys
 
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
 from household_contact_tracing.network import Node, EdgeType
@@ -8,17 +9,25 @@ from household_contact_tracing.network import Node, EdgeType
 
 class Infection:
     """ Class for Infection processes """
-    # The mean number of contacts made by each household
-    total_contact_means = [7.238, 10.133, 11.419, 12.844, 14.535, 15.844]
-
-    # Local contact probability:
-    local_contact_probs = [0, 0.826, 0.795, 0.803, 0.787, 0.819]
 
     def __init__(self, network, params):
         self._network = network
         self._new_household = None
         self._new_infection = None
         self._contact_rate_reduction = None
+
+        # The mean number of contacts made by each household
+        self.total_contact_means = [7.238, 10.133, 11.419, 12.844, 14.535, 15.844]
+
+        # Local contact probability:
+        self.local_contact_probs = [0, 0.826, 0.795, 0.803, 0.787, 0.819]
+
+        # Probability of each household size
+        if "house_size_probs" in params:
+            self.house_size_probs = params["house_size_probs"]
+        else:
+            self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886,
+                                     0.045067385, 0.021455526]
 
         # infection parameters
         self.outside_household_infectivity_scaling = params["outside_household_infectivity_scaling"]
@@ -66,12 +75,6 @@ class Infection:
 
         # Calculate the expected global contacts
         expected_global_contacts = np.array(self.total_contact_means) - np.array(expected_local_contacts)
-
-        # Probability of each household size
-        if "house_size_probs" in params:
-            self.house_size_probs = params["house_size_probs"]
-        else:
-            self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886, 0.045067385, 0.021455526]
 
         # Size biased distribution of households (choose a node, what is the prob they are in a house size 6, this is
         # biased by the size of the house)
