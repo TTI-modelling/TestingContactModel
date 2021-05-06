@@ -369,19 +369,3 @@ class Infection:
 
         # We record which edges are within this household for visualisation later on
         infecting_node_household.within_house_edges.append((infecting_node.node_id, node_count))
-
-    def get_hh_infection_prob(self, infectious_age: int, asymptomatic: bool) -> float:
-        """Returns the current probability per local infectious contact.
-
-        Args:
-            infectious_age (int): The current infectious age
-            asymptomatic (bool): Whether or not the node is asymptomatic
-
-        Returns:
-            float: The probability the contact spreads the infection
-        """
-
-        if asymptomatic:
-            self.asymptomatic_hh_infection_probs[infectious_age]
-        else:
-            self.symptomatic_hh_infection_probs[infectious_age]
