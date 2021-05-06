@@ -242,7 +242,7 @@ class household_sim_contact_tracing(BPSimulationModel):
 
         # Isolate all households under observation that now display symptoms (excludes those who will not take up isolation if prob <1)
         [
-            self.isolate_household(node.household())
+            self.contact_tracing.contact_trace_household.isolate_household(node.household(), self.network, self.time)
             for node in self.network.all_nodes()
             if node.symptom_onset_time <= self.time
             and node.contact_traced
@@ -564,7 +564,7 @@ class uk_model(household_sim_contact_tracing):
         # Isolate all non isolated households where the infection has been reported
         # (excludes those who will not take up isolation if prob <1)
         [
-            self.isolate_household(node.household())
+            self.contact_tracing.contact_trace_household.isolate_household(node.household(), self.network, self.time)
             for node in self.network.all_nodes()
             if node.time_of_reporting + node.testing_delay == self.time
             and node.received_positive_test_result
@@ -590,7 +590,7 @@ class uk_model(household_sim_contact_tracing):
         self.receive_pcr_test_results()
 
         [
-            self.isolate_household(node.household())
+            self.contact_tracing.contact_trace_household.isolate_household(node.household(), self.network, self.time)
             for node in self.network.all_nodes()
             if node.symptom_onset_time <= self.time
                and node.received_positive_test_result
@@ -1347,7 +1347,7 @@ class ContactModelTest(uk_model):
         self.receive_pcr_test_results()
 
         [
-            self.isolate_household(node.household())
+            self.contact_tracing.contact_trace_household.isolate_household(node.household(), self.network, self.time)
             for node in self.network.all_nodes()
             if node.symptom_onset_time <= self.time
                and node.received_positive_test_result
