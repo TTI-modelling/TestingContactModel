@@ -216,7 +216,7 @@ class Infection:
 
     def incubation_period(self, asymptomatic: bool) -> int:
         if asymptomatic:
-            return float('Inf')
+            return sys.maxsize
         else:
             return round(self.incubation_period_delay)
 
@@ -241,7 +241,7 @@ class Infection:
         obs = sum([int(cdf[i] < random) for i in range(100)])
         return obs
 
-    def compute_hh_infection_probs(self, pairwise_survival_prob: float) -> list:
+    def compute_hh_infection_probs(self, pairwise_survival_prob: float) -> np.ndarray:
         # Precomputing the infection probabilities for the within household epidemics.
         contact_prob = 0.8
         day_0_infection_prob = current_hazard_rate(0, pairwise_survival_prob) / contact_prob
@@ -253,9 +253,9 @@ class Infection:
             infection_probs = np.append(infection_probs, current_prob_infection)
         return infection_probs
 
-    def reporting_delay(self, asymptomatic: bool):
+    def reporting_delay(self, asymptomatic: bool) -> int:
         if asymptomatic:
-            return float('Inf')
+            return sys.maxsize
         else:
             return round(self.symptom_reporting_delay)
 
@@ -266,12 +266,12 @@ class Infection:
         Returns:
             bool: If True they uptake isolation, if False they do not uptake isolation
         """
-        return npr.choice([True, False], p = (self.node_will_uptake_isolation_prob, 1 -
-                                              self.node_will_uptake_isolation_prob))
+        return npr.choice([True, False], p=(self.node_will_uptake_isolation_prob, 1 -
+                                            self.node_will_uptake_isolation_prob))
 
     def get_propensity_imperfect_isolation(self) -> bool:
-        return npr.choice([True, False], p = (self.propensity_imperfect_quarantine, 1 -
-                                              self.propensity_imperfect_quarantine))
+        return npr.choice([True, False], p=(self.propensity_imperfect_quarantine, 1 -
+                                            self.propensity_imperfect_quarantine))
 
     def get_infection_prob(self, local: bool, infectious_age: int, asymptomatic: bool) -> float:
         """Get the current probability per global infectious contact
@@ -296,7 +296,8 @@ class Infection:
             else:
                 return self.symptomatic_global_infection_probs[infectious_age]
 
-    def new_outside_household_infection(self, infecting_node: 'Node', serial_interval: Optional[int]):
+    def new_outside_household_infection(self, infecting_node: 'Node',
+                                        serial_interval: Optional[int]):
         # We assume all new outside household infections are in a new household
         # i.e: You do not infect 2 people in a new household
         # you do not spread the infection to a household that already has an infection
@@ -328,8 +329,11 @@ class Infection:
         self.network.graph.edges[infecting_node.node_id, node_count].update(
             {"edge_type": EdgeType.default.name})
 
-    def new_within_household_infection(self, infecting_node: 'Node', serial_interval: Optional[int]):
-        # Add a new node to the network, it will be a member of the same household that the node that infected it was
+    def new_within_household_infection(self, infecting_node: Node, serial_interval: Optional[int]):
+        """Add a new node to the network.
+
+        The new node will be a member of the same household as the infecting node.
+        """
         node_count = self.network.node_count + 1
 
         # We record which node caused this infection
@@ -344,7 +348,8 @@ class Infection:
                            serial_interval=serial_interval,
                            infecting_node=infecting_node)
 
-        # Add the edge to the graph and give it the default label if the house is not traced/isolated
+        # Add the edge to the graph and give it the default label if the house is not
+        # traced/isolated
         self.network.graph.add_edge(infecting_node.node_id, node_count)
 
         if self.network.node(node_count).household().isolated:

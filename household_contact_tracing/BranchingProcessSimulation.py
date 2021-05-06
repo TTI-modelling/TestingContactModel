@@ -78,7 +78,7 @@ class household_sim_contact_tracing(BPSimulationModel):
     def instantiate_contact_trace_household(self) -> ContactTraceHouseholdBP:
         return ContactTraceHouseholdBP()
 
-    def instantiate_network(self):
+    def instantiate_network(self) -> Network:
         return Network()
 
     def contact_trace_delay(self, app_traced_edge) -> int:
