@@ -1,19 +1,13 @@
 # Code to visualise networks derived from the model
-from typing import Callable
+from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 import networkx as nx
 from matplotlib.lines import Line2D
 
 from household_contact_tracing.simulation_view_interface import SimulationViewInterface
-from household_contact_tracing.network import Node, Network
+from household_contact_tracing.network import Network
 from household_contact_tracing.simulation_model_interface import SimulationModelInterface
-
-contact_traced_edge_colour_within_house = "blue"
-contact_traced_edge_between_house = "magenta"
-default_edge_colour = "black"
-failed_contact_tracing = "red"
-app_traced_edge = "green"
 
 
 def make_proxy(clr, **kwargs):
@@ -28,32 +22,46 @@ def make_proxy(clr, **kwargs):
     return Line2D([0, 1], [0, 1], color=clr, **kwargs)
 
 
-class GraphView(SimulationViewInterface):
-    '''
-        Graph View
-    '''
+@dataclass
+class EdgeColour:
+    color: str
+    label: str
 
-    edge_type_colours = {'within_house': "blue",
-                         'between_house': "magenta",
-                         'default': "black",
-                         'failed_contact_tracing': "red",
-                         'app_traced': "green"}
+
+@dataclass
+class NodeColour:
+    colour: str
+    label: str
+
+
+class GraphView(SimulationViewInterface):
+    """Graph View"""
+
+    edge_colours = {'default': EdgeColour("black", "Transmission, yet to be traced"),
+                    'within_house': EdgeColour("blue", "Within household contact tracing"),
+                    'between_house': EdgeColour("magenta", "Between household contact tracing"),
+                    'failed_contact_tracing': EdgeColour("red", "Failed contact trace"),
+                    'app_traced': EdgeColour("green", "App traced edge")
+                    }
 
     node_type_colours = {'default': 'white',
                          'isolated': 'yellow',
                          'had_contacts_traced': 'orange',
                          'symptomatic_will_report_infection': 'lime',
                          'symptomatic_will_not_report_infection': 'green',
-
-                         'received_pos_test_pcr': 'grey', 'received_neg_test_pcr': 'deeppink',
-                         'confirmatory_pos_pcr_test': 'turquoise', 'confirmatory_neg_pcr_test': 'tomato',
-                         'received_pos_test_lfa': 'pink', 'being_lateral_flow_tested_isolated': 'blue',
-                         'being_lateral_flow_tested_not_isolated': 'orange'}
+                         'received_pos_test_pcr': 'grey',
+                         'received_neg_test_pcr': 'deeppink',
+                         'confirmatory_pos_pcr_test': 'turquoise',
+                         'confirmatory_neg_pcr_test': 'tomato',
+                         'received_pos_test_lfa': 'pink',
+                         'being_lateral_flow_tested_isolated': 'blue',
+                         'being_lateral_flow_tested_not_isolated': 'orange'
+                         }
 
     def __init__(self, controller, model: SimulationModelInterface):
         # Viewers own copies of controller and model (MVC pattern)
         # ... but controller not required yet (no input collected from view)
-        #self.controller = controller
+        # self.controller = controller
         self.model = model
 
         # Register as observer
@@ -82,26 +90,11 @@ class GraphView(SimulationViewInterface):
         node_colour_map = [self.node_type_colours[node.node_type()] for node in network.all_nodes()]
 
         # The following chunk of code draws the pretty branching processes
-        edge_colour_map = [self.edge_type_colours[network.graph.edges[edge]["edge_type"]] for edge in network.graph.edges()]
+        edge_colour_map = [self.edge_colours[network.graph.edges[edge]["edge_type"]].color for edge in network.graph.edges()]
 
         # Legend for explaining edge colouring
-        proxies = [
-            make_proxy(clr, lw=1) for clr in (
-                default_edge_colour,
-                contact_traced_edge_colour_within_house,
-                contact_traced_edge_between_house,
-                app_traced_edge,
-                failed_contact_tracing
-            )
-        ]
-
-        labels = (
-            "Transmission, yet to be traced",
-            "Within household contact tracing",
-            "Between household contact tracing",
-            "App traced edge",
-            "Failed contact trace"
-        )
+        proxies = [make_proxy(clr.color, lw=1) for clr in self.edge_colours.values()]
+        labels = [value.label for value in self.edge_colours.values()]
 
         node_households = {}
         for node in network.all_nodes():
