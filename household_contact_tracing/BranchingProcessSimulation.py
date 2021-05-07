@@ -3,7 +3,7 @@ import numpy.random as npr
 import os
 
 from household_contact_tracing.network import Network, NetworkContractModel, Household, Node, \
-    NodeContactModel, EdgeType, graphs_isomorphic
+    EdgeType, graphs_isomorphic
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
@@ -782,11 +782,11 @@ class ContactModelTest(uk_model):
     def instantiate_network(self):
         return NetworkContractModel()
 
-    def pcr_test_node(self, node: NodeContactModel):
+    def pcr_test_node(self, node: Node):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
-            node (NodeContactModel): The node to be tested today
+            node (Node): The node to be tested today
         """
         node.received_result = True
         
@@ -802,11 +802,11 @@ class ContactModelTest(uk_model):
             node.received_positive_test_result = False
             node.avenue_of_testing = 'PCR'
 
-    def lfa_test_node(self, node: NodeContactModel):
+    def lfa_test_node(self, node: Node):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
-            node (NodeContactModel): The node to be tested today
+            node (Node): The node to be tested today
         """
 
         infectious_age = self.time - node.time_infected
@@ -818,7 +818,7 @@ class ContactModelTest(uk_model):
         else:
             return False
 
-    def will_lfa_test_today(self, node: NodeContactModel) -> bool:
+    def will_lfa_test_today(self, node: Node) -> bool:
 
         if node.propensity_to_miss_lfa_tests:
 
@@ -894,7 +894,7 @@ class ContactModelTest(uk_model):
         generation: int,
         household_id: int,
         serial_interval=None,
-        infecting_node: Optional[NodeContactModel]=None,
+        infecting_node: Optional[Node] = None,
         additional_attributes: Optional[dict] = None):
         """Add a new infection to the model and network. Attributes are randomly generated.
 
@@ -905,7 +905,7 @@ class ContactModelTest(uk_model):
             generation (int): The generation of the node
             household_id (int): The household id that the node is being added to
             serial_interval ([type]): The serial interval
-            infecting_node (Optional[NodeContactModel]): The id of the infecting node
+            infecting_node (Optional[Node]): The id of the infecting node
             additional_attributes (Optional[dict]): Additional attributes to be passed
         """
 
@@ -1027,7 +1027,7 @@ class ContactModelTest(uk_model):
     def propensity_to_miss_lfa_tests(self) -> bool:
         return npr.binomial(1, self.proportion_with_propensity_miss_lfa_tests) == 1
 
-    def propagate_contact_tracing(self, node: NodeContactModel):
+    def propagate_contact_tracing(self, node: Node):
         """
         To be called after a node in a household either reports their symptoms, and gets tested, when a household that is under surveillance develops symptoms + gets tested.
         """
@@ -1229,11 +1229,11 @@ class ContactModelTest(uk_model):
 
                 self.apply_policy_for_household_contacts_of_a_positive_case(node.household())
 
-    def take_confirmatory_pcr_test(self, node: NodeContactModel):
+    def take_confirmatory_pcr_test(self, node: Node):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
-            node (NodeContactModel): The node to be tested today
+            node (Node): The node to be tested today
         """
         
         infectious_age_when_tested = self.time - node.time_infected

@@ -1,4 +1,3 @@
-# Contains objects which encode the network
 from __future__ import annotations
 from typing import Optional, Iterator, List, Tuple, Dict
 from enum import Enum
@@ -7,6 +6,7 @@ import networkx as nx
 
 
 class EdgeType(Enum):
+    """Describes the source of infection between nodes."""
     default = 0
     within_house = 1
     between_house = 2
@@ -34,9 +34,9 @@ class Network:
 
     @property
     def active_infections(self):
-        """
-        Returns a list of nodes who have not yet recovered, and can still infect.
-        These nodes may be isolated and not able to infect globally however.
+        """Returns a list of nodes who have not yet recovered.
+
+         Nodes can still infect unless they have been isolated.
 
         Returns:
             list: list of nodes able to infect
@@ -51,71 +51,44 @@ class Network:
         self.graph = nx.Graph()
 
     def count_non_recovered_nodes(self) -> int:
-        """Returns the number of nodes not in the recovered state.
-        Returns:
-            [int] -- Number of non-recovered nodes.
-        """
+        """Returns the number of nodes not in the recovered state."""
         return len([node for node in self.all_nodes() if not node.recovered])
 
-    def get_edge_between_household(self, house1: Household, house2: Household):
+    def get_edge_between_household(self, house1: Household, house2: Household) -> Tuple[int, int]:
+        """Get the id's of the two nodes that connect households."""
         for node1 in house1.nodes():
             for node2 in house2.nodes():
                 if self.graph.has_edge(node1.node_id, node2.node_id):
                     return node1.node_id, node2.node_id
 
-    def is_edge_app_traced(self, edge):
-        """Returns whether both ends of an edge have the app, and the app does the tracing.
-        """
-        return self.node(edge[0]).has_contact_tracing_app and self.node(edge[1]).has_contact_tracing_app
+    def is_edge_app_traced(self, edge: Tuple[int, int]) -> bool:
+        """Returns whether two nodes have the contract tracing app."""
+        node_1_app = self.node(edge[0]).has_contact_tracing_app
+        node_2_app = self.node(edge[1]).has_contact_tracing_app
+        return node_1_app and node_2_app
 
-    def add_node(
-        self,
-        node_id,
-        time,
-        generation,
-        household,
-        isolated,
-        will_uptake_isolation,
-        propensity_imperfect_isolation,
-        asymptomatic,
-        symptom_onset_time,
-        pseudo_symptom_onset_time,
-        serial_interval,
-        recovery_time,
-        will_report_infection,
-        time_of_reporting,
-        has_contact_tracing_app,
-        testing_delay,
-        contact_traced,
-        additional_attributes: Optional[dict] = None,
-        infecting_node: Optional['Node'] = None,
-        completed_isolation=False,
-    ) -> 'Node':
+    def add_node(self, node_id, time, generation, household, isolated, will_uptake_isolation,
+                 propensity_imperfect_isolation, asymptomatic, symptom_onset_time,
+                 pseudo_symptom_onset_time, serial_interval, recovery_time, will_report_infection,
+                 time_of_reporting, has_contact_tracing_app, testing_delay, contact_traced,
+                 additional_attributes: Optional[dict] = None,
+                 infecting_node: Optional[Node] = None, completed_isolation=False) -> Node:
         self.graph.add_node(node_id)
-        node = Node(
-            nodes=self,
-            houses=self.houses,
-            node_id=node_id,
-            time_infected=time,
-            generation=generation,
-            household=household,
-            isolated=isolated,
-            will_uptake_isolation=will_uptake_isolation,
-            propensity_imperfect_isolation=propensity_imperfect_isolation,
-            asymptomatic=asymptomatic,
-            symptom_onset_time=symptom_onset_time,
-            pseudo_symptom_onset_time=pseudo_symptom_onset_time,
-            serial_interval=serial_interval,
-            recovery_time=recovery_time,
-            will_report_infection=will_report_infection,
-            time_of_reporting=time_of_reporting,
-            has_contact_tracing_app=has_contact_tracing_app,
-            testing_delay=testing_delay,
-            contact_traced=contact_traced,
-            additional_attributes=additional_attributes,
-            infecting_node=infecting_node,
-            completed_isolation=completed_isolation,
-        )
+        node = Node(nodes=self, houses=self.houses, node_id=node_id, time_infected=time,
+                    generation=generation, household=household, isolated=isolated,
+                    will_uptake_isolation=will_uptake_isolation,
+                    propensity_imperfect_isolation=propensity_imperfect_isolation,
+                    asymptomatic=asymptomatic, symptom_onset_time=symptom_onset_time,
+                    pseudo_symptom_onset_time=pseudo_symptom_onset_time,
+                    serial_interval=serial_interval, recovery_time=recovery_time,
+                    will_report_infection=will_report_infection,
+                    time_of_reporting=time_of_reporting,
+                    has_contact_tracing_app=has_contact_tracing_app,
+                    testing_delay=testing_delay,
+                    contact_traced=contact_traced,
+                    additional_attributes=additional_attributes,
+                    infecting_node=infecting_node,
+                    completed_isolation=completed_isolation)
         self.graph.nodes[node_id]['node_obj'] = node
         return node
 
@@ -153,11 +126,11 @@ class NetworkContractModel(Network):
         testing_delay,
         contact_traced,
         additional_attributes: Optional[dict] = None,
-        infecting_node: Optional['Node'] = None,
+        infecting_node: Optional[Node] = None,
         completed_isolation=False,
-    ) -> 'NodeContactModel':
+    ) -> Node:
         self.graph.add_node(node_id)
-        node = NodeContactModel(
+        node = Node(
             nodes=self,
             houses=self.houses,
             node_id=node_id,
@@ -226,8 +199,8 @@ class Node:
         had_contacts_traced=False,
         outside_house_contacts_made=0,
         recovered=False,
-        additional_attributes: Optional[dict] = None,
         infecting_node: Optional[Node] = None,
+        additional_attributes: dict = None
     ):
         self.nodes = nodes
         self.houses = houses
@@ -264,12 +237,26 @@ class Node:
         self.received_result = False
         self.received_positive_test_result = None
 
-        # add custom attributes
-        # This is most useful for model variants
-        # first check is for when not supplied, when it will be None
-        if additional_attributes:
-            for key, value in additional_attributes.items():
-                setattr(self, key, value)
+        self.being_lateral_flow_tested = None
+        self.time_started_lfa_testing = None
+        self.received_positive_test_result = False
+        self.received_result = None
+        self.avenue_of_testing: Optional[str] = None
+        self.positive_test_time = None
+        self.node_will_take_up_lfa_testing = None
+        self.confirmatory_PCR_result_was_positive: Optional[bool] = None
+        self.taken_confirmatory_PCR_test: Optional[bool] = None
+        self.confirmatory_PCR_test_time = None
+        self.confirmatory_PCR_test_result_time = None
+        self.propensity_risky_behaviour_lfa_testing = None
+        self.propensity_to_miss_lfa_tests = None
+
+        self.time: Optional[int] = None
+
+        # Update instance variables with anything in params
+        for param_name in self.__dict__:
+            if param_name in additional_attributes:
+                self.__dict__[param_name] = additional_attributes[param_name]
 
     def household(self) -> Household:
         return self.houses.household(self.household_id)
@@ -328,15 +315,7 @@ class Node:
             return NodeType.symptomatic_will_report_infection.name
         elif not self.asymptomatic and not self.will_report_infection:
             return NodeType.symptomatic_will_not_report_infection.name
-        else:
-            return NodeType.default.name
-
-
-class NodeContactModel(Node):
-    def node_type(self):
-        """Returns a detailed node type, given the current status of the node.
-        """
-        if self.received_result and not self.received_positive_test_result and self.avenue_of_testing == 'PCR':
+        elif self.received_result and not self.received_positive_test_result and self.avenue_of_testing == 'PCR':
             return NodeType.received_neg_test_pcr.name
         elif self.received_positive_test_result and self.avenue_of_testing == 'PCR':
             return NodeType.received_pos_test_pcr.name
@@ -350,12 +329,6 @@ class NodeContactModel(Node):
             return NodeType.being_lateral_flow_tested_isolated.name
         elif self.being_lateral_flow_tested and not self.isolated:
             return NodeType.being_lateral_flow_tested_not_isolated.name
-        elif self.isolated:
-            return NodeType.isolated.name
-        elif not self.asymptomatic and self.will_report_infection:
-            return NodeType.symptomatic_will_report_infection.name
-        elif not self.asymptomatic and not self.will_report_infection:
-            return NodeType.symptomatic_will_not_report_infection.name
         else:
             return NodeType.default.name
 
