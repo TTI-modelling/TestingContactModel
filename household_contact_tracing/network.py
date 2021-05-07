@@ -20,21 +20,9 @@ def graphs_isomorphic(graph1: nx.Graph, graph2: nx.Graph) -> bool:
 
 
 class Network:
-    def __init__(self, houses: HouseholdCollection = None):
-        self._graph = nx.Graph()
-        self.houses = houses
-
-    @property
-    def houses(self):
-        return self._houses
-
-    @houses.setter
-    def houses(self, houses: HouseholdCollection):
-        self._houses = houses
-
-    @property
-    def graph(self):
-        return self._graph
+    def __init__(self):
+        self.graph = nx.Graph()
+        self.houses: Optional[HouseholdCollection] = None
 
     @property
     def house_count(self):
@@ -60,7 +48,7 @@ class Network:
         self.houses = HouseholdCollection(self)
 
         # Rest the graph of infections
-        self._graph = nx.Graph()
+        self.graph = nx.Graph()
 
     def count_non_recovered_nodes(self) -> int:
         """Returns the number of nodes not in the recovered state.
