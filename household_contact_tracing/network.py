@@ -1,7 +1,9 @@
 # Contains objects which encode the network
+from __future__ import annotations
 from typing import Optional, Iterator, List, Tuple, Dict
-import networkx as nx
 from enum import Enum
+
+import networkx as nx
 
 
 class EdgeType(Enum):
@@ -12,12 +14,13 @@ class EdgeType(Enum):
     app_traced = 4
 
 
-def graphs_isomorphic(graph1, graph2):
+def graphs_isomorphic(graph1: nx.Graph, graph2: nx.Graph) -> bool:
+    """Determine whether graphs have identical network structures."""
     return nx.is_isomorphic(graph1, graph2)
 
 
 class Network:
-    def __init__(self, houses: 'HouseholdCollection' = None):
+    def __init__(self, houses: HouseholdCollection = None):
         self._graph = nx.Graph()
         self.houses = houses
 
@@ -26,7 +29,7 @@ class Network:
         return self._houses
 
     @houses.setter
-    def houses(self, houses: 'HouseholdCollection'):
+    def houses(self, houses: HouseholdCollection):
         self._houses = houses
 
     @property
@@ -50,10 +53,7 @@ class Network:
         Returns:
             list: list of nodes able to infect
         """
-        return [
-            node for node in self.all_nodes()
-            if not node.recovered
-        ]
+        return [node for node in self.all_nodes() if not node.recovered]
 
     def reset(self):
         # Reset houses
@@ -69,7 +69,7 @@ class Network:
         """
         return len([node for node in self.all_nodes() if not node.recovered])
 
-    def get_edge_between_household(self, house1: 'Household', house2: 'Household'):
+    def get_edge_between_household(self, house1: Household, house2: Household):
         for node1 in house1.nodes():
             for node2 in house2.nodes():
                 if self.graph.has_edge(node1.node_id, node2.node_id):
@@ -100,7 +100,7 @@ class Network:
         testing_delay,
         contact_traced,
         additional_attributes: Optional[dict] = None,
-        infecting_node: Optional['Node']=None,
+        infecting_node: Optional['Node'] = None,
         completed_isolation=False,
     ) -> 'Node':
         self.graph.add_node(node_id)
@@ -131,17 +131,18 @@ class Network:
         self.graph.nodes[node_id]['node_obj'] = node
         return node
 
-    def node(self, node_id) -> 'Node':
+    def node(self, node_id) -> Node:
         return self.graph.nodes[node_id]['node_obj']
 
-    def all_nodes(self) -> Iterator['Node']:
+    def all_nodes(self) -> Iterator[Node]:
         return (self.node(n) for n in self.graph)
 
-    def asymptomatic_nodes(self) -> Iterator['Node']:
+    def asymptomatic_nodes(self) -> Iterator[Node]:
         return [self.node(n) for n in self.graph if self.node(n).asymptomatic]
 
-    def symptomatic_nodes(self) -> Iterator['Node']:
+    def symptomatic_nodes(self) -> Iterator[Node]:
         return [self.node(n) for n in self.graph if not self.node(n).asymptomatic]
+
 
 class NetworkContractModel(Network):
     def add_node(
@@ -164,7 +165,7 @@ class NetworkContractModel(Network):
         testing_delay,
         contact_traced,
         additional_attributes: Optional[dict] = None,
-        infecting_node: Optional['Node']=None,
+        infecting_node: Optional['Node'] = None,
         completed_isolation=False,
     ) -> 'NodeContactModel':
         self.graph.add_node(node_id)
@@ -206,8 +207,8 @@ class Node:
 
     def __init__(
         self,
-        nodes: 'Network',
-        houses: 'HouseholdCollection',
+        nodes: Network,
+        houses: HouseholdCollection,
         node_id: int,
         time_infected: int,
         generation: int,
@@ -230,7 +231,7 @@ class Node:
         outside_house_contacts_made=0,
         recovered=False,
         additional_attributes: Optional[dict] = None,
-        infecting_node: Optional['Node']=None,
+        infecting_node: Optional[Node] = None,
     ):
         self.nodes = nodes
         self.houses = houses
@@ -274,7 +275,7 @@ class Node:
             for key, value in additional_attributes.items():
                 setattr(self, key, value)
 
-    def household(self) -> 'Household':
+    def household(self) -> Household:
         return self.houses.household(self.household_id)
 
     def time_relative_to_symptom_onset(self, time: int) -> int:
@@ -283,7 +284,7 @@ class Node:
         # so we can work out when they test positive
         return time - self.pseudo_symptom_onset_time
 
-    def infected_by_node(self) -> Optional['Node']:
+    def infected_by_node(self) -> Optional[Node]:
         if self.infected_by_node_id is None:
             return None
         return self.nodes.node(self.infected_by_node_id)
@@ -305,7 +306,6 @@ class Node:
             return self.symptom_onset_time >= time_now
         else:
             return self.will_report_infection and self.symptom_onset_time >= time_now
-
 
     def infection_status(self, time_now: int) -> str:
         if self.contact_traced:
@@ -377,21 +377,13 @@ class NodeContactModel(Node):
         else:
             return self.NodeType.default.name
 
+
 class Household:
 
-    def __init__(
-        self,
-        houses: 'HouseholdCollection',
-        nodecollection: Network,
-        house_id: int,
-        house_size: int,
-        time_infected: int,
-        generation: int,
-        infected_by: int,
-        infected_by_node: int,
-        propensity_trace_app: bool,
-        additional_attributes: Optional[dict] = None,
-    ):
+    def __init__(self, houses: HouseholdCollection, nodecollection: Network, house_id: int,
+                 house_size: int, time_infected: int, generation: int, infected_by: int,
+                 infected_by_node: int, propensity_trace_app: bool,
+                 additional_attributes: Optional[dict] = None):
         self.houses = houses
         self.nodecollection = nodecollection
         self.house_id = house_id
@@ -427,13 +419,13 @@ class Household:
     def add_node_id(self, node_id: int):
         self.node_ids.append(node_id)
 
-    def contact_traced_households(self) -> Iterator['Household']:
+    def contact_traced_households(self) -> Iterator[Household]:
         return (self.houses.household(hid) for hid in self.contact_traced_household_ids)
 
-    def spread_to(self) -> Iterator['Household']:
+    def spread_to(self) -> Iterator[Household]:
         return (self.houses.household(hid) for hid in self.spread_to_ids)
 
-    def infected_by(self) -> 'Household':
+    def infected_by(self) -> Optional[Household]:
         if self.infected_by_id is None:
             return None
         return self.houses.household(self.infected_by_id)
@@ -447,8 +439,8 @@ class Household:
             True
             for household_node
             in self.nodes()
-            # TODO self.time here is household time_infected - consider renaming to self.time_infected
-            # to reduce confusion with model self.time
+            # TODO self.time here is household time_infected - consider renaming to
+            #  self.time_infected to reduce confusion with model self.time
             if max(household_node.symptom_onset_time, self.isolated_time) + household_node.testing_delay >= self.time
         ])
 
@@ -462,7 +454,7 @@ class Household:
             if household_node.infection_status(model_time) in ("known_infection", "self_recognised_infection")
         ]
 
-        if recognised_symptom_onsets != []:
+        if recognised_symptom_onsets:
             return min(recognised_symptom_onsets)
         else:
             return float('inf')
@@ -474,19 +466,19 @@ class Household:
         recognised_symptom_onsets = [
             household_node.symptom_onset_time
             for household_node in self.nodes()
-            if household_node.infection_status(model_time) in ("known_infection", "self_recognised_infection")
+            if household_node.infection_status(model_time) in ["known_infection", "self_recognised_infection"]
         ]
 
         positive_test_times = [
             household_node.positive_test_time
             for household_node in self.nodes()
-            if household_node.infection_status(model_time) in ("known_infection")
+            if household_node.infection_status(model_time) == "known_infection"
             and household_node.received_positive_test_result
         ]
 
         recognised_symptom_and_positive_test_times = recognised_symptom_onsets + positive_test_times
 
-        if recognised_symptom_and_positive_test_times != []:
+        if recognised_symptom_and_positive_test_times:
             return min(recognised_symptom_and_positive_test_times)
         else:
             return float('inf')
@@ -499,28 +491,13 @@ class HouseholdCollection:
         self.nodes = nodes
         # TODO: put house_count in this class
 
-    def add_household(
-        self,
-        house_id: int,
-        house_size: int,
-        time_infected: int,
-        generation: int,
-        infected_by: int,
-        infected_by_node: int,
-        propensity_trace_app: bool,
-        additional_attributes: Optional[dict] = None) -> Household:
-        new_household = Household(
-            self,
-            self.nodes,
-            house_id,
-            house_size,
-            time_infected,
-            generation,
-            infected_by,
-            infected_by_node,
-            propensity_trace_app,
-            additional_attributes
-        )
+    def add_household(self, house_id: int, house_size: int, time_infected: int, generation: int,
+                      infected_by: int, infected_by_node: int, propensity_trace_app: bool,
+                      additional_attributes: Optional[dict] = None) -> Household:
+
+        new_household = Household(self, self.nodes, house_id, house_size, time_infected, generation,
+                                  infected_by, infected_by_node, propensity_trace_app,
+                                  additional_attributes)
         self.house_dict[house_id] = new_household
         return new_household
 
