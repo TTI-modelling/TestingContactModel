@@ -343,7 +343,7 @@ class Household:
         self.nodecollection = nodecollection
         self.house_id = house_id
         self.size = house_size                  # Size of the household
-        self.time = time_infected               # The time at which the infection entered the household
+        self.time_infected = time_infected               # The time at which the infection entered the household
         self.susceptibles = house_size - 1      # How many susceptibles remain in the household
         self.isolated = False                   # Has the household been isolated, so there can be no more infections from this household
         self.isolated_time = float('inf')       # When the house was isolated
@@ -390,24 +390,32 @@ class Household:
         Returns:
             bool: Does the household contain a known infection
         """
-        return any([
-            True
-            for household_node
-            in self.nodes()
-            # TODO self.time here is household time_infected - consider renaming to
-            #  self.time_infected to reduce confusion with model self.time
-            if max(household_node.symptom_onset_time, self.isolated_time) + household_node.testing_delay >= self.time
-        ])
+        for household_node in self.nodes():
+            if max(household_node.symptom_onset_time, self.isolated_time) + household_node.testing_delay >= self.time_infected:
+                return True
+        return False
+
+    def get_recognised_symptom_onsets(self, model_time: int):
+        """Report symptom onset time for all active infections in the Houshold."""
+        recognised_symptom_onsets = []
+
+        for household_node in self.nodes():
+            if household_node.infection_status(model_time) in ("known_infection", "self_recognised_infection"):
+                recognised_symptom_onsets.append(household_node.symptom_onset_time)
+        return recognised_symptom_onsets
+
+    def get_positive_test_times(self, model_time: int) -> List[int]:
+        positive_test_times = []
+
+        for node in self.nodes():
+            if node.infection_status(model_time) == "known_infection":
+                if node.received_positive_test_result:
+                    positive_test_times.append(node.positive_test_time)
+        return positive_test_times
 
     def earliest_recognised_symptom_onset(self, model_time: int):
-        """
-        Return infinite if no node in household has recognised symptom onset
-        """
-        recognised_symptom_onsets = [
-            household_node.symptom_onset_time
-            for household_node in self.nodes()
-            if household_node.infection_status(model_time) in ("known_infection", "self_recognised_infection")
-        ]
+        """Return infinite if no node in household has recognised symptom onset."""
+        recognised_symptom_onsets = self.get_recognised_symptom_onsets(model_time)
 
         if recognised_symptom_onsets:
             return min(recognised_symptom_onsets)
@@ -418,18 +426,8 @@ class Household:
         """
         Return infinite if no node in household has recognised symptom onset
         """
-        recognised_symptom_onsets = [
-            household_node.symptom_onset_time
-            for household_node in self.nodes()
-            if household_node.infection_status(model_time) in ["known_infection", "self_recognised_infection"]
-        ]
-
-        positive_test_times = [
-            household_node.positive_test_time
-            for household_node in self.nodes()
-            if household_node.infection_status(model_time) == "known_infection"
-            and household_node.received_positive_test_result
-        ]
+        recognised_symptom_onsets = self.get_recognised_symptom_onsets(model_time)
+        positive_test_times = self.get_positive_test_times(model_time)
 
         recognised_symptom_and_positive_test_times = recognised_symptom_onsets + positive_test_times
 
@@ -437,6 +435,7 @@ class Household:
             return min(recognised_symptom_and_positive_test_times)
         else:
             return float('inf')
+
 
 
 class HouseholdCollection:
