@@ -243,64 +243,6 @@ class household_sim_contact_tracing(BPSimulationModel):
             if node.recovery_time == self.time:
                 node.recovered = True
 
-    def attempt_contact_trace_of_household(self, house_to: Household, house_from: Household, contact_trace_delay: int = 0):
-        # Decide if the edge was traced by the app
-        app_traced = self.network.is_edge_app_traced(self.network.get_edge_between_household(house_from, house_to))
-
-        # Get the success probability
-        if app_traced:
-            success_prob = 1
-        else:
-            success_prob = self.contact_tracing.contact_tracing_success_prob
-
-        # is the trace successful
-        if (npr.binomial(1, success_prob) == 1):
-            # Update the list of traced households from this one
-            house_from.contact_traced_household_ids.append(house_to.house_id)
-
-            # Assign the household a contact tracing index, 1 more than it's parent tracer
-            house_to.contact_tracing_index = house_from.contact_tracing_index + 1
-
-            # work out the time delay
-            contact_trace_delay = contact_trace_delay + self.contact_tracing.contact_trace_delay
-            proposed_time_until_contact_trace = self.time + contact_trace_delay
-
-            # Get the current time until contact trace, and compare against the proposed time until contact trace
-            # Note this starts as infinity
-            # If the new proposed time is quicker, change the route
-            if proposed_time_until_contact_trace < house_to.time_until_contact_traced:
-                house_to.time_until_contact_traced = proposed_time_until_contact_trace
-                house_to.being_contact_traced_from = house_from.house_id
-
-            # Edge labelling
-            if app_traced:
-                self.contact_tracing.contact_trace_household.label_node_edges_between_houses(house_to, house_from, EdgeType.app_traced.name)
-            else:
-                self.contact_tracing.contact_trace_household.label_node_edges_between_houses(house_to, house_from, EdgeType.between_house.name)
-        else:
-            self.contact_tracing.contact_trace_household.label_node_edges_between_houses(house_to, house_from, EdgeType.failed_contact_tracing.name)
-
-
-    def update_contact_tracing_index(self):
-        for household in self.network.houses.all_households():
-            # loop over households with non-zero indexes, those that have been contact traced but with
-            if household.contact_tracing_index != 0:
-                for node in household.nodes():
-
-                    # Necessary conditions for an index 1 household to propagate tracing:
-                    # The node must have onset of symptoms
-                    # The node households must be isolated
-                    # The testing delay must be passed
-                    # The testing delay starts when the house have been isolated and symptoms have onset
-                    critical_time = max(node.symptom_onset_time, household.isolated_time)
-
-                    if critical_time + node.testing_delay <= self.time:
-                        household.contact_tracing_index = 0
-
-                        for index_1_hh in household.contact_traced_households():
-                            if index_1_hh.contact_tracing_index == 2:
-                                index_1_hh.contact_tracing_index = 1
-
     def isolate_self_reporting_cases(self):
         """Applies the isolation status to nodes who have reached their self-report time.
         They may of course decide to not adhere to said isolation, or may be a member of a household
@@ -457,8 +399,6 @@ class uk_model(household_sim_contact_tracing):
 
         self.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
 
-        super().__init__(params)
-
 
 
         if "number_of_days_to_trace_backwards" in params:
@@ -469,20 +409,29 @@ class uk_model(household_sim_contact_tracing):
             self.number_of_days_to_trace_forwards = params["number_of_days_to_trace_forwards"]
         else:
             self.number_of_days_to_trace_forwards = 7
-        if "probable_infections_need_test" in params:
-            self.probable_infections_need_test = params["probable_infections_need_test"]
-        else:
-            self.probable_infections_need_test = True
+
         if "recall_probability_fall_off" in params:
             self.recall_probability_fall_off = params["recall_probability_fall_off"]
         else:
             self.recall_probability_fall_off = 1
 
+        super().__init__(params)
+
+        if "probable_infections_need_test" in params:
+            self.probable_infections_need_test = params["probable_infections_need_test"]
+        else:
+            self.probable_infections_need_test = True
+
+
     def instantiate_contact_trace_household(self) -> ContactTraceHouseholdUK:
         return ContactTraceHouseholdUK(self.network)
 
     def instantiate_increment_contact_tracing(self) -> IncrementContactTracingUK:
-        return IncrementContactTracingUK(self.network, self.contact_tracing)
+        return IncrementContactTracingUK(self.network,
+                                         self.contact_tracing,
+                                         self.number_of_days_to_trace_backwards,
+                                         self.number_of_days_to_trace_forwards,
+                                         self.recall_probability_fall_off)
 
     def update_isolation(self):
         # Update the contact traced status for all households that have had the contact
@@ -504,44 +453,6 @@ class uk_model(household_sim_contact_tracing):
             and not node.household().isolated
             and not node.household().contact_traced
         ]
-
-    def attempt_contact_trace_of_household(self, house_to: Household, house_from: Household,
-                                           days_since_contact_occurred: int, contact_trace_delay: int = 0):
-        # Decide if the edge was traced by the app
-        app_traced = self.network.is_edge_app_traced(self.network.get_edge_between_household(house_from, house_to))
-
-        # Get the success probability
-        if app_traced:
-            success_prob = 1
-        else:
-            success_prob = self.contact_tracing.contact_tracing_success_prob * \
-                           self.recall_probability_fall_off ** days_since_contact_occurred
-
-        # is the trace successful
-        if (npr.binomial(1, success_prob) == 1):
-            # Update the list of traced households from this one
-            house_from.contact_traced_household_ids.append(house_to.house_id)
-
-            # Assign the household a contact tracing index, 1 more than it's parent tracer
-            house_to.contact_tracing_index = house_from.contact_tracing_index + 1
-
-            # work out the time delay
-            proposed_time_until_contact_trace = self.time + contact_trace_delay
-
-            # Get the current time until contact trace, and compare against the proposed time until contact trace
-            # Note this starts as infinity
-            # If the new proposed time is quicker, change the route
-            if proposed_time_until_contact_trace < house_to.time_until_contact_traced:
-                house_to.time_until_contact_traced = proposed_time_until_contact_trace
-                house_to.being_contact_traced_from = house_from.house_id
-
-            # Edge labelling
-            if app_traced:
-                self.contact_tracing.contact_trace_household.label_node_edges_between_houses(house_to, house_from, EdgeType.app_traced.name)
-            else:
-                self.contact_tracing.contact_trace_household.label_node_edges_between_houses(house_to, house_from, EdgeType.between_house.name)
-        else:
-            self.contact_tracing.contact_trace_household.label_node_edges_between_houses(house_to, house_from, EdgeType.failed_contact_tracing.name)
 
 
 class ContactModelTest(uk_model):
@@ -598,7 +509,11 @@ class ContactModelTest(uk_model):
         return IncrementContactTracingContactModelTest(self.network, self.contact_tracing,
                                                        self.LFA_testing_requires_confirmatory_PCR,
                                                        self.lfa_tested_nodes_book_pcr_on_symptom_onset,
-                                                       self.prob_testing_positive_pcr_func)
+                                                       self.prob_testing_positive_pcr_func,
+                                                       self.number_of_days_to_trace_backwards,
+                                                       self.number_of_days_to_trace_forwards,
+                                                       self.recall_probability_fall_off,
+                                                       self.number_of_days_prior_to_LFA_result_to_trace)
 
     def instantiate_network(self):
         return NetworkContractModel()
