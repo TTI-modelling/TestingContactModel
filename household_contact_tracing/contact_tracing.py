@@ -18,7 +18,6 @@ class ContactTracing:
         self.contact_tracing_success_prob = params["contact_tracing_success_prob"]
 
         self.do_2_step = False
-        self.prob_has_trace_app = 0
         self.hh_propensity_to_use_trace_app = 1
         self.test_before_propagate_tracing = True
         self.test_delay = 1
@@ -54,9 +53,6 @@ class ContactTracing:
             return True
         else:
             return False
-
-    def has_contact_tracing_app(self) -> bool:
-        return npr.binomial(1, self.prob_has_trace_app) == 1
 
     def testing_delay(self) -> int:
         if self.test_before_propagate_tracing is False:

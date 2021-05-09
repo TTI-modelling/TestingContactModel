@@ -36,7 +36,8 @@ def simple_model():
         else:
             return 0
 
-    model = ContactModelTest(default_params, prob_testing_positive_pcr_func,
+    model = ContactModelTest(default_params,
+                             prob_testing_positive_pcr_func,
                              prob_testing_positive_lfa_func)
 
     return model
@@ -214,6 +215,7 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
     model.contact_tracing.contact_tracing_success_prob = 1
 
     model.infection.new_outside_household_infection(
+        time=0,
         infecting_node=model.network.node(1),
         serial_interval=0
     )
@@ -249,6 +251,7 @@ def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: Contac
     # add another infection to the household, so we can check that they are not quarantining
     # but they are lfa testing
     model.infection.new_within_household_infection(
+        time=model.time,
         infecting_node=model.network.node(1),
         serial_interval=0
     )
@@ -308,6 +311,7 @@ def test_start_lateral_flow_testing_household_and_quarantine(
     model.isolate_positive_lateral_flow_tests()
 
     model.infection.new_within_household_infection(
+        time=model.time,
         infecting_node=model.network.node(1),
         serial_interval=0
     )
@@ -368,6 +372,7 @@ def test_household_contacts_quarantine_only(
     model.isolate_positive_lateral_flow_tests()
 
     model.infection.new_within_household_infection(
+        time=model.time,
         infecting_node=model.network.node(1),
         serial_interval=0
     )
@@ -383,6 +388,7 @@ def test_risky_behaviour_attributes_default(simple_model: simple_model):
     """Tests that the default behaviour is no more risky behaviour
     """
 
+    print('output:', simple_model.network.node(1).propensity_risky_behaviour_lfa_testing)
     assert not simple_model.network.node(1).propensity_risky_behaviour_lfa_testing
 
 

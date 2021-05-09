@@ -80,6 +80,7 @@ def recreate_pytest():
     controller = SimulationController(model=model)
 
     model.infection.new_outside_household_infection(
+        time=0,
         infecting_node=model.network.node(1),
         serial_interval=0
     )

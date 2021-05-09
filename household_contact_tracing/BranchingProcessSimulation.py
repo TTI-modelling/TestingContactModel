@@ -7,7 +7,10 @@ from household_contact_tracing.network import Network, NetworkContractModel, Hou
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
-from household_contact_tracing.infection import Infection
+from household_contact_tracing.infection import Infection, \
+    NewHousehold, NewHouseholdContactModelTest, \
+    NewInfectionHousehold, NewInfectionContactModelTest, \
+    ContactRateReductionHousehold, ContactRateReductionContactModelTest
 from household_contact_tracing.contact_tracing import ContactTracing, \
     ContactTraceHousehold, ContactTraceHouseholdUK, ContactTraceHouseholdContactModelTest, \
     IncrementContactTracingHousehold, IncrementContactTracingUK, IncrementContactTracingContactModelTest
@@ -33,9 +36,9 @@ class household_sim_contact_tracing(BPSimulationModel):
         self._network = self.instantiate_network()
 
         self._infection = Infection(self._network, params)
-        self.infection.new_household = self.new_household
-        self.infection.new_infection = self.new_infection
-        self.infection.contact_rate_reduction = self.get_contact_rate_reduction
+        self.infection.new_household = self.instantiate_new_household()
+        self.infection.new_infection = self.instantiate_new_infection()
+        self.infection.contact_rate_reduction = self.instantiate_contact_rate_reduction()
 
         self._contact_tracing = ContactTracing(self._network, params)
         self.contact_tracing.contact_trace_household = self.instantiate_contact_trace_household()
@@ -86,133 +89,20 @@ class household_sim_contact_tracing(BPSimulationModel):
     def instantiate_network(self) -> Network:
         return Network()
 
+    def instantiate_new_household(self) -> NewHousehold:
+        return NewHousehold(self.network, self.infection)
+
+    def instantiate_new_infection(self) -> NewInfectionHousehold:
+        return NewInfectionHousehold(self.network, self.infection)
+
+    def instantiate_contact_rate_reduction(self) -> ContactRateReductionHousehold:
+        return ContactRateReductionHousehold(self.infection)
+
     def contact_trace_delay(self, app_traced_edge) -> int:
         if app_traced_edge:
             return 0
         else:
             return round(self.contact_trace_delay)
-
-    def new_infection(self, node_count: int, generation: int, household_id: int,
-                      serial_interval=None, infecting_node: Optional[Node] = None,
-                      additional_attributes: Optional[dict] = None):
-        """
-        Adds a new infection to the graph along with the following attributes:
-        t - when they were infected
-        offspring - how many offspring they produce
-
-        Inputs::
-        G - the network object
-        time - the time when the new infection happens
-        node_count - how many nodes are currently in the network
-        """
-        asymptomatic = self.infection.is_asymptomatic_infection()
-
-        # Symptom onset time
-        symptom_onset_time = self.time + self.infection.incubation_period(asymptomatic)
-
-        # If the node is asymptomatic, we need to generate a pseudo symptom onset time
-        if asymptomatic:
-            pseudo_symptom_onset_time = self.infection.incubation_period(asymptomatic=False)
-        else:
-            pseudo_symptom_onset_time = symptom_onset_time
-
-        # When a node reports its infection
-        if not asymptomatic and npr.binomial(1, self.infection.infection_reporting_prob) == 1:
-            will_report_infection = True
-            time_of_reporting = symptom_onset_time + self.infection.reporting_delay(asymptomatic)
-        else:
-            will_report_infection = False
-            time_of_reporting = float('Inf')
-
-        # We assign each node a recovery period of 21 days, after 21 days the probability of
-        # causing a new infections is 0, due to the generation time distribution
-        recovery_time = self.time + 14
-
-        household = self.network.houses.household(household_id)
-
-        # If the household has the propensity to use the contact tracing app, decide
-        # if the node uses the app.
-        if household.propensity_trace_app:
-            has_trace_app = self.contact_tracing.has_contact_tracing_app()
-        else:
-            has_trace_app = False
-
-        # in case you want to add non-default additional attributes
-        default_additional_attributes = {}
-
-        if additional_attributes:
-            default_additional_attributes = {**default_additional_attributes, **additional_attributes}
-
-        isolation_uptake = self.infection.will_uptake_isolation()
-
-        if household.isolated and isolation_uptake:
-            node_is_isolated = True
-        else:
-            node_is_isolated = False
-
-        self.network.add_node(
-            node_id=node_count,
-            time=self.time,
-            generation=generation,
-            household=household_id,
-            isolated=node_is_isolated,
-            will_uptake_isolation=isolation_uptake,
-            propensity_imperfect_isolation=self.infection.get_propensity_imperfect_isolation(),
-            asymptomatic=asymptomatic,
-            contact_traced=household.contact_traced,
-            symptom_onset_time=symptom_onset_time,
-            pseudo_symptom_onset_time=pseudo_symptom_onset_time,
-            serial_interval=serial_interval,
-            recovery_time=recovery_time,
-            will_report_infection=will_report_infection,
-            time_of_reporting=time_of_reporting,
-            has_contact_tracing_app=has_trace_app,
-            testing_delay=self.contact_tracing.testing_delay(),
-            additional_attributes=default_additional_attributes,
-            infecting_node=infecting_node,
-        )
-
-        # Each house now stores the ID's of which nodes are stored inside the house,
-        # so that quarantining can be done at the household level
-        household.node_ids.append(node_count)
-
-    def get_contact_rate_reduction(self, node):
-        """Returns a contact rate reduction, depending upon a nodes current status and various
-        isolation parameters
-        """
-
-        if node.isolated and node.propensity_imperfect_isolation:
-            return self.infection.global_contact_reduction_imperfect_quarantine
-        elif node.isolated and not node.propensity_imperfect_isolation:
-            # return 1 means 100% of contacts are stopped
-            return 1
-        else:
-            return self.infection.reduce_contacts_by
-
-    def new_household(self, new_household_number: int, generation: int, infected_by: int,
-                      infected_by_node: int, additional_attributes: Optional[dict] = None):
-        """Adds a new household to the household dictionary
-
-        Arguments:
-            new_household_number {int} -- The house id
-            generation {int} -- The household generation of this household
-            infected_by {int} -- Which household spread the infection to this household
-            infected_by_node {int} -- Which node spread the infection to this household
-        """
-        house_size = self.infection.size_of_household()
-
-        propensity_trace_app = self.contact_tracing.hh_propensity_use_trace_app()
-
-        self.network.houses.add_household(
-            house_id=new_household_number,
-            house_size=house_size,
-            time_infected=self.time,
-            generation=generation,
-            infected_by=infected_by,
-            infected_by_node=infected_by_node,
-            propensity_trace_app=propensity_trace_app,
-            additional_attributes=additional_attributes
-        )
 
 
     def update_isolation(self):
@@ -469,10 +359,7 @@ class ContactModelTest(uk_model):
             self.number_of_days_prior_to_LFA_result_to_trace = params["number_of_days_prior_to_LFA_result_to_trace"]
         else:
             self.number_of_days_prior_to_LFA_result_to_trace = 2
-        if "propensity_risky_behaviour_lfa_testing" in params:
-            self.propensity_risky_behaviour_lfa_testing = params["propensity_risky_behaviour_lfa_testing"]
-        else:
-            self.propensity_risky_behaviour_lfa_testing = 0
+
 
         if "node_daily_prob_lfa_test" in params:
             self.node_daily_prob_lfa_test = params["node_daily_prob_lfa_test"]
@@ -482,10 +369,7 @@ class ContactModelTest(uk_model):
             self.proportion_with_propensity_miss_lfa_tests = params["proportion_with_propensity_miss_lfa_tests"]
         else:
             self.proportion_with_propensity_miss_lfa_tests = 0
-        if "node_prob_will_take_up_lfa_testing" in params:
-            self.node_prob_will_take_up_lfa_testing = params["node_prob_will_take_up_lfa_testing"]
-        else:
-            self.node_prob_will_take_up_lfa_testing = 1
+
         if "lateral_flow_testing_duration" in params:
             self.lateral_flow_testing_duration = params["lateral_flow_testing_duration"]
         else:
@@ -518,6 +402,15 @@ class ContactModelTest(uk_model):
     def instantiate_network(self):
         return NetworkContractModel()
 
+    def instantiate_new_household(self) -> NewHouseholdContactModelTest:
+        return NewHouseholdContactModelTest(self.network, self.infection)
+
+    def instantiate_new_infection(self) -> NewInfectionContactModelTest:
+        return NewInfectionContactModelTest(self.network, self.infection)
+
+    def instantiate_contact_rate_reduction(self) -> ContactRateReductionContactModelTest:
+        return ContactRateReductionContactModelTest(self.infection)
+
     def lfa_test_node(self, node: NodeContactModel):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
@@ -544,201 +437,6 @@ class ContactModelTest(uk_model):
                 return False
         else:
             return True
-    
-    def will_engage_in_risky_behaviour_while_being_lfa_tested(self):
-        """Will the node engage in more risky behaviour if they are being LFA tested?
-        """
-        if npr.binomial(1, self.propensity_risky_behaviour_lfa_testing) == 1:
-            return True
-        else:
-            return False
-
-    def will_take_up_lfa_testing(self) -> bool:
-        return npr.binomial(1, self.node_prob_will_take_up_lfa_testing) == 1
-
-    def get_contact_rate_reduction(self, node):
-        """This method overides the default behaviour. Previously the overide behaviour allowed the global
-        contact reduction to vary by household size.
-
-        We override this behaviour, so that we can vary the global contact reduction by whether a node is
-        isolating or being lfa tested or whether they engage in risky behaviour while they are being lfa tested.
-
-        Remember that a contact rate reduction of 1 implies that 100% of conacts are stopped.
-        """
-        # the isolated status should never apply to an individual who will not uptake isolation
-
-        if node.isolated and not node.propensity_imperfect_isolation:
-            # perfect isolation
-            return 1
-
-        elif node.isolated and node.propensity_imperfect_isolation:
-            # imperfect isolation
-            return self.infection.global_contact_reduction_imperfect_quarantine
-
-        elif node.being_lateral_flow_tested and node.propensity_risky_behaviour_lfa_testing:
-            # engaging in risky behaviour while testing negative
-            return self.infection.global_contact_reduction_risky_behaviour
-
-        else:
-            # normal levels of social distancing
-            return self.infection.reduce_contacts_by
-
-
-    def new_household(
-        self,
-        new_household_number: int,
-        generation: int,
-        infected_by: int,
-        infected_by_node: int,
-        additional_attributes: Optional[dict] = None):
-
-        super().new_household(
-            new_household_number=new_household_number,
-            generation=generation,
-            infected_by=infected_by,
-            infected_by_node=infected_by_node,
-            additional_attributes={
-                'being_lateral_flow_tested': False,
-                'being_lateral_flow_tested_start_time': None,
-                'applied_policy_for_household_contacts_of_a_positive_case': False
-            }
-        )
-
-    def new_infection(
-        self,
-        node_count: int,
-        generation: int,
-        household_id: int,
-        serial_interval=None,
-        infecting_node: Optional[NodeContactModel]=None,
-        additional_attributes: Optional[dict] = None):
-        """Add a new infection to the model and network. Attributes are randomly generated.
-
-        This method passess additional attribute, relevant to the lateral flow testing.
-
-        Args:
-            node_count (int): The number of nodes already in the model
-            generation (int): The generation of the node
-            household_id (int): The household id that the node is being added to
-            serial_interval ([type]): The serial interval
-            infecting_node (Optional[NodeContactModel]): The id of the infecting node
-            additional_attributes (Optional[dict]): Additional attributes to be passed
-        """
-
-        household = self.network.houses.household(household_id)
-
-        node_will_take_up_lfa_testing = self.will_take_up_lfa_testing()
-
-        if household.being_lateral_flow_tested:
-
-            time_started_lfa_testing = household.being_lateral_flow_tested_start_time
-
-            if node_will_take_up_lfa_testing:
-                node_being_lateral_flow_tested = True
-
-            else:
-                node_being_lateral_flow_tested = False
-                
-        else:
-            node_being_lateral_flow_tested = False
-            time_started_lfa_testing = float('Inf')
-
-        default_additional_attributes = {
-            'being_lateral_flow_tested': node_being_lateral_flow_tested,
-            'time_started_lfa_testing': time_started_lfa_testing,
-            'received_positive_test_result': False,
-            'received_result': None,
-            'avenue_of_testing': None,
-            'positive_test_time': None,
-            'node_will_take_up_lfa_testing': node_will_take_up_lfa_testing,
-            'confirmatory_PCR_result_was_positive': None,
-            'taken_confirmatory_PCR_test': False,
-            'confirmatory_PCR_test_time': None,
-            'confirmatory_PCR_test_result_time': None,
-            'propensity_risky_behaviour_lfa_testing': self.will_engage_in_risky_behaviour_while_being_lfa_tested(),
-            'propensity_to_miss_lfa_tests': self.propensity_to_miss_lfa_tests()
-        }
-
-        if additional_attributes:
-            # if new additional attributes are passed, these overide the current additional attributes if they are the same value
-            # if they are different values, then they are added to the dictionary
-            additional_attributes_with_defaults = {**default_additional_attributes, **additional_attributes}
-        else:
-            additional_attributes_with_defaults = default_additional_attributes
-
-        asymptomatic = self.infection.is_asymptomatic_infection()
-
-        # Symptom onset time
-        symptom_onset_time = self.time + self.infection.incubation_period(asymptomatic)
-
-        # If the node is asymptomatic, we need to generate a pseudo symptom onset time
-        if asymptomatic:
-            pseudo_symptom_onset_time = self.infection.incubation_period(asymptomatic=False)
-        else:
-            pseudo_symptom_onset_time = symptom_onset_time
-
-        # When a node reports its infection
-        if not asymptomatic and npr.binomial(1, self.infection.infection_reporting_prob) == 1:
-            will_report_infection = True
-            time_of_reporting = symptom_onset_time + self.infection.reporting_delay(asymptomatic)
-        else:
-            will_report_infection = False
-            time_of_reporting = float('Inf')
-
-        # We assign each node a recovery period of 21 days, after 21 days the probability of
-        # causing a new infections is 0, due to the generation time distribution
-        recovery_time = self.time + 14
-
-        household = self.network.houses.household(household_id)
-
-        # If the household has the propensity to use the contact tracing app, decide
-        # if the node uses the app.
-        if household.propensity_trace_app:
-            has_trace_app = self.contact_tracing.has_contact_tracing_app()
-        else:
-            has_trace_app = False
-
-        # in case you want to add non-default additional attributes
-        default_additional_attributes = {}
-
-        if additional_attributes_with_defaults:
-            default_additional_attributes = {**default_additional_attributes, **additional_attributes_with_defaults}
-
-        isolation_uptake = self.infection.will_uptake_isolation()
-
-        if household.isolated and isolation_uptake:
-            node_is_isolated = True
-        else:
-            node_is_isolated = False
-
-        self.network.add_node(
-            node_id=node_count,
-            time=self.time,
-            generation=generation,
-            household=household_id,
-            isolated=node_is_isolated,
-            will_uptake_isolation=isolation_uptake,
-            propensity_imperfect_isolation=self.infection.get_propensity_imperfect_isolation(),
-            asymptomatic=asymptomatic,
-            contact_traced=household.contact_traced,
-            symptom_onset_time=symptom_onset_time,
-            pseudo_symptom_onset_time=pseudo_symptom_onset_time,
-            serial_interval=serial_interval,
-            recovery_time=recovery_time,
-            will_report_infection=will_report_infection,
-            time_of_reporting=time_of_reporting,
-            has_contact_tracing_app=has_trace_app,
-            testing_delay=self.contact_tracing.testing_delay(),
-            additional_attributes=default_additional_attributes,
-            infecting_node=infecting_node,
-        )
-
-        # Each house now stores the ID's of which nodes are stored inside the house,
-        # so that quarantining can be done at the household level
-        household.node_ids.append(node_count)
-
-    def propensity_to_miss_lfa_tests(self) -> bool:
-        return npr.binomial(1, self.proportion_with_propensity_miss_lfa_tests) == 1
 
     def start_lateral_flow_testing_household(self, household: Household):
         """Sets the household to the lateral flow testing status so that new within household infections are tested
@@ -1037,7 +735,7 @@ class ContactModelTest(uk_model):
         #                 node.being_lateral_flow_tested = False
         #                 node.completed_lateral_flow_testing_time = self.time
 
-    def simulate_one_step(self):
+    def simulate_one_step(self, time=0):
         """Simulates one day of the epidemic and contact tracing.
 
         Useful for bug testing and visualisation.
@@ -1045,7 +743,7 @@ class ContactModelTest(uk_model):
 
         prev_graph = self.network.graph.copy()
 
-        self.contact_tracing.increment.receive_pcr_test_results(self.time)
+        self.contact_tracing.increment.receive_pcr_test_results(time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         self.isolate_self_reporting_cases()
         # isolate self-reporting-nodes while they wait for tests
