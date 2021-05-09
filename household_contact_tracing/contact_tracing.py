@@ -46,8 +46,8 @@ class ContactTracing:
         return self._increment
 
     @increment.setter
-    def increment(self, fn):
-        self._increment = fn
+    def increment(self, increment: 'IncrementContactTracingBehaviour'):
+        self._increment = increment
 
     def hh_propensity_use_trace_app(self) -> bool:
         if npr.binomial(1, self.hh_propensity_to_use_trace_app) == 1:
