@@ -42,7 +42,7 @@ class ContactTracing:
         self._contact_trace_household = contact_trace_household
 
     @property
-    def increment(self):
+    def increment(self) -> 'IncrementContactTracingBehaviour':
         return self._increment
 
     @increment.setter
