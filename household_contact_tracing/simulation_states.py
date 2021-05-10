@@ -45,6 +45,7 @@ class ReadyState(SimulationState):
     def initialise(self):
         """ The simulation was re-set to initial pre-run state """
         print('In ready/initialised state!')
+        self._simulation_model.state = self._simulation_model.ready_state
 
     def start_run(self):
         """ The simulation has started running."""
@@ -72,7 +73,7 @@ class RunningState(SimulationState):
 
     def initialise(self):
         """ The simulation was re-set to initial pre-run state """
-        print('Cannot initialise whilst running')
+        print('Cannot initialise whilst running. Wait for stop and then re-initialise model')
 
     def start_run(self):
         """ The simulation has started running."""
@@ -104,7 +105,7 @@ class ExtinctState(SimulationState):
 
     def initialise(self):
         """ The simulation was re-set to initial pre-run state """
-        print('Can\'t initialise from extinct state')
+        print('Can\'t initialise from extinct state. Re-initialise model')
 
     def start_run(self):
         """ The simulation has started running."""
@@ -130,7 +131,7 @@ class TimedOutState(SimulationState):
 
     def initialise(self):
         """ The simulation was re-set to initial pre-run state """
-        print('Can\'t initialise from timed out state')
+        print('Can\'t initialise from timed out state. Re-initialise model')
 
     def start_run(self):
         """ The simulation has started running."""
@@ -156,7 +157,7 @@ class MaxNodesInfectiousState(SimulationState):
 
     def initialise(self):
         """ The simulation was re-set to initial pre-run state """
-        print('Can\'t initialise from max nodes reached state')
+        print('Can\'t initialise from max nodes reached state. Re-initialise model')
 
     def start_run(self):
         """ The simulation has started running."""
