@@ -85,16 +85,13 @@ def recreate_pytest():
         serial_interval=0
     )
 
-    model.contact_tracing.increment.attempt_contact_trace_of_household(
+    model.contact_tracing.increment_behaviour.attempt_contact_trace_of_household(
         house_to=model.network.houses.household(2),
         house_from=model.network.houses.household(1),
         days_since_contact_occurred=0,
         contact_trace_delay=0,
         time=0
     )
-
-    #model.simulate_one_step()
-    #model.simulate_one_step()
     controller.run_simulation(2)
 
     print('Assert node 2 being lft\'d', model.network.node(2).being_lateral_flow_tested)

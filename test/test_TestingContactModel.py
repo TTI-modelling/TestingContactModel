@@ -220,7 +220,7 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
         serial_interval=0
     )
     
-    model.contact_tracing.increment.attempt_contact_trace_of_household(
+    model.contact_tracing.increment_behaviour.attempt_contact_trace_of_household(
         house_to=model.network.houses.household(2),
         house_from=model.network.houses.household(1),
         days_since_contact_occurred=0,

@@ -10,13 +10,14 @@ class ContactTracing:
     def __init__(self, network: Network, params: dict):
         self._network = network
 
-        self._contact_trace_household = None
-        self._increment = None
+        # Declare behavours
+        self._contact_trace_household_behaviour = None
+        self._increment_behaviour = None
+        self._update_isolation_behaviour = None
 
         # Parameter Inputs:
         # contact tracing parameters
         self.contact_tracing_success_prob = params["contact_tracing_success_prob"]
-
         self.do_2_step = False
         self.hh_propensity_to_use_trace_app = 1
         self.test_before_propagate_tracing = True
@@ -33,20 +34,40 @@ class ContactTracing:
         return self._network
 
     @property
-    def contact_trace_household(self) -> 'ContactTraceHouseholdBehaviour':
-        return self._contact_trace_household
+    def update_isolation_behaviour(self) -> 'UpdateIsolationBehaviour':
+        return self._update_isolation_behaviour
 
-    @contact_trace_household.setter
-    def contact_trace_household(self, contact_trace_household: 'ContactTraceHouseholdBehaviour'):
-        self._contact_trace_household = contact_trace_household
+    @update_isolation_behaviour.setter
+    def update_isolation_behaviour(self, update_isolation_behaviour: 'UpdateIsolationBehaviour'):
+        self._update_isolation_behaviour = update_isolation_behaviour
 
     @property
-    def increment(self) -> 'IncrementContactTracingBehaviour':
-        return self._increment
+    def contact_trace_household_behaviour(self) -> 'ContactTraceHouseholdBehaviour':
+        return self._contact_trace_household_behaviour
 
-    @increment.setter
-    def increment(self, increment: 'IncrementContactTracingBehaviour'):
-        self._increment = increment
+    @contact_trace_household_behaviour.setter
+    def contact_trace_household_behaviour(self, contact_trace_household_behaviour: 'ContactTraceHouseholdBehaviour'):
+        self._contact_trace_household_behaviour= contact_trace_household_behaviour
+
+    @property
+    def increment_behaviour(self) -> 'IncrementContactTracingBehaviour':
+        return self._increment_behaviour
+
+    @increment_behaviour.setter
+    def increment_behaviour(self, increment_behaviour: 'IncrementContactTracingBehaviour'):
+        self._increment_behaviour = increment_behaviour
+
+    def update_isolation(self, time: int):
+        if self.update_isolation_behaviour:
+            self.update_isolation_behaviour.update_isolation(time)
+
+    def contact_trace_household(self, household: Household, time: int):
+        if self.contact_trace_household_behaviour:
+            self.contact_trace_household_behaviour.contact_trace_household(household, time)
+
+    def increment(self, time: int):
+        if self.increment_behaviour:
+            self.increment_behaviour.increment_contact_tracing(time)
 
     def hh_propensity_use_trace_app(self) -> bool:
         if npr.binomial(1, self.hh_propensity_to_use_trace_app) == 1:
@@ -60,6 +81,79 @@ class ContactTracing:
         else:
             return round(self.test_delay)
 
+#Todo - Peter: for Network?  All UpdateIsolation Behaviours below and sub-classes???
+class UpdateIsolationBehaviour:
+    def __init__(self, network: Network, contact_tracing: ContactTracing):
+        self._network = network
+        self._contact_tracing = contact_tracing
+
+    def update_isolation(self, time):
+        pass
+
+    def update_all_households_contact_traced(self, time):
+        # Update the contact traced status for all households that have had the contact tracing process get there
+        [
+            self._contact_tracing.contact_trace_household(household, time)
+            for household in self._network.houses.all_households()
+            if household.time_until_contact_traced <= time
+               and not household.contact_traced
+        ]
+
+
+class UpdateIsolationHousehold(UpdateIsolationBehaviour):
+
+    def update_isolation(self, time):
+        # Update the contact traced status for all households that have had the contact tracing process get there
+        self.update_all_households_contact_traced(time)
+
+        # Isolate all non isolated households where the infection has been reported (excludes those who will not take up isolation if prob <1)
+        [
+            self._contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
+            for node in self._network.all_nodes()
+            if node.time_of_reporting + node.testing_delay == time
+            and not node.household().isolated
+            and not node.household().contact_traced
+        ]
+
+
+class UpdateIsolationUK(UpdateIsolationBehaviour):
+    def update_isolation(self, time):
+        # Update the contact traced status for all households that have had the contact
+        # tracing process get there
+        self.update_all_households_contact_traced(time)
+
+        # Isolate all non isolated households where the infection has been reported
+        # (excludes those who will not take up isolation if prob <1)
+        [
+            self._contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
+            for node in self._network.all_nodes()
+            if node.time_of_reporting + node.testing_delay == time
+               and node.received_positive_test_result
+               and not node.household().isolated
+               and not node.household().contact_traced
+        ]
+
+
+class UpdateIsolationContactModelTest(UpdateIsolationBehaviour):
+    def update_isolation(self, time):
+        # Update the contact traced status for all households that have had the contact tracing process get there
+        self.update_all_households_contact_traced(time)
+
+        # Isolate all non isolated households where the infection has been reported (excludes those who will not take up isolation if prob <1)
+        new_pcr_test_results = [
+            node for node in self._network.all_nodes()
+            if node.positive_test_time == time
+            and node.avenue_of_testing == 'PCR'
+            and node.received_positive_test_result
+        ]
+
+        [
+            self.apply_policy_for_household_contacts_of_a_positive_case(node.household())
+            for node in new_pcr_test_results
+            if not node.household().applied_policy_for_household_contacts_of_a_positive_case
+        ]
+
+
 #Todo - Peter: for Network?  All ContactTraceHousehold Behaviours below and sub-classes???
 class ContactTraceHouseholdBehaviour:
 
@@ -67,6 +161,9 @@ class ContactTraceHouseholdBehaviour:
         self._network = network
 
     def contact_trace_household(self, household: Household, time: int):
+        pass
+
+    def label_node_edges_between_houses(self, house_to: Household, house_from: Household, new_edge_type):
         pass
 
     #Todo - Peter: for Network?
@@ -205,6 +302,9 @@ class IncrementContactTracingBehaviour:
     def increment_contact_tracing(self, time: int):
         pass
 
+    def receive_pcr_test_results(time):
+        pass
+
 
 class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
 
@@ -221,7 +321,7 @@ class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
 
         # Isolate all households under observation that now display symptoms (excludes those who will not take up isolation if prob <1)
         [
-            self._contact_tracing.contact_trace_household.isolate_household(node.household(), time)
+            self._contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
             for node in self._network.all_nodes()
             if node.symptom_onset_time <= time
             and node.contact_traced
@@ -285,7 +385,9 @@ class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
         for child in child_households_not_traced:
             self.attempt_contact_trace_of_household(child, household, time)
 
-    def attempt_contact_trace_of_household(self, house_to: Household, house_from: Household,
+    def attempt_contact_trace_of_household(self,
+                                           house_to: Household,
+                                           house_from: Household,
                                            time: int,
                                            contact_trace_delay: int = 0):
         # Decide if the edge was traced by the app
@@ -318,13 +420,13 @@ class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
 
             # Edge labelling
             if app_traced:
-                self._contact_tracing.contact_trace_household.label_node_edges_between_houses(
+                self._contact_tracing.contact_trace_household_behaviour.label_node_edges_between_houses(
                     house_to, house_from, EdgeType.app_traced.name)
             else:
-                self._contact_tracing.contact_trace_household.label_node_edges_between_houses(
+                self._contact_tracing.contact_trace_household_behaviour.label_node_edges_between_houses(
                     house_to, house_from, EdgeType.between_house.name)
         else:
-            self._contact_tracing.contact_trace_household.label_node_edges_between_houses(
+            self._contact_tracing.contact_trace_household_behaviour.label_node_edges_between_houses(
                 house_to, house_from, EdgeType.failed_contact_tracing.name)
 
     # Todo - Peter: for Network?
@@ -376,10 +478,10 @@ class IncrementContactTracingUK(IncrementContactTracingHousehold):
         """
 
         # Isolate all households under observation that now display symptoms (excludes those who will not take up isolation if prob <1)
-        self.receive_pcr_test_results()
+        self.receive_pcr_test_results(time)
 
         [
-            self._contact_tracing.contact_trace_household.isolate_household(node.household(), time)
+            self._contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
             for node in self._network.all_nodes()
             if node.symptom_onset_time <= time
                and node.received_positive_test_result
@@ -481,7 +583,9 @@ class IncrementContactTracingUK(IncrementContactTracingHousehold):
         else:
             node.received_positive_test_result = False
 
-    def attempt_contact_trace_of_household(self, house_to: Household, house_from: Household,
+    def attempt_contact_trace_of_household(self,
+                                           house_to: Household,
+                                           house_from: Household,
                                            days_since_contact_occurred: int,
                                            time: int,
                                            contact_trace_delay: int = 0):
@@ -515,13 +619,13 @@ class IncrementContactTracingUK(IncrementContactTracingHousehold):
 
             # Edge labelling
             if app_traced:
-                self._contact_tracing.contact_trace_household.label_node_edges_between_houses(
+                self._contact_tracing.contact_trace_household_behaviour.label_node_edges_between_houses(
                     house_to, house_from, EdgeType.app_traced.name)
             else:
-                self._contact_tracing.contact_trace_household.label_node_edges_between_houses(
+                self._contact_tracing.contact_trace_household_behaviour.label_node_edges_between_houses(
                     house_to, house_from, EdgeType.between_house.name)
         else:
-            self._contact_tracing.contact_trace_household.label_node_edges_between_houses(
+            self._contact_tracing.contact_trace_household_behaviour.label_node_edges_between_houses(
                 house_to, house_from, EdgeType.failed_contact_tracing.name)
 
 

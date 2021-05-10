@@ -13,7 +13,8 @@ from household_contact_tracing.infection import Infection, \
     ContactRateReductionHousehold, ContactRateReductionContactModelTest
 from household_contact_tracing.contact_tracing import ContactTracing, \
     ContactTraceHousehold, ContactTraceHouseholdUK, ContactTraceHouseholdContactModelTest, \
-    IncrementContactTracingHousehold, IncrementContactTracingUK, IncrementContactTracingContactModelTest
+    IncrementContactTracingHousehold, IncrementContactTracingUK, IncrementContactTracingContactModelTest, \
+    UpdateIsolationHousehold, UpdateIsolationUK, UpdateIsolationContactModelTest
 
 
 class household_sim_contact_tracing(BPSimulationModel):
@@ -43,17 +44,19 @@ class household_sim_contact_tracing(BPSimulationModel):
             if param_name in params:
                 self.__dict__[param_name] = params[param_name]
 
-        # Set strategies (Strategy pattern)
+        # Set network
         self._network = self.instantiate_network()
 
+        # Set strategies (Strategy pattern)
         self._infection = Infection(self._network, params)
-        self.infection.new_household = self.instantiate_new_household()
-        self.infection.new_infection = self.instantiate_new_infection()
-        self.infection.contact_rate_reduction = self.instantiate_contact_rate_reduction()
+        self.infection.new_household_behaviour = self.instantiate_new_household()
+        self.infection.new_infection_behaviour = self.instantiate_new_infection()
+        self.infection.contact_rate_reduction_behaviour = self.instantiate_contact_rate_reduction()
 
         self._contact_tracing = ContactTracing(self._network, params)
-        self.contact_tracing.contact_trace_household = self.instantiate_contact_trace_household()
-        self.contact_tracing.increment = self.instantiate_increment_contact_tracing()
+        self.contact_tracing.update_isolation_behaviour = self.instantiate_update_isolation()
+        self.contact_tracing.contact_trace_household_behaviour = self.instantiate_contact_trace_household()
+        self.contact_tracing.increment_behaviour = self.instantiate_increment_contact_tracing()
 
         # Set the simulated time to the start (days)
         self.time = 0
@@ -81,6 +84,9 @@ class household_sim_contact_tracing(BPSimulationModel):
     def contact_tracing(self, contact_tracing: ContactTracing):
         self._contact_tracing = contact_tracing
 
+    def instantiate_update_isolation(self) -> UpdateIsolationHousehold:
+        return UpdateIsolationHousehold(self.network, self.contact_tracing)
+
     def instantiate_contact_trace_household(self) -> ContactTraceHousehold:
         return ContactTraceHousehold(self.network)
 
@@ -104,25 +110,6 @@ class household_sim_contact_tracing(BPSimulationModel):
             return 0
         else:
             return round(self.contact_trace_delay)
-
-
-    def update_isolation(self):
-        # Update the contact traced status for all households that have had the contact tracing process get there
-        [
-            self.contact_tracing.contact_trace_household.contact_trace_household(household, self.time)
-            for household in self.network.houses.all_households()
-            if household.time_until_contact_traced <= self.time
-            and not household.contact_traced
-        ]
-
-        # Isolate all non isolated households where the infection has been reported (excludes those who will not take up isolation if prob <1)
-        [
-            self.contact_tracing.contact_trace_household.isolate_household(node.household(), self.time)
-            for node in self.network.all_nodes()
-            if node.time_of_reporting + node.testing_delay == self.time
-            and not node.household().isolated
-            and not node.household().contact_traced
-        ]
 
     def perform_recoveries(self):
         """
@@ -214,10 +201,10 @@ class household_sim_contact_tracing(BPSimulationModel):
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         self.isolate_self_reporting_cases()
         # isolate self-reporting-nodes while they wait for tests
-        self.update_isolation()
+        self.contact_tracing.update_isolation(self.time)
         # propagate contact tracing
-        for _ in range(5):
-            self.contact_tracing.increment.increment_contact_tracing(self.time)
+        for step in range(5):
+            self.contact_tracing.increment(self.time)
         # node recoveries
         self.perform_recoveries()
         # release nodes from quarantine or isolation if the time has arrived
@@ -295,6 +282,9 @@ class uk_model(household_sim_contact_tracing):
         # Call superclass constructor (which overwrites defaults with new params if present)
         super().__init__(params)
 
+    def instantiate_update_isolation(self) -> UpdateIsolationUK:
+        return UpdateIsolationUK(self.network, self.contact_tracing)
+
     def instantiate_contact_trace_household(self) -> ContactTraceHouseholdUK:
         return ContactTraceHouseholdUK(self.network)
 
@@ -304,28 +294,6 @@ class uk_model(household_sim_contact_tracing):
                                          self.number_of_days_to_trace_backwards,
                                          self.number_of_days_to_trace_forwards,
                                          self.recall_probability_fall_off)
-
-    def update_isolation(self):
-        # Update the contact traced status for all households that have had the contact
-        # tracing process get there
-        [
-            self.contact_tracing.contact_trace_household.contact_trace_household(household, self.time)
-            for household in self.network.houses.all_households()
-            if household.time_until_contact_traced <= self.time
-            and not household.contact_traced
-        ]
-
-        # Isolate all non isolated households where the infection has been reported
-        # (excludes those who will not take up isolation if prob <1)
-        [
-            self.contact_tracing.contact_trace_household.isolate_household(node.household(), self.time)
-            for node in self.network.all_nodes()
-            if node.time_of_reporting + node.testing_delay == self.time
-            and node.received_positive_test_result
-            and not node.household().isolated
-            and not node.household().contact_traced
-        ]
-
 
 class ContactModelTest(uk_model):
 
@@ -443,7 +411,7 @@ class ContactModelTest(uk_model):
         Args:
             household (Household): The household which is initiating testing
         """
-        self.contact_tracing.contact_trace_household.isolate_household(household, self.time)
+        self.contact_tracing.contact_trace_household_behaviour.isolate_household(household, self.time)
 
     def apply_policy_for_household_contacts_of_a_positive_case(self, household: Household):
         """We apply different policies to the household contacts of a discovered case.
@@ -556,30 +524,6 @@ class ContactModelTest(uk_model):
 
         if self.LFA_testing_requires_confirmatory_PCR:
             self.confirmatory_pcr_test_LFA_nodes()
-
-    def update_isolation(self):
-
-        # Update the contact traced status for all households that have had the contact tracing process get there
-        [
-            self.contact_tracing.contact_trace_household.contact_trace_household(household, self.time)
-            for household in self.network.houses.all_households()
-            if household.time_until_contact_traced <= self.time
-            and not household.contact_traced
-        ]
-
-        # Isolate all non isolated households where the infection has been reported (excludes those who will not take up isolation if prob <1)
-        new_pcr_test_results = [
-            node for node in self.network.all_nodes()
-            if node.positive_test_time == self.time
-            and node.avenue_of_testing == 'PCR'
-            and node.received_positive_test_result
-        ]
-
-        [
-            self.apply_policy_for_household_contacts_of_a_positive_case(node.household())
-            for node in new_pcr_test_results
-            if not node.household().applied_policy_for_household_contacts_of_a_positive_case
-        ]
 
     def infection_status(self, time_now: int) -> str:
         if self.contact_traced:
@@ -701,11 +645,11 @@ class ContactModelTest(uk_model):
 
         prev_graph = self.network.graph.copy()
 
-        self.contact_tracing.increment.receive_pcr_test_results(time)
+        self.contact_tracing.increment_behaviour.receive_pcr_test_results(time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         self.isolate_self_reporting_cases()
         # isolate self-reporting-nodes while they wait for tests
-        self.update_isolation()
+        self.contact_tracing.update_isolation(self.time)
         # isolate self reporting nodes
         self.act_on_positive_LFA_tests()
         # if we require PCR tests, to confirm infection we act on those
@@ -715,7 +659,7 @@ class ContactModelTest(uk_model):
         self.infection.increment(self.time)
         # propagate contact tracing
         for _ in range(5):
-            self.contact_tracing.increment.increment_contact_tracing(self.time)
+            self.contact_tracing.increment(self.time)
         # node recoveries
         self.perform_recoveries()
         # release nodes from quarantine or isolation if the time has arrived

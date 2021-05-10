@@ -12,9 +12,11 @@ class Infection:
 
     def __init__(self, network: Network, params: dict):
         self._network = network
-        self._new_household = None
-        self._new_infection = None
-        self._contact_rate_reduction = None
+
+        # Declare behavours
+        self._new_household_behaviour = None
+        self._new_infection_behaviour = None
+        self._contact_rate_reduction_behaviour = None
 
         # Probability of each household size
         self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886,
@@ -99,28 +101,68 @@ class Infection:
         return self._network
 
     @property
-    def new_household(self) -> 'NewHouseholdBehaviour':
-        return self._new_household
+    def new_household_behaviour(self) -> 'NewHouseholdBehaviour':
+        return self._new_household_behaviour
 
-    @new_household.setter
-    def new_household(self, new_household: 'NewHouseholdBehaviour'):
-        self._new_household = new_household
-
-    @property
-    def new_infection(self) -> 'NewInfectionBehaviour':
-        return self._new_infection
-
-    @new_infection.setter
-    def new_infection(self, new_infection: 'NewInfectionBehaviour'):
-        self._new_infection = new_infection
+    @new_household_behaviour.setter
+    def new_household_behaviour(self, new_household_behaviour: 'NewHouseholdBehaviour'):
+        self._new_household_behaviour = new_household_behaviour
 
     @property
-    def contact_rate_reduction(self) -> 'ContactRateReductionBehaviour':
-        return self._contact_rate_reduction
+    def new_infection_behaviour(self) -> 'NewInfectionBehaviour':
+        return self._new_infection_behaviour
 
-    @contact_rate_reduction.setter
-    def contact_rate_reduction(self, contact_rate_reduction: 'ContactRateReductionBehaviour'):
-        self._contact_rate_reduction = contact_rate_reduction
+    @new_infection_behaviour.setter
+    def new_infection_behaviour(self, new_infection_behaviour: 'NewInfectionBehaviour'):
+        self._new_infection_behaviour = new_infection_behaviour
+
+    @property
+    def contact_rate_reduction_behaviour(self) -> 'ContactRateReductionBehaviour':
+        return self._contact_rate_reduction_behaviour
+
+    @contact_rate_reduction_behaviour.setter
+    def contact_rate_reduction_behaviour(self, contact_rate_reduction_behaviour: 'ContactRateReductionBehaviour'):
+        self._contact_rate_reduction_behaviour = contact_rate_reduction_behaviour
+
+    def new_household(self,
+                      time,
+                      new_household_number,
+                      generation,
+                      infected_by,
+                      propensity_trace_app,
+                      infected_by_node,
+                      additional_attributes=None):
+        if self.new_household_behaviour:
+            self.new_household_behaviour.new_household(time,
+                                                       new_household_number,
+                                                       generation,
+                                                       infected_by,
+                                                       propensity_trace_app,
+                                                       infected_by_node,
+                                                       additional_attributes)
+
+    def new_infection(self,
+                      time: int,
+                      node_count: int,
+                      generation: int,
+                      household_id: int,
+                      test_delay: int=0,
+                      serial_interval=None,
+                      infecting_node: Optional[Node] = None,
+                      additional_attributes=None):
+        if self.new_infection_behaviour:
+            self.new_infection_behaviour.new_infection(time,
+                                                       node_count,
+                                                       generation,
+                                                       household_id,
+                                                       test_delay,
+                                                       serial_interval,
+                                                       infecting_node,
+                                                       additional_attributes)
+
+    def get_contact_rate_reduction(self, node: Node) -> int:
+        if self.contact_rate_reduction_behaviour:
+            return self.contact_rate_reduction_behaviour.get_contact_rate_reduction(node)
 
     def reset(self):
 
@@ -133,10 +175,8 @@ class Infection:
         for time in range(self.starting_infections):
             house_id += 1
             node_id = self.network.node_count + 1
-            if self.new_household:
-                self.new_household.new_household(time, house_id, 1, None, None, None)
-            if self.new_infection:
-                self.new_infection.new_infection(time, node_id, generation, house_id)
+            self.new_household(time, house_id, 1, None, None, None)
+            self.new_infection(time, node_id, generation, house_id)
 
     def increment(self, time):
         """
@@ -162,10 +202,10 @@ class Infection:
                 # How many of the contacts are outside household contacts
                 outside_household_contacts = contacts_made - local_contacts
 
-            if self.contact_rate_reduction:
+            if self.contact_rate_reduction_behaviour:
                 outside_household_contacts = npr.binomial(
                     outside_household_contacts,
-                    1 - self.contact_rate_reduction.get_contact_rate_reduction(node)
+                    1 - self.get_contact_rate_reduction(node)
                 )
 
             # Within household, how many of the infections would cause new infections
@@ -323,7 +363,7 @@ class Infection:
         infecting_household.spread_to_ids.append(house_id)
 
         # Create a new household, since the infection was outside the household
-        self.new_household.new_household(time=time,
+        self.new_household(time=time,
                            new_household_number=house_id,
                            generation=infecting_household.generation + 1,
                            infected_by=infecting_node.household_id,
@@ -331,7 +371,7 @@ class Infection:
                            infected_by_node=infecting_node.node_id)
 
         # add a new infection in the house just created
-        self.new_infection.new_infection(time=time,
+        self.new_infection(time=time,
                            node_count=node_count,
                            generation=infecting_node.generation + 1,
                            household_id=house_id,
@@ -356,12 +396,12 @@ class Infection:
         infecting_node_household = infecting_node.household()
 
         # Adds the new infection to the network
-        self.new_infection.new_infection(time=time,
-                                         node_count=node_count,
-                                         generation=infecting_node.generation + 1,
-                                         household_id=infecting_node_household.house_id,
-                                         serial_interval=serial_interval,
-                                         infecting_node=infecting_node)
+        self.new_infection(time=time,
+                           node_count=node_count,
+                           generation=infecting_node.generation + 1,
+                           household_id=infecting_node_household.house_id,
+                           serial_interval=serial_interval,
+                           infecting_node=infecting_node)
 
         # Add the edge to the graph and give it the default label if the house is not
         # traced/isolated
@@ -481,7 +521,7 @@ class NewInfectionBehaviour:
                       node_count: int,
                       generation: int,
                       household_id: int,
-                      test_delay: int=0,
+                      test_delay: int = 0,
                       serial_interval=None,
                       infecting_node: Optional[Node] = None,
                       additional_attributes: Optional[dict] = None):
@@ -495,7 +535,7 @@ class NewInfectionHousehold(NewInfectionBehaviour):
                       node_count: int,
                       generation: int,
                       household_id: int,
-                      test_delay: int=0,
+                      test_delay: int = 0,
                       serial_interval=None,
                       infecting_node: Optional[Node] = None,
                       additional_attributes: Optional[dict] = None):
@@ -588,7 +628,7 @@ class NewInfectionContactModelTest(NewInfectionBehaviour):
                       node_count: int,
                       generation: int,
                       household_id: int,
-                      test_delay: int=0,
+                      test_delay: int = 0,
                       serial_interval=None,
                       infecting_node: Optional[NodeContactModel] = None,
                       additional_attributes: Optional[dict] = None):
@@ -723,13 +763,13 @@ class ContactRateReductionBehaviour:
     def __init__(self, infection: Infection):
         self._infection = infection
 
-    def get_contact_rate_reduction(self, node):
+    def get_contact_rate_reduction(self, node) -> int:
         pass
 
 
 class ContactRateReductionHousehold(ContactRateReductionBehaviour):
 
-    def get_contact_rate_reduction(self, node):
+    def get_contact_rate_reduction(self, node) -> int:
         """Returns a contact rate reduction, depending upon a nodes current status and various
         isolation parameters
         """
@@ -745,7 +785,7 @@ class ContactRateReductionHousehold(ContactRateReductionBehaviour):
 
 class ContactRateReductionContactModelTest(ContactRateReductionBehaviour):
 
-    def get_contact_rate_reduction(self, node):
+    def get_contact_rate_reduction(self, node) -> int:
         """This method overides the default behaviour. Previously the overide behaviour allowed the global
         contact reduction to vary by household size.
 
