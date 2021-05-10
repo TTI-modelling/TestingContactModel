@@ -5,7 +5,7 @@ from household_contact_tracing.network import Network, Household, EdgeType
 
 
 class ContactTracing:
-    """ Class for contract tracing  """
+    """ 'Context' class for contact tracing processes/strategies (Strategy pattern) """
 
     def __init__(self, network: Network, params: dict):
         self._network = network

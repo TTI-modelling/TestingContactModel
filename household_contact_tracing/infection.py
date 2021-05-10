@@ -8,7 +8,7 @@ from household_contact_tracing.network import Node, NodeContactModel, EdgeType, 
 
 
 class Infection:
-    """ Class for Infection processes """
+    """ 'Context' class for infection processes/strategies (Strategy pattern) """
 
     def __init__(self, network: Network, params: dict):
         self._network = network
