@@ -146,7 +146,7 @@ class Infection:
                       node_count: int,
                       generation: int,
                       household_id: int,
-                      test_delay: int=0,
+                      test_delay: int = 0,
                       serial_interval=None,
                       infecting_node: Optional[Node] = None,
                       additional_attributes=None):
@@ -197,7 +197,8 @@ class Infection:
                 contacts_made = self.contacts_made_today(household.size)
 
                 # How many of the contacts are within the household
-                local_contacts = npr.binomial(household.size - 1, self.local_contact_probs[household.size - 1])
+                local_contacts = npr.binomial(household.size - 1,
+                                              self.local_contact_probs[household.size - 1])
 
                 # How many of the contacts are outside household contacts
                 outside_household_contacts = contacts_made - local_contacts
@@ -209,8 +210,10 @@ class Infection:
                 )
 
             # Within household, how many of the infections would cause new infections
-            # These contacts may be made with someone who is already infected, and so they will again be thinned
-            local_infection_probs = self.get_infection_prob(local=True, infectious_age=days_since_infected,
+            # These contacts may be made with someone who is already infected so they
+            # will be thinned again
+            local_infection_probs = self.get_infection_prob(local=True,
+                                                            infectious_age=days_since_infected,
                                                             asymptomatic=node.asymptomatic)
 
             local_infective_contacts = npr.binomial(
@@ -219,13 +222,14 @@ class Infection:
             )
 
             for _ in range(local_infective_contacts):
-                # A further thinning has to happen since each attempt may choose an already infected person
-                # That is to say, if everyone in your house is infected, you have 0 chance to infect a new person in your house
+                # A further thinning has to happen since each attempt may choose an
+                # already infected person. That is to say, if everyone in your house is infected,
+                # you have 0 chance to infect a new person in your house
 
                 # A one represents a susceptibles node in the household
                 # A 0 represents an infected member of the household
-                # We choose a random subset of this vector of length local_infective_contacts to determine infections
-                # i.e we are choosing without replacement
+                # We choose a random subset of this vector of length local_infective_contacts
+                # to determine infections, i.e we are choosing without replacement
                 household_composition = [1] * household.susceptibles + [0] * (
                             household.size - 1 - household.susceptibles)
                 within_household_new_infections = sum(
@@ -243,7 +247,8 @@ class Infection:
             node.outside_house_contacts_made += outside_household_contacts
 
             # How many outside household contacts cause new infections
-            global_infection_probs = self.get_infection_prob(local=False, infectious_age=days_since_infected,
+            global_infection_probs = self.get_infection_prob(local=False,
+                                                             infectious_age=days_since_infected,
                                                              asymptomatic=node.asymptomatic)
             outside_household_new_infections = npr.binomial(
                 outside_household_contacts,
@@ -345,9 +350,7 @@ class Infection:
             else:
                 return self.symptomatic_global_infection_probs[infectious_age]
 
-    def new_outside_household_infection(self,
-                                        time: int,
-                                        infecting_node: 'Node',
+    def new_outside_household_infection(self, time: int, infecting_node: Node,
                                         serial_interval: Optional[int]):
         # We assume all new outside household infections are in a new household
         # i.e: You do not infect 2 people in a new household
@@ -383,7 +386,8 @@ class Infection:
         self._network.graph.edges[infecting_node.node_id, node_count].update(
             {"edge_type": EdgeType.default.name})
 
-    def new_within_household_infection(self, time, infecting_node: Node, serial_interval: Optional[int]):
+    def new_within_household_infection(self, time, infecting_node: Node,
+                                       serial_interval: Optional[int]):
         """Add a new node to the network.
 
         The new node will be a member of the same household as the infecting node.
@@ -586,7 +590,8 @@ class NewInfectionHousehold(NewInfectionBehaviour):
         default_additional_attributes = {}
 
         if additional_attributes:
-            default_additional_attributes = {**default_additional_attributes, **additional_attributes}
+            default_additional_attributes = {**default_additional_attributes,
+                                             **additional_attributes}
 
         isolation_uptake = self._infection.will_uptake_isolation()
 
@@ -595,27 +600,20 @@ class NewInfectionHousehold(NewInfectionBehaviour):
         else:
             node_is_isolated = False
 
-        self._network.add_node(
-            node_id=node_count,
-            time=time,
-            generation=generation,
-            household=household_id,
-            isolated=node_is_isolated,
-            will_uptake_isolation=isolation_uptake,
-            propensity_imperfect_isolation=self._infection.get_propensity_imperfect_isolation(),
-            asymptomatic=asymptomatic,
-            contact_traced=household.contact_traced,
-            symptom_onset_time=symptom_onset_time,
-            pseudo_symptom_onset_time=pseudo_symptom_onset_time,
-            serial_interval=serial_interval,
-            recovery_time=recovery_time,
-            will_report_infection=will_report_infection,
-            time_of_reporting=time_of_reporting,
-            has_contact_tracing_app=has_trace_app,
-            testing_delay=test_delay,
-            additional_attributes=default_additional_attributes,
-            infecting_node=infecting_node,
-        )
+        self._network.add_node(node_id=node_count, time=time, generation=generation,
+                               household=household_id, isolated=node_is_isolated,
+                               will_uptake_isolation=isolation_uptake,
+                               propensity_imperfect_isolation=self._infection.get_propensity_imperfect_isolation(),
+                               asymptomatic=asymptomatic, contact_traced=household.contact_traced,
+                               symptom_onset_time=symptom_onset_time,
+                               pseudo_symptom_onset_time=pseudo_symptom_onset_time,
+                               serial_interval=serial_interval, recovery_time=recovery_time,
+                               will_report_infection=will_report_infection,
+                               time_of_reporting=time_of_reporting,
+                               has_contact_tracing_app=has_trace_app,
+                               testing_delay=test_delay,
+                               additional_attributes=default_additional_attributes,
+                               infecting_node=infecting_node)
 
         # Each house now stores the ID's of which nodes are stored inside the house,
         # so that quarantining can be done at the household level
@@ -624,18 +622,13 @@ class NewInfectionHousehold(NewInfectionBehaviour):
 
 class NewInfectionContactModelTest(NewInfectionBehaviour):
 
-    def new_infection(self,
-                      time: int,
-                      node_count: int,
-                      generation: int,
-                      household_id: int,
-                      test_delay: int = 0,
-                      serial_interval=None,
+    def new_infection(self, time: int, node_count: int, generation: int, household_id: int,
+                      test_delay: int = 0, serial_interval=None,
                       infecting_node: Optional[Node] = None,
                       additional_attributes: Optional[dict] = None):
         """Add a new infection to the model and network. Attributes are randomly generated.
 
-        This method passess additional attribute, relevant to the lateral flow testing.
+        This method passes additional attribute, relevant to the lateral flow testing.
 
         Args:
             node_count (int): The number of nodes already in the model
@@ -682,10 +675,11 @@ class NewInfectionContactModelTest(NewInfectionBehaviour):
         }
 
         if additional_attributes:
-            # if new additional attributes are passed, these overide the current additional
+            # if new additional attributes are passed, these override the current additional
             # attributes if they are the same value if they are different values, then they
             # are added to the dictionary
-            additional_attributes_with_defaults = {**default_additional_attributes, **additional_attributes}
+            additional_attributes_with_defaults = {**default_additional_attributes,
+                                                   **additional_attributes}
         else:
             additional_attributes_with_defaults = default_additional_attributes
 
@@ -725,7 +719,8 @@ class NewInfectionContactModelTest(NewInfectionBehaviour):
         default_additional_attributes = {}
 
         if additional_attributes_with_defaults:
-            default_additional_attributes = {**default_additional_attributes, **additional_attributes_with_defaults}
+            default_additional_attributes = {**default_additional_attributes,
+                                             **additional_attributes_with_defaults}
 
         isolation_uptake = self._infection.will_uptake_isolation()
 

@@ -52,7 +52,7 @@ class Network:
 
     @property
     def house_count(self):
-        return len(self.houses.house_dict)
+        return self.houses.count
 
     @property
     def node_count(self):
@@ -411,7 +411,8 @@ class Household:
             bool: Does the household contain a known infection
         """
         for household_node in self.nodes():
-            if max(household_node.symptom_onset_time, self.isolated_time) + household_node.testing_delay >= self.time_infected:
+            time_infection_known = max(household_node.symptom_onset_time, self.isolated_time) + household_node.testing_delay
+            if time_infection_known >= self.time_infected:
                 return True
         return False
 
@@ -464,7 +465,6 @@ class HouseholdCollection:
     def __init__(self, nodes: Network):
         self.house_dict: Dict[int, Household] = {}
         self.nodes = nodes
-        # TODO: put house_count in this class
 
     def add_household(self, house_id: int, house_size: int, time_infected: int, generation: int,
                       infected_by: int, infected_by_node: int, propensity_trace_app: bool,
