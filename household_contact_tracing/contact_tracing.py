@@ -1,7 +1,7 @@
-import numpy as np
+from __future__ import annotations
 import numpy.random as npr
 
-from household_contact_tracing.network import Network, Household, EdgeType
+from household_contact_tracing.network import Network, Household, EdgeType, Node, NodeContactModel
 
 
 class ContactTracing:
@@ -10,7 +10,7 @@ class ContactTracing:
     def __init__(self, network: Network, params: dict):
         self._network = network
 
-        # Declare behavours
+        # Declare behaviours
         self._contact_trace_household_behaviour = None
         self._increment_behaviour = None
         self._update_isolation_behaviour = None
@@ -34,27 +34,27 @@ class ContactTracing:
         return self._network
 
     @property
-    def update_isolation_behaviour(self) -> 'UpdateIsolationBehaviour':
+    def update_isolation_behaviour(self) -> UpdateIsolationBehaviour:
         return self._update_isolation_behaviour
 
     @update_isolation_behaviour.setter
-    def update_isolation_behaviour(self, update_isolation_behaviour: 'UpdateIsolationBehaviour'):
+    def update_isolation_behaviour(self, update_isolation_behaviour: UpdateIsolationBehaviour):
         self._update_isolation_behaviour = update_isolation_behaviour
 
     @property
-    def contact_trace_household_behaviour(self) -> 'ContactTraceHouseholdBehaviour':
+    def contact_trace_household_behaviour(self) -> ContactTraceHouseholdBehaviour:
         return self._contact_trace_household_behaviour
 
     @contact_trace_household_behaviour.setter
-    def contact_trace_household_behaviour(self, contact_trace_household_behaviour: 'ContactTraceHouseholdBehaviour'):
+    def contact_trace_household_behaviour(self, contact_trace_household_behaviour: ContactTraceHouseholdBehaviour):
         self._contact_trace_household_behaviour= contact_trace_household_behaviour
 
     @property
-    def increment_behaviour(self) -> 'IncrementContactTracingBehaviour':
+    def increment_behaviour(self) -> IncrementContactTracingBehaviour:
         return self._increment_behaviour
 
     @increment_behaviour.setter
-    def increment_behaviour(self, increment_behaviour: 'IncrementContactTracingBehaviour'):
+    def increment_behaviour(self, increment_behaviour: IncrementContactTracingBehaviour):
         self._increment_behaviour = increment_behaviour
 
     def update_isolation(self, time: int):
@@ -80,6 +80,7 @@ class ContactTracing:
             return 0
         else:
             return round(self.test_delay)
+
 
 #Todo - Peter: for Network?  All UpdateIsolation Behaviours below and sub-classes???
 class UpdateIsolationBehaviour:
@@ -404,7 +405,7 @@ class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
             # Update the list of traced households from this one
             house_from.contact_traced_household_ids.append(house_to.house_id)
 
-            # Assign the household a contact tracing index, 1 more than it's parent tracer
+            # Assign the household a contact tracing index, 1 more than its parent tracer
             house_to.contact_tracing_index = house_from.contact_tracing_index + 1
 
             # work out the time delay
@@ -468,7 +469,7 @@ class IncrementContactTracingUK(IncrementContactTracingHousehold):
         # TODO update the below - going to hospital is not included in the model
         """
         Performs a days worth of contact tracing by:
-        * Looking for nodes that have been admitted to hospital. Once a node is admitted to hospital, it's house is isolated
+        * Looking for nodes that have been admitted to hospital. Once a node is admitted to hospital, its house is isolated
         * Looks for houses where the contact tracing delay is over and moves them to the contact traced state
         * Looks for houses in the contact traced state, and checks them for symptoms. If any of them have symptoms, the house is isolated
 
@@ -495,7 +496,7 @@ class IncrementContactTracingUK(IncrementContactTracingHousehold):
             if node.received_result and not node.propagated_contact_tracing
         ]
 
-    def propagate_contact_tracing(self, node: 'Node', time: int):
+    def propagate_contact_tracing(self, node: Node, time: int):
         """
         To be called after a node in a household either reports their symptoms, and gets tested, when a household that
         is under surveillance develops symptoms + gets tested.
@@ -565,7 +566,7 @@ class IncrementContactTracingUK(IncrementContactTracingHousehold):
             and not node.received_result
         ]
 
-    def pcr_test_node(self, node: 'Node', time: int):
+    def pcr_test_node(self, node: Node, time: int):
         """Given the nodes infectious age, will that node test positive
 
         Args:
@@ -604,7 +605,7 @@ class IncrementContactTracingUK(IncrementContactTracingHousehold):
             # Update the list of traced households from this one
             house_from.contact_traced_household_ids.append(house_to.house_id)
 
-            # Assign the household a contact tracing index, 1 more than it's parent tracer
+            # Assign the household a contact tracing index, 1 more than its parent tracer
             house_to.contact_tracing_index = house_from.contact_tracing_index + 1
 
             # work out the time delay
@@ -676,7 +677,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                    and not node.propagated_contact_tracing
             ]
 
-    def propagate_contact_tracing(self, node: 'NodeContactModel', time: int):
+    def propagate_contact_tracing(self, node: NodeContactModel, time: int):
         """
         To be called after a node in a household either reports their symptoms, and gets tested, when a household
         that is under surveillance develops symptoms + gets tested.
@@ -797,7 +798,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                 and not node.being_lateral_flow_tested
             ]
 
-    def pcr_test_node(self, node: 'NodeContactModel', time: int):
+    def pcr_test_node(self, node: NodeContactModel, time: int):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
