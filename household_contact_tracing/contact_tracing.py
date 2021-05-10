@@ -1,7 +1,7 @@
 from __future__ import annotations
 import numpy.random as npr
 
-from household_contact_tracing.network import Network, Household, EdgeType, Node, NodeContactModel
+from household_contact_tracing.network import Network, Household, EdgeType, Node, TestType
 
 
 class ContactTracing:
@@ -144,7 +144,7 @@ class UpdateIsolationContactModelTest(UpdateIsolationBehaviour):
         new_pcr_test_results = [
             node for node in self._network.all_nodes()
             if node.positive_test_time == time
-            and node.avenue_of_testing == 'PCR'
+            and node.avenue_of_testing == TestType.PCR
             and node.received_positive_test_result
         ]
 
@@ -303,7 +303,7 @@ class IncrementContactTracingBehaviour:
     def increment_contact_tracing(self, time: int):
         pass
 
-    def receive_pcr_test_results(time):
+    def receive_pcr_test_results(self, time: int):
         pass
 
 
@@ -654,7 +654,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
             self.propagate_contact_tracing(node, time)
             for node in self._network.all_nodes()
             if node.received_positive_test_result
-               and node.avenue_of_testing == 'PCR'
+               and node.avenue_of_testing == TestType.pcr
                and not node.propagated_contact_tracing
         ]
 
@@ -663,7 +663,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                 self.propagate_contact_tracing(node, time)
                 for node in self._network.all_nodes()
                 if node.received_positive_test_result
-                   and node.avenue_of_testing == 'LFA'
+                   and node.avenue_of_testing == TestType.lfa
                    and not node.propagated_contact_tracing
             ]
 
@@ -673,11 +673,11 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                 for node in self._network.all_nodes()
                 if node.confirmatory_PCR_test_result_time == time
                    and node.confirmatory_PCR_result_was_positive
-                   and node.avenue_of_testing == 'LFA'
+                   and node.avenue_of_testing == TestType.lfa
                    and not node.propagated_contact_tracing
             ]
 
-    def propagate_contact_tracing(self, node: NodeContactModel, time: int):
+    def propagate_contact_tracing(self, node: Node, time: int):
         """
         To be called after a node in a household either reports their symptoms, and gets tested, when a household
         that is under surveillance develops symptoms + gets tested.
@@ -700,7 +700,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
 
             # if the infector is not already isolated and the time the node was infected captured by going backwards
             # the node.time_infected is when they had a contact with their infector.
-            if node.avenue_of_testing == 'PCR':
+            if node.avenue_of_testing == TestType.pcr:
 
                 if not infected_by_node.isolated and node.time_infected >= node.symptom_onset_time - self.number_of_days_to_trace_backwards:
 
@@ -711,7 +711,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                         days_since_contact_occurred=time - node.time_infected,
                         time=time)
 
-            elif node.avenue_of_testing == 'LFA':
+            elif node.avenue_of_testing == TestType.lfa:
 
                 if not self.LFA_testing_requires_confirmatory_PCR:
 
@@ -734,7 +734,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
 
             child_node = self._network.node(child_node_id)
 
-            if node.avenue_of_testing == 'PCR':
+            if node.avenue_of_testing == TestType.pcr:
 
                 # If the node was infected 2 days prior to symptom onset, or 7 days post and is not already isolated
                 if time_t >= node.symptom_onset_time - self.number_of_days_to_trace_backwards and \
@@ -747,7 +747,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                         days_since_contact_occurred=time - time_t,
                         time=time)
 
-            elif node.avenue_of_testing == 'LFA':
+            elif node.avenue_of_testing == TestType.lfa:
 
                 if not self.LFA_testing_requires_confirmatory_PCR:
 
@@ -798,7 +798,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                 and not node.being_lateral_flow_tested
             ]
 
-    def pcr_test_node(self, node: NodeContactModel, time: int):
+    def pcr_test_node(self, node: Node, time: int):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
@@ -811,10 +811,10 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
 
         prob_positive_result = self.prob_testing_positive_pcr_func(infectious_age_when_tested)
 
+        node.avenue_of_testing = TestType.pcr
+
         if npr.binomial(1, prob_positive_result) == 1:
             node.received_positive_test_result = True
-            node.avenue_of_testing = 'PCR'
             node.positive_test_time = time
         else:
             node.received_positive_test_result = False
-            node.avenue_of_testing = 'PCR'

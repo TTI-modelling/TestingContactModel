@@ -1,9 +1,9 @@
-from typing import List, Optional, Callable
+from typing import List, Callable
 import numpy.random as npr
 import os
 
-from household_contact_tracing.network import Network, NetworkContractModel, Household, Node, \
-    NodeContactModel, EdgeType, graphs_isomorphic
+from household_contact_tracing.network import Network, NetworkContactModel, Household, Node, \
+    graphs_isomorphic, InfectionStatus, TestType
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
@@ -14,7 +14,7 @@ from household_contact_tracing.infection import Infection, \
 from household_contact_tracing.contact_tracing import ContactTracing, \
     ContactTraceHousehold, ContactTraceHouseholdUK, ContactTraceHouseholdContactModelTest, \
     IncrementContactTracingHousehold, IncrementContactTracingUK, IncrementContactTracingContactModelTest, \
-    UpdateIsolationHousehold, UpdateIsolationUK, UpdateIsolationContactModelTest
+    UpdateIsolationHousehold, UpdateIsolationUK
 
 
 class household_sim_contact_tracing(BPSimulationModel):
@@ -105,12 +105,6 @@ class household_sim_contact_tracing(BPSimulationModel):
     def instantiate_contact_rate_reduction(self) -> ContactRateReductionHousehold:
         return ContactRateReductionHousehold(self.infection)
 
-    def contact_trace_delay(self, app_traced_edge) -> int:
-        if app_traced_edge:
-            return 0
-        else:
-            return round(self.contact_trace_delay)
-
     def perform_recoveries(self):
         """
         Loops over all nodes in the branching process and determine recoveries.
@@ -158,7 +152,7 @@ class household_sim_contact_tracing(BPSimulationModel):
             # (if they do not self-report they will not isolate; if contact traced, they will be quarantining for the quarantine duration)          
             #if node.household_id == node.infected_by_node().household_id:
             if node.infected_by_node():
-                if (node.infection_status(self.time) == "unknown_infection") & node.isolated:
+                if (node.infection_status(self.time) == InfectionStatus.unknown_infection) & node.isolated:
                     if node.locally_infected():
 
                         if self.time >= (node.household().earliest_recognised_symptom_onset(model_time = self.time) + self.quarantine_duration):
@@ -187,7 +181,9 @@ class household_sim_contact_tracing(BPSimulationModel):
         """
         for node in self.network.all_nodes():
             if node.isolated:
-                if node.infection_status(self.time)=="known_infection" or node.infection_status(self.time)=="self_recognised_infection":
+                infection_status = node.infection_status(self.time)
+                if infection_status in [InfectionStatus.known_infection,
+                                        infection_status.self_recognised_infection]:
                     if self.time >= node.symptom_onset_time + self.self_isolation_duration:
                         node.isolated = False
                         node.completed_isolation = True
@@ -233,7 +229,7 @@ class household_sim_contact_tracing(BPSimulationModel):
                 Announces start/stopped and step increments to observers
 
         Arguments:
-            node: num steps -- The number of step increments to perform
+            num steps -- The number of step increments to perform
             infection_threshold -- The maximum number of infectious nodes allowed, befure stopping stimulation
 
         Returns:
@@ -326,7 +322,7 @@ class ContactModelTest(uk_model):
                                                        self.number_of_days_prior_to_LFA_result_to_trace)
 
     def instantiate_network(self):
-        return NetworkContractModel()
+        return NetworkContactModel()
 
     def instantiate_new_household(self) -> NewHouseholdContactModelTest:
         return NewHouseholdContactModelTest(self.network, self.infection)
@@ -337,11 +333,11 @@ class ContactModelTest(uk_model):
     def instantiate_contact_rate_reduction(self) -> ContactRateReductionContactModelTest:
         return ContactRateReductionContactModelTest(self.infection)
 
-    def lfa_test_node(self, node: NodeContactModel):
+    def lfa_test_node(self, node: Node):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
-            node (NodeContactModel): The node to be tested today
+            node (Node): The node to be tested today
         """
 
         infectious_age = self.time - node.time_infected
@@ -353,7 +349,7 @@ class ContactModelTest(uk_model):
         else:
             return False
 
-    def will_lfa_test_today(self, node: NodeContactModel) -> bool:
+    def will_lfa_test_today(self, node: Node) -> bool:
 
         if node.propensity_to_miss_lfa_tests:
 
@@ -479,7 +475,7 @@ class ContactModelTest(uk_model):
             if node.will_uptake_isolation:
                 node.isolated = True
 
-            node.avenue_of_testing = 'LFA'
+            node.avenue_of_testing = TestType.lfa
             node.positive_test_time = self.time
             node.being_lateral_flow_tested = False
 
@@ -487,11 +483,11 @@ class ContactModelTest(uk_model):
 
                 self.apply_policy_for_household_contacts_of_a_positive_case(node.household())
 
-    def take_confirmatory_pcr_test(self, node: NodeContactModel):
+    def take_confirmatory_pcr_test(self, node: Node):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
-            node (NodeContactModel): The node to be tested today
+            node (Node): The node to be tested today
         """
         
         infectious_age_when_tested = self.time - node.time_infected
@@ -525,47 +521,9 @@ class ContactModelTest(uk_model):
         if self.LFA_testing_requires_confirmatory_PCR:
             self.confirmatory_pcr_test_LFA_nodes()
 
-    def infection_status(self, time_now: int) -> str:
-        if self.contact_traced:
-            if self.positive_test_time <= time_now:
-                return "known_infection"
-            if self.symptom_onset_time <= time_now:
-                return "self_reported_infection"     
-        
-        else:
-            if self.positive_test_time <= time_now:
-                return "known_infection"
-            if self.time_of_reporting <= time_now:
-                return "self_recognised_infection"
-
-        return "unknown_infection"   
-        
-    def earliest_recognised_symptom_onset_or_lateral_flow_test(self, model_time: int):
-        """
-        Return infinite if no node in household has recognised symptom onset
-        """
-        recognised_symptom_onsets = [
-            household_node.symptom_onset_time
-            for household_node in self.network.nodes()
-            if household_node.infection_status(model_time) in ("known_infection", "self_recognised_infection")
-        ]
-
-        positive_test_times = [
-            household_node.positive_test_time
-            for household_node in self.network.nodes()
-            if household_node.infection_status(model_time) in ("known_infection")
-        ]
-
-        recognised_symptom_and_positive_test_times = recognised_symptom_onsets + positive_test_times
-
-        if recognised_symptom_and_positive_test_times != []:
-            return min(recognised_symptom_and_positive_test_times)
-        else:
-            return float('inf')        
-
     def release_nodes_from_lateral_flow_testing_or_isolation(self):
-            """If a node has completed the quarantine according to the following rules, they are released from
-            quarantine.
+            """If a node has completed the quarantine according to the following rules, they are
+            released from quarantine.
 
             You are released from isolation if:
                 * it has been 10 days since your symptoms onset (Changed from 7 to reflect updated policy, Nov 2020)
@@ -586,8 +544,10 @@ class ContactModelTest(uk_model):
         """
         for node in self.network.all_nodes():
             if node.isolated:
-                if node.infection_status(self.time)=="known_infection" or node.infection_status(self.time)=="self_recognised_infection":
-                    if node.avenue_of_testing == "LFA":
+                infection_status = node.infection_status(self.time)
+                if infection_status in [InfectionStatus.known_infection,
+                                        InfectionStatus.self_recognised_infection]:
+                    if node.avenue_of_testing == TestType.lfa:
                         if self.time >= node.positive_test_time + self.self_isolation_duration:
                             node.isolated = False
                             node.completed_isolation = True
