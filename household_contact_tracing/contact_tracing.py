@@ -1,7 +1,7 @@
 from __future__ import annotations
 import numpy.random as npr
 
-from household_contact_tracing.network import Network, Household, EdgeType, Node, NodeContactModel
+from household_contact_tracing.network import Network, Household, EdgeType, Node
 
 
 class ContactTracing:
@@ -677,7 +677,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                    and not node.propagated_contact_tracing
             ]
 
-    def propagate_contact_tracing(self, node: NodeContactModel, time: int):
+    def propagate_contact_tracing(self, node: Node, time: int):
         """
         To be called after a node in a household either reports their symptoms, and gets tested, when a household
         that is under surveillance develops symptoms + gets tested.
@@ -798,7 +798,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                 and not node.being_lateral_flow_tested
             ]
 
-    def pcr_test_node(self, node: NodeContactModel, time: int):
+    def pcr_test_node(self, node: Node, time: int):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:

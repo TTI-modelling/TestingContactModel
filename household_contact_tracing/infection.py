@@ -4,7 +4,7 @@ from typing import Optional
 import sys
 
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
-from household_contact_tracing.network import Node, NodeContactModel, EdgeType, Network
+from household_contact_tracing.network import Node, EdgeType, Network
 
 
 class Infection:
@@ -630,7 +630,7 @@ class NewInfectionContactModelTest(NewInfectionBehaviour):
                       household_id: int,
                       test_delay: int = 0,
                       serial_interval=None,
-                      infecting_node: Optional[NodeContactModel] = None,
+                      infecting_node: Optional[Node] = None,
                       additional_attributes: Optional[dict] = None):
         """Add a new infection to the model and network. Attributes are randomly generated.
 

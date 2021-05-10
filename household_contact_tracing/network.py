@@ -70,8 +70,7 @@ class Network:
     def add_node(self, node_id, time, generation, household, isolated, will_uptake_isolation,
                  propensity_imperfect_isolation, asymptomatic, symptom_onset_time,
                  pseudo_symptom_onset_time, serial_interval, recovery_time, will_report_infection,
-                 time_of_reporting, has_contact_tracing_app, testing_delay, contact_traced,
-        testing_delay=0,
+                 time_of_reporting, has_contact_tracing_app, contact_traced, testing_delay=0,
                  additional_attributes: Optional[dict] = None,
                  infecting_node: Optional[Node] = None, completed_isolation=False) -> Node:
         self.graph.add_node(node_id)
@@ -85,8 +84,8 @@ class Network:
                     will_report_infection=will_report_infection,
                     time_of_reporting=time_of_reporting,
                     has_contact_tracing_app=has_contact_tracing_app,
-                    testing_delay=testing_delay,
                     contact_traced=contact_traced,
+                    testing_delay=testing_delay,
                     additional_attributes=additional_attributes,
                     infecting_node=infecting_node,
                     completed_isolation=completed_isolation)
@@ -195,7 +194,7 @@ class Node:
         time_of_reporting: int,
         has_contact_tracing_app: bool,
         contact_traced: bool,
-        testing_delay: int=0,
+        testing_delay: int = 0,
         completed_isolation=False,
         had_contacts_traced=False,
         outside_house_contacts_made=0,
@@ -436,7 +435,6 @@ class Household:
             return min(recognised_symptom_and_positive_test_times)
         else:
             return float('inf')
-
 
 
 class HouseholdCollection:
