@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 import numpy.random as npr
 from typing import Optional
@@ -44,7 +45,6 @@ class Infection:
         self.node_will_uptake_isolation_prob = 1
         self.propensity_imperfect_quarantine = 0
         self.global_contact_reduction_imperfect_quarantine = 0
-
 
         self.node_prob_will_take_up_lfa_testing = 1
         self.propensity_risky_behaviour_lfa_testing = 0
@@ -101,27 +101,27 @@ class Infection:
         return self._network
 
     @property
-    def new_household_behaviour(self) -> 'NewHouseholdBehaviour':
+    def new_household_behaviour(self) -> NewHouseholdBehaviour:
         return self._new_household_behaviour
 
     @new_household_behaviour.setter
-    def new_household_behaviour(self, new_household_behaviour: 'NewHouseholdBehaviour'):
+    def new_household_behaviour(self, new_household_behaviour: NewHouseholdBehaviour):
         self._new_household_behaviour = new_household_behaviour
 
     @property
-    def new_infection_behaviour(self) -> 'NewInfectionBehaviour':
+    def new_infection_behaviour(self) -> NewInfectionBehaviour:
         return self._new_infection_behaviour
 
     @new_infection_behaviour.setter
-    def new_infection_behaviour(self, new_infection_behaviour: 'NewInfectionBehaviour'):
+    def new_infection_behaviour(self, new_infection_behaviour: NewInfectionBehaviour):
         self._new_infection_behaviour = new_infection_behaviour
 
     @property
-    def contact_rate_reduction_behaviour(self) -> 'ContactRateReductionBehaviour':
+    def contact_rate_reduction_behaviour(self) -> ContactRateReductionBehaviour:
         return self._contact_rate_reduction_behaviour
 
     @contact_rate_reduction_behaviour.setter
-    def contact_rate_reduction_behaviour(self, contact_rate_reduction_behaviour: 'ContactRateReductionBehaviour'):
+    def contact_rate_reduction_behaviour(self, contact_rate_reduction_behaviour: ContactRateReductionBehaviour):
         self._contact_rate_reduction_behaviour = contact_rate_reduction_behaviour
 
     def new_household(self,
@@ -437,6 +437,7 @@ class Infection:
     def has_contact_tracing_app(self) -> bool:
         return npr.binomial(1, self.prob_has_trace_app) == 1
 
+
 class NewHouseholdBehaviour:
     def __init__(self, network: Network, infection: Infection):
         self._network = network
@@ -681,8 +682,9 @@ class NewInfectionContactModelTest(NewInfectionBehaviour):
         }
 
         if additional_attributes:
-            # if new additional attributes are passed, these overide the current additional attributes if they are the same value
-            # if they are different values, then they are added to the dictionary
+            # if new additional attributes are passed, these overide the current additional
+            # attributes if they are the same value if they are different values, then they
+            # are added to the dictionary
             additional_attributes_with_defaults = {**default_additional_attributes, **additional_attributes}
         else:
             additional_attributes_with_defaults = default_additional_attributes
@@ -786,13 +788,14 @@ class ContactRateReductionHousehold(ContactRateReductionBehaviour):
 class ContactRateReductionContactModelTest(ContactRateReductionBehaviour):
 
     def get_contact_rate_reduction(self, node) -> int:
-        """This method overides the default behaviour. Previously the overide behaviour allowed the global
-        contact reduction to vary by household size.
+        """This method overrides the default behaviour. Previously the override behaviour allowed
+        he global contact reduction to vary by household size.
 
-        We override this behaviour, so that we can vary the global contact reduction by whether a node is
-        isolating or being lfa tested or whether they engage in risky behaviour while they are being lfa tested.
+        We override this behaviour, so that we can vary the global contact reduction by whether a
+        node is isolating or being lfa tested or whether they engage in risky behaviour while they
+         are being lfa tested.
 
-        Remember that a contact rate reduction of 1 implies that 100% of conacts are stopped.
+        Remember that a contact rate reduction of 1 implies that 100% of contacts are stopped.
         """
         # the isolated status should never apply to an individual who will not uptake isolation
 

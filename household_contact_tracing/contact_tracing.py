@@ -303,7 +303,7 @@ class IncrementContactTracingBehaviour:
     def increment_contact_tracing(self, time: int):
         pass
 
-    def receive_pcr_test_results(time):
+    def receive_pcr_test_results(self, time: int):
         pass
 
 
