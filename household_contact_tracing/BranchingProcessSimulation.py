@@ -211,7 +211,7 @@ class household_sim_contact_tracing(BPSimulationModel):
         # increment time
         self.time += 1
 
-    def run_simulation(self, num_steps: int, infection_threshold: int = 100000) -> None:
+    def run_simulation(self, num_steps: int, infection_threshold: int = 1000) -> None:
         """ Runs the simulation:
                 Sets model state,
                 Announces start/stopped and step increments to observers
@@ -242,7 +242,7 @@ class household_sim_contact_tracing(BPSimulationModel):
             BPSimulationModel.completed_step_increment(self)
 
             # Simulation ends if num_steps is reached
-            if self.time == num_steps:
+            if self.time >= num_steps:
                 self.state.timed_out()
             elif self.network.count_non_recovered_nodes() == 0:
                 self.state.go_extinct()

@@ -14,7 +14,7 @@ class BPSimulationModel(SimulationModelInterface):
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
     def __init__(self):
-        
+
         # Set observer lists
         self._observers_param_change = []
         self._observers_graph_change = []

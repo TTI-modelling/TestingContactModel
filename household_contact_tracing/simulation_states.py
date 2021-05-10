@@ -109,7 +109,9 @@ class ExtinctState(SimulationState):
 
     def start_run(self):
         """ The simulation has started running."""
-        print('Can\'t start run from extinct state. Re-initialise model')
+        print('Changing to running state')
+        self._simulation_model.state = self._simulation_model.running_state
+        self._simulation_model.notify_observers_state_change()
 
     def timed_out(self):
         """ The simulation timed out """
@@ -135,7 +137,9 @@ class TimedOutState(SimulationState):
 
     def start_run(self):
         """ The simulation has started running."""
-        print('Can\'t start run from timed-out state. Re-initialise model')
+        print('Changing to running state')
+        self._simulation_model.state = self._simulation_model.running_state
+        self._simulation_model.notify_observers_state_change()
 
     def timed_out(self):
         """ The simulation timed out """
@@ -161,7 +165,9 @@ class MaxNodesInfectiousState(SimulationState):
 
     def start_run(self):
         """ The simulation has started running."""
-        print('Can\'t start run from max infected nodes state. Re-initialise model')
+        print('Changing to running state')
+        self._simulation_model.state = self._simulation_model.running_state
+        self._simulation_model.notify_observers_state_change()
 
     def timed_out(self):
         """ The simulation timed out """

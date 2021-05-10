@@ -32,12 +32,10 @@ def main():
     model = ContactModelTest(params, prob_testing_positive_function, prob_testing_positive_function)
 
     controller = SimulationController(model)
+    controller.set_show_all_graphs(True)
+    controller.run_simulation(9)
+    controller.run_simulation(11)
 
-    controller.run_simulation(20)
-
-    #controller.set_show_all_graphs(True)
-    #controller.reset()
-    #controller.run_simulation(10)
     recreate_pytest()
 
 
