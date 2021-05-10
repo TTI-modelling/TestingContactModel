@@ -3,7 +3,7 @@ import numpy.random as npr
 import os
 
 from household_contact_tracing.network import Network, NetworkContractModel, Household, Node, \
-    graphs_isomorphic, InfectionStatus
+    graphs_isomorphic, InfectionStatus, TestType
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
@@ -475,7 +475,7 @@ class ContactModelTest(uk_model):
             if node.will_uptake_isolation:
                 node.isolated = True
 
-            node.avenue_of_testing = 'LFA'
+            node.avenue_of_testing = TestType.lfa
             node.positive_test_time = self.time
             node.being_lateral_flow_tested = False
 
@@ -547,7 +547,7 @@ class ContactModelTest(uk_model):
                 infection_status = node.infection_status(self.time)
                 if infection_status in [InfectionStatus.known_infection,
                                         InfectionStatus.self_recognised_infection]:
-                    if node.avenue_of_testing == "LFA":
+                    if node.avenue_of_testing == TestType.lfa:
                         if self.time >= node.positive_test_time + self.self_isolation_duration:
                             node.isolated = False
                             node.completed_isolation = True

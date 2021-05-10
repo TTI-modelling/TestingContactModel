@@ -14,6 +14,32 @@ class EdgeType(Enum):
     app_traced = 4
 
 
+class NodeType(Enum):
+    default = 0
+    isolated = 1
+    had_contacts_traced = 2
+    received_pos_test_pcr = 3
+    received_neg_test_pcr = 4
+    confirmatory_pos_pcr_test = 5
+    confirmatory_neg_pcr_test = 6
+    received_pos_test_lfa = 7
+    being_lateral_flow_tested_isolated = 8
+    being_lateral_flow_tested_not_isolated = 9
+    symptomatic_will_report_infection = 10
+    symptomatic_will_not_report_infection = 11
+
+
+class InfectionStatus(Enum):
+    known_infection = 0
+    self_recognised_infection = 1
+    unknown_infection = 2
+
+
+class TestType(Enum):
+    pcr = 0
+    lfa = 1
+
+
 def graphs_isomorphic(graph1: nx.Graph, graph2: nx.Graph) -> bool:
     """Determine whether graphs have identical network structures."""
     return nx.is_isomorphic(graph1, graph2)
@@ -158,27 +184,6 @@ class NetworkContractModel(Network):
         return node
 
 
-class NodeType(Enum):
-    default = 0
-    isolated = 1
-    had_contacts_traced = 2
-    received_pos_test_pcr = 3
-    received_neg_test_pcr = 4
-    confirmatory_pos_pcr_test = 5
-    confirmatory_neg_pcr_test = 6
-    received_pos_test_lfa = 7
-    being_lateral_flow_tested_isolated = 8
-    being_lateral_flow_tested_not_isolated = 9
-    symptomatic_will_report_infection = 10
-    symptomatic_will_not_report_infection = 11
-
-
-class InfectionStatus(Enum):
-    known_infection = 0
-    self_recognised_infection = 1
-    unknown_infection = 2
-
-
 class Node:
     def __init__(
         self,
@@ -247,7 +252,7 @@ class Node:
         self.time_started_lfa_testing = None
         self.received_positive_test_result = False
         self.received_result = None
-        self.avenue_of_testing: Optional[str] = None
+        self.avenue_of_testing: Optional[TestType] = None
         self.positive_test_time = None
         self.node_will_take_up_lfa_testing = None
         self.confirmatory_PCR_result_was_positive: Optional[bool] = None
@@ -321,15 +326,15 @@ class Node:
             return NodeType.symptomatic_will_report_infection.name
         elif not self.asymptomatic and not self.will_report_infection:
             return NodeType.symptomatic_will_not_report_infection.name
-        elif self.received_result and not self.received_positive_test_result and self.avenue_of_testing == 'PCR':
+        elif self.received_result and not self.received_positive_test_result and self.avenue_of_testing == TestType.pcr:
             return NodeType.received_neg_test_pcr.name
-        elif self.received_positive_test_result and self.avenue_of_testing == 'PCR':
+        elif self.received_positive_test_result and self.avenue_of_testing == TestType.pcr:
             return NodeType.received_pos_test_pcr.name
         elif self.taken_confirmatory_PCR_test and self.confirmatory_PCR_result_was_positive and self.time >= self.confirmatory_PCR_test_result_time:
             return NodeType.confirmatory_pos_pcr_test.name
         elif self.taken_confirmatory_PCR_test and not self.confirmatory_PCR_result_was_positive and self.time >= self.confirmatory_PCR_test_result_time:
             return NodeType.confirmatory_neg_pcr_test.name
-        elif self.received_positive_test_result and self.avenue_of_testing == 'LFA':
+        elif self.received_positive_test_result and self.avenue_of_testing == TestType.lfa:
             return NodeType.received_pos_test_lfa.name
         elif self.being_lateral_flow_tested and self.isolated:
             return NodeType.being_lateral_flow_tested_isolated.name
