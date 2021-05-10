@@ -55,7 +55,7 @@ class household_sim_contact_tracing(BPSimulationModel):
         self.contact_tracing.contact_trace_household = self.instantiate_contact_trace_household()
         self.contact_tracing.increment = self.instantiate_increment_contact_tracing()
 
-        # The simulation timer
+        # Set the simulated time to the start (days)
         self.time = 0
 
         # Calls the simulation reset function, which creates all the required dictionaries

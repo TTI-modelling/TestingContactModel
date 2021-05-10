@@ -29,7 +29,7 @@ class ContactTracing:
                 self.__dict__[param_name] = params[param_name]
 
     @property
-    def network(self):
+    def network(self) -> Network:
         return self._network
 
     @property
@@ -60,7 +60,7 @@ class ContactTracing:
         else:
             return round(self.test_delay)
 
-
+#Todo - Peter: for Network?  All ContactTraceHousehold Behaviours below and sub-classes???
 class ContactTraceHouseholdBehaviour:
 
     def __init__(self, network: Network):
@@ -69,6 +69,7 @@ class ContactTraceHouseholdBehaviour:
     def contact_trace_household(self, household: Household, time: int):
         pass
 
+    #Todo - Peter: for Network?
     def update_network(self, household: Household):
         """
         When a house is contact traced, we need to place all the nodes under surveillance.
@@ -87,6 +88,7 @@ class ContactTraceHouseholdBehaviour:
             for edge in household.within_house_edges
         ]
 
+    # Todo - Peter: for Network?
     def quarantine_traced_node(self, household):
         traced_node = self.find_traced_node(household)
 
@@ -95,18 +97,21 @@ class ContactTraceHouseholdBehaviour:
             #Todo: AG: Peter/Martyn checking 2nd operand is traced_node and not node (as before)
             traced_node.isolated = True
 
+    # Todo - Peter: for Network?
     def find_traced_node(self, household):
         # work out which was the traced node
         tracing_household = self._network.houses.household(household.being_contact_traced_from)
         traced_node_id = self._network.get_edge_between_household(household, tracing_household)[0]
         return self._network.node(traced_node_id)
 
+    # Todo - Peter: for Network?
     def isolate_household_if_symptomatic_nodes(self, household: Household, time: int):
         symptomatic_nodes = [node for node in household.nodes() if
                              node.symptom_onset_time <= time and not node.completed_isolation]
         if symptomatic_nodes:
             self.isolate_household(household, time)
 
+    # Todo - Peter: for Network?
     def isolate_household(self, household: Household, time: int):
         """
         Isolates a house so that all infectives in that household may no longer infect others.
@@ -260,7 +265,8 @@ class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
 
     def propagate_contact_tracing(self, household: Household, time: int):
         """
-        To be called after a node in a household either reports their symptoms, and gets tested, when a household that is under surveillance develops symptoms + gets tested.
+        To be called after a node in a household either reports their symptoms, and gets tested, when a household
+        that is under surveillance develops symptoms + gets tested.
         """
         # update the propagation data
         household.propagated_contact_tracing = True
@@ -321,6 +327,7 @@ class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
             self._contact_tracing.contact_trace_household.label_node_edges_between_houses(
                 house_to, house_from, EdgeType.failed_contact_tracing.name)
 
+    # Todo - Peter: for Network?
     def update_contact_tracing_index(self, time):
         for household in self._network.houses.all_households():
             # loop over households with non-zero indexes, those that have been contact traced but with
