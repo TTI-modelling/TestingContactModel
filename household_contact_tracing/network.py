@@ -315,31 +315,36 @@ class Node:
                     return InfectionStatus.self_recognised_infection
         return InfectionStatus.unknown_infection
 
-    def node_type(self):
+    def node_type(self) -> str:
         """Returns a node type, given the current status of the node.
         """
-        if self.isolated:
+        if self.being_lateral_flow_tested:
+            if self.isolated:
+                return NodeType.being_lateral_flow_tested_isolated.name
+            else:
+                return NodeType.being_lateral_flow_tested_not_isolated.name
+        elif self.isolated:
             return NodeType.isolated.name
         elif self.had_contacts_traced:
             return NodeType.had_contacts_traced.name
-        elif not self.asymptomatic and self.will_report_infection:
-            return NodeType.symptomatic_will_report_infection.name
-        elif not self.asymptomatic and not self.will_report_infection:
-            return NodeType.symptomatic_will_not_report_infection.name
-        elif self.received_result and not self.received_positive_test_result and self.avenue_of_testing == TestType.pcr:
+        elif not self.asymptomatic:
+            if self.will_report_infection:
+                return NodeType.symptomatic_will_report_infection.name
+            else:
+                return NodeType.symptomatic_will_not_report_infection.name
+        elif self.received_positive_test_result:
+            if self.avenue_of_testing == TestType.pcr:
+                return NodeType.received_pos_test_pcr.name
+            else:
+                return NodeType.received_pos_test_lfa.name
+        elif self.received_result and self.avenue_of_testing == TestType.pcr:
             return NodeType.received_neg_test_pcr.name
-        elif self.received_positive_test_result and self.avenue_of_testing == TestType.pcr:
-            return NodeType.received_pos_test_pcr.name
-        elif self.taken_confirmatory_PCR_test and self.confirmatory_PCR_result_was_positive and self.time >= self.confirmatory_PCR_test_result_time:
-            return NodeType.confirmatory_pos_pcr_test.name
-        elif self.taken_confirmatory_PCR_test and not self.confirmatory_PCR_result_was_positive and self.time >= self.confirmatory_PCR_test_result_time:
-            return NodeType.confirmatory_neg_pcr_test.name
-        elif self.received_positive_test_result and self.avenue_of_testing == TestType.lfa:
-            return NodeType.received_pos_test_lfa.name
-        elif self.being_lateral_flow_tested and self.isolated:
-            return NodeType.being_lateral_flow_tested_isolated.name
-        elif self.being_lateral_flow_tested and not self.isolated:
-            return NodeType.being_lateral_flow_tested_not_isolated.name
+        elif self.taken_confirmatory_PCR_test:
+            if self.time >= self.confirmatory_PCR_test_result_time:
+                if self.confirmatory_PCR_result_was_positive:
+                    return NodeType.confirmatory_pos_pcr_test.name
+                else:
+                    return NodeType.confirmatory_neg_pcr_test.name
         else:
             return NodeType.default.name
 
@@ -354,7 +359,7 @@ class Household:
         self.nodecollection = nodecollection
         self.house_id = house_id
         self.size = house_size                  # Size of the household
-        self.time_infected = time_infected               # The time at which the infection entered the household
+        self.time_infected = time_infected      # The time at which the infection entered the household
         self.susceptibles = house_size - 1      # How many susceptibles remain in the household
         self.isolated = False                   # Has the household been isolated, so there can be no more infections from this household
         self.isolated_time = float('inf')       # When the house was isolated
@@ -411,7 +416,7 @@ class Household:
         return False
 
     def get_recognised_symptom_onsets(self, model_time: int):
-        """Report symptom onset time for all active infections in the Houshold."""
+        """Report symptom onset time for all active infections in the Household."""
         recognised_symptom_onsets = []
 
         for household_node in self.nodes():
