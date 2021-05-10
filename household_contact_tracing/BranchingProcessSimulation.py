@@ -33,6 +33,17 @@ class household_sim_contact_tracing(BPSimulationModel):
         # Parse parameters against schema to check they are valid
         validate_parameters(params, os.path.join(self.ROOT_DIR, "schemas/household_sim_contact_tracing.json"))
 
+        # Set default parameters
+        # isolation or quarantine parameters
+        self.quarantine_duration = 14
+        self.self_isolation_duration = 7
+
+        # Overwrites default params with new params if present
+        for param_name in self.__dict__:
+            if param_name in params:
+                self.__dict__[param_name] = params[param_name]
+
+        # Set strategies (Strategy pattern)
         self._network = self.instantiate_network()
 
         self._infection = Infection(self._network, params)
@@ -43,16 +54,6 @@ class household_sim_contact_tracing(BPSimulationModel):
         self._contact_tracing = ContactTracing(self._network, params)
         self.contact_tracing.contact_trace_household = self.instantiate_contact_trace_household()
         self.contact_tracing.increment = self.instantiate_increment_contact_tracing()
-
-        # isolation or quarantine parameters
-        if "quarantine_duration" in params:
-            self.quarantine_duration = params["quarantine_duration"]
-        else:
-            self.quarantine_duration = 14
-        if "self_isolation_duration" in params:
-            self.self_isolation_duration = params["self_isolation_duration"]
-        else:
-            self.self_isolation_duration = 7
 
         # The simulation timer
         self.time = 0
@@ -285,33 +286,14 @@ class uk_model(household_sim_contact_tracing):
 
     def __init__(self, params: dict, prob_testing_positive_pcr_func: Callable[[int], float]):
 
-        validate_parameters(params, os.path.join(self.ROOT_DIR, "./schemas/uk_model.json"))
-
+        # Set default params
         self.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
+        self.number_of_days_to_trace_backwards = 2
+        self.number_of_days_to_trace_forwards = 7
+        self.recall_probability_fall_off = 1
 
-
-
-        if "number_of_days_to_trace_backwards" in params:
-            self.number_of_days_to_trace_backwards = params["number_of_days_to_trace_backwards"]
-        else:
-            self.number_of_days_to_trace_backwards = 2
-        if "number_of_days_to_trace_forwards" in params:
-            self.number_of_days_to_trace_forwards = params["number_of_days_to_trace_forwards"]
-        else:
-            self.number_of_days_to_trace_forwards = 7
-
-        if "recall_probability_fall_off" in params:
-            self.recall_probability_fall_off = params["recall_probability_fall_off"]
-        else:
-            self.recall_probability_fall_off = 1
-
+        # Call superclass constructor (which overwrites defaults with new params if present)
         super().__init__(params)
-
-        if "probable_infections_need_test" in params:
-            self.probable_infections_need_test = params["probable_infections_need_test"]
-        else:
-            self.probable_infections_need_test = True
-
 
     def instantiate_contact_trace_household(self) -> ContactTraceHouseholdUK:
         return ContactTraceHouseholdUK(self.network)
@@ -349,42 +331,18 @@ class ContactModelTest(uk_model):
 
     def __init__(self, params, prob_testing_positive_pcr_func, prob_testing_positive_lfa_func):
 
-        validate_parameters(params, os.path.join(self.ROOT_DIR, "schemas/household_sim_contact_tracing.json"))
-
+        # Set param defaults
         self.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
-        self.LFA_testing_requires_confirmatory_PCR = params["LFA_testing_requires_confirmatory_PCR"]
-        self.policy_for_household_contacts_of_a_positive_case = params["policy_for_household_contacts_of_a_positive_case"]
+        self.LFA_testing_requires_confirmatory_PCR = False
+        self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
+        self.policy_for_household_contacts_of_a_positive_case = 'lfa testing no quarantine'
+        self.number_of_days_prior_to_LFA_result_to_trace = 2
+        self.node_daily_prob_lfa_test = 1
+        self.lateral_flow_testing_duration = 7
 
-        if "number_of_days_prior_to_LFA_result_to_trace" in params:
-            self.number_of_days_prior_to_LFA_result_to_trace = params["number_of_days_prior_to_LFA_result_to_trace"]
-        else:
-            self.number_of_days_prior_to_LFA_result_to_trace = 2
-
-
-        if "node_daily_prob_lfa_test" in params:
-            self.node_daily_prob_lfa_test = params["node_daily_prob_lfa_test"]
-        else:
-            self.node_daily_prob_lfa_test = 1
-        if "proportion_with_propensity_miss_lfa_tests" in params:
-            self.proportion_with_propensity_miss_lfa_tests = params["proportion_with_propensity_miss_lfa_tests"]
-        else:
-            self.proportion_with_propensity_miss_lfa_tests = 0
-
-        if "lateral_flow_testing_duration" in params:
-            self.lateral_flow_testing_duration = params["lateral_flow_testing_duration"]
-        else:
-            self.lateral_flow_testing_duration = 7
-        if "lfa_tested_nodes_book_pcr_on_symptom_onset" in params:
-            self.lfa_tested_nodes_book_pcr_on_symptom_onset = params["lfa_tested_nodes_book_pcr_on_symptom_onset"]
-        else:
-            self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
-
+        # Call superclass constructor (which overwrites defaults with new params if present)
         super().__init__(params, prob_testing_positive_pcr_func)
 
-        if "global_contact_reduction_risky_behaviour" in params:
-            self.infection.global_contact_reduction_risky_behaviour = params["global_contact_reduction_risky_behaviour"]
-        else:
-            self.infection.global_contact_reduction_risky_behaviour = 0
 
     def instantiate_contact_trace_household(self) -> ContactTraceHouseholdContactModelTest:
         return ContactTraceHouseholdContactModelTest(self.network)

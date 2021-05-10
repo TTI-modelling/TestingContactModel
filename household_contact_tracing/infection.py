@@ -36,6 +36,7 @@ class Infection:
         self.starting_infections = 1
         self.symptom_reporting_delay = 1
         self.incubation_period_delay = 5
+        self.global_contact_reduction_risky_behaviour = 0
 
         # adherence parameters
         self.node_will_uptake_isolation_prob = 1
