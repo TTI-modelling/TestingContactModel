@@ -1,9 +1,9 @@
-from typing import List, Optional, Callable
+from typing import List, Callable
 import numpy.random as npr
 import os
 
 from household_contact_tracing.network import Network, NetworkContractModel, Household, Node, \
-    EdgeType, graphs_isomorphic
+    graphs_isomorphic
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
@@ -14,7 +14,7 @@ from household_contact_tracing.infection import Infection, \
 from household_contact_tracing.contact_tracing import ContactTracing, \
     ContactTraceHousehold, ContactTraceHouseholdUK, ContactTraceHouseholdContactModelTest, \
     IncrementContactTracingHousehold, IncrementContactTracingUK, IncrementContactTracingContactModelTest, \
-    UpdateIsolationHousehold, UpdateIsolationUK, UpdateIsolationContactModelTest
+    UpdateIsolationHousehold, UpdateIsolationUK
 
 
 class household_sim_contact_tracing(BPSimulationModel):
@@ -104,12 +104,6 @@ class household_sim_contact_tracing(BPSimulationModel):
 
     def instantiate_contact_rate_reduction(self) -> ContactRateReductionHousehold:
         return ContactRateReductionHousehold(self.infection)
-
-    def contact_trace_delay(self, app_traced_edge) -> int:
-        if app_traced_edge:
-            return 0
-        else:
-            return round(self.contact_trace_delay)
 
     def perform_recoveries(self):
         """
@@ -233,7 +227,7 @@ class household_sim_contact_tracing(BPSimulationModel):
                 Announces start/stopped and step increments to observers
 
         Arguments:
-            node: num steps -- The number of step increments to perform
+            num steps -- The number of step increments to perform
             infection_threshold -- The maximum number of infectious nodes allowed, befure stopping stimulation
 
         Returns:
@@ -525,47 +519,9 @@ class ContactModelTest(uk_model):
         if self.LFA_testing_requires_confirmatory_PCR:
             self.confirmatory_pcr_test_LFA_nodes()
 
-    def infection_status(self, time_now: int) -> str:
-        if self.contact_traced:
-            if self.positive_test_time <= time_now:
-                return "known_infection"
-            if self.symptom_onset_time <= time_now:
-                return "self_reported_infection"     
-        
-        else:
-            if self.positive_test_time <= time_now:
-                return "known_infection"
-            if self.time_of_reporting <= time_now:
-                return "self_recognised_infection"
-
-        return "unknown_infection"   
-        
-    def earliest_recognised_symptom_onset_or_lateral_flow_test(self, model_time: int):
-        """
-        Return infinite if no node in household has recognised symptom onset
-        """
-        recognised_symptom_onsets = [
-            household_node.symptom_onset_time
-            for household_node in self.network.nodes()
-            if household_node.infection_status(model_time) in ("known_infection", "self_recognised_infection")
-        ]
-
-        positive_test_times = [
-            household_node.positive_test_time
-            for household_node in self.network.nodes()
-            if household_node.infection_status(model_time) in ("known_infection")
-        ]
-
-        recognised_symptom_and_positive_test_times = recognised_symptom_onsets + positive_test_times
-
-        if recognised_symptom_and_positive_test_times != []:
-            return min(recognised_symptom_and_positive_test_times)
-        else:
-            return float('inf')        
-
     def release_nodes_from_lateral_flow_testing_or_isolation(self):
-            """If a node has completed the quarantine according to the following rules, they are released from
-            quarantine.
+            """If a node has completed the quarantine according to the following rules, they are
+            released from quarantine.
 
             You are released from isolation if:
                 * it has been 10 days since your symptoms onset (Changed from 7 to reflect updated policy, Nov 2020)
