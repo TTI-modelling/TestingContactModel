@@ -63,9 +63,9 @@ class BPSimulationModel(SimulationModelInterface):
     ### Fulfill inherited interface methods: ###
 
     def simulation_initialised(self):
-        """ Initialise/Reset the simulation to starting values."""
+        """ Initialise the simulation to starting values."""
         # NOTIFY OF STATE CHANGE
-        self._state.reset()
+        self._state.initialise()
 
     def updated_parameters(self):
         """ Increment simulation by one step """
