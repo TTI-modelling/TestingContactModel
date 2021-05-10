@@ -131,7 +131,7 @@ class Network:
         return [self.node(n) for n in self.graph if not self.node(n).asymptomatic]
 
 
-class NetworkContractModel(Network):
+class NetworkContactModel(Network):
     def add_node(
         self,
         node_id,

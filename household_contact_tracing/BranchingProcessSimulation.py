@@ -2,7 +2,7 @@ from typing import List, Callable
 import numpy.random as npr
 import os
 
-from household_contact_tracing.network import Network, NetworkContractModel, Household, Node, \
+from household_contact_tracing.network import Network, NetworkContactModel, Household, Node, \
     graphs_isomorphic, InfectionStatus, TestType
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
 from household_contact_tracing.parameters import validate_parameters
@@ -322,7 +322,7 @@ class ContactModelTest(uk_model):
                                                        self.number_of_days_prior_to_LFA_result_to_trace)
 
     def instantiate_network(self):
-        return NetworkContractModel()
+        return NetworkContactModel()
 
     def instantiate_new_household(self) -> NewHouseholdContactModelTest:
         return NewHouseholdContactModelTest(self.network, self.infection)
