@@ -14,7 +14,7 @@ class Infection:
     def __init__(self, network: Network, params: dict):
         self._network = network
 
-        # Declare behavours
+        # Declare behaviours
         self._new_household_behaviour = None
         self._new_infection_behaviour = None
         self._contact_rate_reduction_behaviour = None
@@ -81,7 +81,8 @@ class Infection:
 
         self.symptomatic_local_infection_probs = self.compute_hh_infection_probs(
             params["household_pairwise_survival_prob"])
-        asymptomatic_household_pairwise_survival_prob = 1 - self.asymptomatic_relative_infectivity + self.asymptomatic_relative_infectivity * \
+        asymptomatic_household_pairwise_survival_prob = 1 - self.asymptomatic_relative_infectivity \
+                                                        + self.asymptomatic_relative_infectivity * \
                                                         params["household_pairwise_survival_prob"]
         self.asymptomatic_local_infection_probs = self.compute_hh_infection_probs(
             asymptomatic_household_pairwise_survival_prob)
@@ -95,6 +96,8 @@ class Infection:
             self.asymptomatic_global_infection_probs.append(self.outside_household_infectivity_scaling *
                                                             self.asymptomatic_relative_infectivity *
                                                             current_rate_infection(day))
+
+        self.initialise()
 
     @property
     def network(self):
@@ -164,7 +167,7 @@ class Infection:
         if self.contact_rate_reduction_behaviour:
             return self.contact_rate_reduction_behaviour.get_contact_rate_reduction(node)
 
-    def reset(self):
+    def initialise(self):
 
         # Create first household
         # Initial values

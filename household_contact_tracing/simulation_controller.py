@@ -12,12 +12,16 @@ class SimulationController(SimulationControllerInterface):
         self.shellView = ShellView(self, model)
         self.graphView = GraphView(self, model)
 
+    @property
+    def model(self) -> SimulationModelInterface:
+        return self._model
+
+    @model.setter
+    def model(self, model: SimulationModelInterface):
+        self._model = model
+
     def set_show_all_graphs(self, show_all):
         self.graphView.set_show_all_graphs(show_all)
-
-    def reset(self):
-        """ Reset the simulation model."""
-        self._model.initialise_simulation()
 
     def run_simulation(self, num_steps: int = 20, infection_threshold: int = 5000):
         """ Run the simulation."""

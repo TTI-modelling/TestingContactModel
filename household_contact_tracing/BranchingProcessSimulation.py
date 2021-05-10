@@ -62,7 +62,10 @@ class household_sim_contact_tracing(BPSimulationModel):
         self.time = 0
 
         # Calls the simulation reset function, which creates all the required dictionaries
-        self.initialise_simulation()
+        self.infection.initialise()
+
+        # Call parent initialised_simulation
+        BPSimulationModel.simulation_initialised(self)
 
     @property
     def network(self):
@@ -208,22 +211,7 @@ class household_sim_contact_tracing(BPSimulationModel):
         # increment time
         self.time += 1
 
-
-    def initialise_simulation(self):
-        """ Initialise the simulation to its starting values. """
-
-        # At step (day) zero
-        self.time = 0
-
-        # Reset the network (nodes, houses and graph)
-        self.network.reset()
-        self.infection.reset()
-
-        # Call parent initialised_simulation
-        BPSimulationModel.simulation_initialised(self)
-
-
-    def run_simulation(self, num_steps: int, infection_threshold: int = 100000) -> None:
+    def run_simulation(self, num_steps: int, infection_threshold: int = 1000) -> None:
         """ Runs the simulation:
                 Sets model state,
                 Announces start/stopped and step increments to observers
@@ -254,7 +242,7 @@ class household_sim_contact_tracing(BPSimulationModel):
             BPSimulationModel.completed_step_increment(self)
 
             # Simulation ends if num_steps is reached
-            if self.time == num_steps:
+            if self.time >= num_steps:
                 self.state.timed_out()
             elif self.network.count_non_recovered_nodes() == 0:
                 self.state.go_extinct()
