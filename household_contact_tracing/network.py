@@ -71,6 +71,7 @@ class Network:
                  propensity_imperfect_isolation, asymptomatic, symptom_onset_time,
                  pseudo_symptom_onset_time, serial_interval, recovery_time, will_report_infection,
                  time_of_reporting, has_contact_tracing_app, testing_delay, contact_traced,
+        testing_delay=0,
                  additional_attributes: Optional[dict] = None,
                  infecting_node: Optional[Node] = None, completed_isolation=False) -> Node:
         self.graph.add_node(node_id)
@@ -123,8 +124,8 @@ class NetworkContractModel(Network):
         will_report_infection,
         time_of_reporting,
         has_contact_tracing_app,
-        testing_delay,
         contact_traced,
+        testing_delay=0,
         additional_attributes: Optional[dict] = None,
         infecting_node: Optional[Node] = None,
         completed_isolation=False,
@@ -193,8 +194,8 @@ class Node:
         will_report_infection: bool,
         time_of_reporting: int,
         has_contact_tracing_app: bool,
-        testing_delay: int,
         contact_traced: bool,
+        testing_delay: int=0,
         completed_isolation=False,
         had_contacts_traced=False,
         outside_house_contacts_made=0,
