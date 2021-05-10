@@ -3,7 +3,7 @@ import numpy.random as npr
 import os
 
 from household_contact_tracing.network import Network, NetworkContractModel, Household, Node, \
-    graphs_isomorphic
+    graphs_isomorphic, InfectionStatus
 from household_contact_tracing.bp_simulation_model import BPSimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
@@ -152,7 +152,7 @@ class household_sim_contact_tracing(BPSimulationModel):
             # (if they do not self-report they will not isolate; if contact traced, they will be quarantining for the quarantine duration)          
             #if node.household_id == node.infected_by_node().household_id:
             if node.infected_by_node():
-                if (node.infection_status(self.time) == "unknown_infection") & node.isolated:
+                if (node.infection_status(self.time) == InfectionStatus.unknown_infection) & node.isolated:
                     if node.locally_infected():
 
                         if self.time >= (node.household().earliest_recognised_symptom_onset(model_time = self.time) + self.quarantine_duration):
@@ -181,7 +181,9 @@ class household_sim_contact_tracing(BPSimulationModel):
         """
         for node in self.network.all_nodes():
             if node.isolated:
-                if node.infection_status(self.time)=="known_infection" or node.infection_status(self.time)=="self_recognised_infection":
+                infection_status = node.infection_status(self.time)
+                if infection_status in [InfectionStatus.known_infection,
+                                        infection_status.self_recognised_infection]:
                     if self.time >= node.symptom_onset_time + self.self_isolation_duration:
                         node.isolated = False
                         node.completed_isolation = True
@@ -542,7 +544,9 @@ class ContactModelTest(uk_model):
         """
         for node in self.network.all_nodes():
             if node.isolated:
-                if node.infection_status(self.time)=="known_infection" or node.infection_status(self.time)=="self_recognised_infection":
+                infection_status = node.infection_status(self.time)
+                if infection_status in [InfectionStatus.known_infection,
+                                        InfectionStatus.self_recognised_infection]:
                     if node.avenue_of_testing == "LFA":
                         if self.time >= node.positive_test_time + self.self_isolation_duration:
                             node.isolated = False

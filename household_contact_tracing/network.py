@@ -173,6 +173,12 @@ class NodeType(Enum):
     symptomatic_will_not_report_infection = 11
 
 
+class InfectionStatus(Enum):
+    known_infection = 0
+    self_recognised_infection = 1
+    unknown_infection = 2
+
+
 class Node:
     def __init__(
         self,
@@ -290,19 +296,19 @@ class Node:
         else:
             return self.will_report_infection and self.symptom_onset_time >= time_now
 
-    def infection_status(self, time_now: int) -> str:
+    def infection_status(self, time_now: int) -> InfectionStatus:
         if self.contact_traced:
             if self.symptom_onset_time + self.testing_delay <= time_now:
-                return "known_infection"
+                return InfectionStatus.known_infection
             if self.symptom_onset_time <= time_now:
-                return "self_recognised_infection"
+                return InfectionStatus.self_recognised_infection
         else:
             if self.will_report_infection:
                 if self.time_of_reporting + self.testing_delay <= time_now:
-                    return "known_infection"
+                    return InfectionStatus.known_infection
                 if self.time_of_reporting <= time_now:
-                    return "self_recognised_infection"
-        return "unknown_infection"
+                    return InfectionStatus.self_recognised_infection
+        return InfectionStatus.unknown_infection
 
     def node_type(self):
         """Returns a node type, given the current status of the node.
@@ -404,7 +410,9 @@ class Household:
         recognised_symptom_onsets = []
 
         for household_node in self.nodes():
-            if household_node.infection_status(model_time) in ("known_infection", "self_recognised_infection"):
+            infection_status = household_node.infection_status(model_time)
+            if infection_status in [InfectionStatus.known_infection,
+                                    InfectionStatus.self_recognised_infection]:
                 recognised_symptom_onsets.append(household_node.symptom_onset_time)
         return recognised_symptom_onsets
 
@@ -412,7 +420,7 @@ class Household:
         positive_test_times = []
 
         for node in self.nodes():
-            if node.infection_status(model_time) == "known_infection":
+            if node.infection_status(model_time) == InfectionStatus.known_infection:
                 if node.received_positive_test_result:
                     positive_test_times.append(node.positive_test_time)
         return positive_test_times
