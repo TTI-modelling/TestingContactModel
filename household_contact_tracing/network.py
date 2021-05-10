@@ -363,6 +363,10 @@ class Household:
         self.within_house_edges: List[Tuple[int, int]] = []  # Which edges are contained within the household
         self.had_contacts_traced = False         # Have the nodes inside the household had their contacts traced?
 
+        self.being_lateral_flow_tested = False,
+        self.being_lateral_flow_tested_start_time = None
+        self.applied_policy_for_household_contacts_of_a_positive_case = False
+
         # add custom attributes
         if additional_attributes:
             for key, value in additional_attributes.items():
