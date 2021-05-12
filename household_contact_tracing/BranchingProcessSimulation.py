@@ -48,21 +48,20 @@ class household_sim_contact_tracing(BPSimulationModel):
         self._network = self.instantiate_network()
 
         # Set strategies (Strategy pattern)
-        self._infection = Infection(self._network, params)
-        self.infection.new_household_behaviour = self.instantiate_new_household()
-        self.infection.new_infection_behaviour = self.instantiate_new_infection()
-        self.infection.contact_rate_reduction_behaviour = self.instantiate_contact_rate_reduction()
+        self._infection = Infection(self._network,
+                                    self.instantiate_new_household(),
+                                    self.instantiate_new_infection(),
+                                    self.instantiate_contact_rate_reduction(),
+                                    params)
 
-        self._contact_tracing = ContactTracing(self._network, params)
-        self.contact_tracing.update_isolation_behaviour = self.instantiate_update_isolation()
-        self.contact_tracing.contact_trace_household_behaviour = self.instantiate_contact_trace_household()
-        self.contact_tracing.increment_behaviour = self.instantiate_increment_contact_tracing()
+        self._contact_tracing = ContactTracing(self._network,
+                                               self.instantiate_contact_trace_household(),
+                                               self.instantiate_increment_contact_tracing(),
+                                               self.instantiate_update_isolation(),
+                                               params)
 
         # Set the simulated time to the start (days)
         self.time = 0
-
-        # Calls the simulation reset function, which creates all the required dictionaries
-        self.infection.initialise()
 
         # Call parent initialised_simulation
         BPSimulationModel.simulation_initialised(self)
@@ -88,25 +87,25 @@ class household_sim_contact_tracing(BPSimulationModel):
         self._contact_tracing = contact_tracing
 
     def instantiate_update_isolation(self) -> UpdateIsolationHousehold:
-        return UpdateIsolationHousehold(self.network, self.contact_tracing)
+        return UpdateIsolationHousehold(self.network)
 
     def instantiate_contact_trace_household(self) -> ContactTraceHousehold:
         return ContactTraceHousehold(self.network)
 
     def instantiate_increment_contact_tracing(self) -> IncrementContactTracingHousehold:
-        return IncrementContactTracingHousehold(self.network, self.contact_tracing)
+        return IncrementContactTracingHousehold(self.network)
 
     def instantiate_network(self) -> Network:
         return Network()
 
     def instantiate_new_household(self) -> NewHousehold:
-        return NewHousehold(self.network, self.infection)
+        return NewHousehold(self.network)
 
     def instantiate_new_infection(self) -> NewInfectionHousehold:
-        return NewInfectionHousehold(self.network, self.infection)
+        return NewInfectionHousehold(self.network)
 
     def instantiate_contact_rate_reduction(self) -> ContactRateReductionHousehold:
-        return ContactRateReductionHousehold(self.infection)
+        return ContactRateReductionHousehold()
 
     def perform_recoveries(self):
         """
@@ -267,14 +266,13 @@ class uk_model(household_sim_contact_tracing):
         super().__init__(params)
 
     def instantiate_update_isolation(self) -> UpdateIsolationUK:
-        return UpdateIsolationUK(self.network, self.contact_tracing)
+        return UpdateIsolationUK(self.network)
 
     def instantiate_contact_trace_household(self) -> ContactTraceHouseholdUK:
         return ContactTraceHouseholdUK(self.network)
 
     def instantiate_increment_contact_tracing(self) -> IncrementContactTracingUK:
         return IncrementContactTracingUK(self.network,
-                                         self.contact_tracing,
                                          self.number_of_days_to_trace_backwards,
                                          self.number_of_days_to_trace_forwards,
                                          self.recall_probability_fall_off)
@@ -300,7 +298,7 @@ class ContactModelTest(uk_model):
         return ContactTraceHouseholdContactModelTest(self.network)
 
     def instantiate_increment_contact_tracing(self) -> IncrementContactTracingContactModelTest:
-        return IncrementContactTracingContactModelTest(self.network, self.contact_tracing,
+        return IncrementContactTracingContactModelTest(self.network,
                                                        self.LFA_testing_requires_confirmatory_PCR,
                                                        self.lfa_tested_nodes_book_pcr_on_symptom_onset,
                                                        self.prob_testing_positive_pcr_func,
@@ -313,13 +311,13 @@ class ContactModelTest(uk_model):
         return NetworkContactModel()
 
     def instantiate_new_household(self) -> NewHouseholdContactModelTest:
-        return NewHouseholdContactModelTest(self.network, self.infection)
+        return NewHouseholdContactModelTest(self.network)
 
     def instantiate_new_infection(self) -> NewInfectionContactModelTest:
-        return NewInfectionContactModelTest(self.network, self.infection)
+        return NewInfectionContactModelTest(self.network)
 
     def instantiate_contact_rate_reduction(self) -> ContactRateReductionContactModelTest:
-        return ContactRateReductionContactModelTest(self.infection)
+        return ContactRateReductionContactModelTest()
 
     def lfa_test_node(self, node: Node):
         """Given a the time relative to a nodes symptom onset, will that node test positive

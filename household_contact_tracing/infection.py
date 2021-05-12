@@ -11,13 +11,14 @@ from household_contact_tracing.network import Node, EdgeType, Network
 class Infection:
     """ 'Context' class for infection processes/strategies (Strategy pattern) """
 
-    def __init__(self, network: Network, params: dict):
+    def __init__(self, network: Network, new_household: NewHouseholdBehaviour, new_infection: NewInfectionBehaviour,
+                 contact_rate_reduction: ContactRateReductionBehaviour, params: dict):
         self._network = network
 
         # Declare behaviours
-        self._new_household_behaviour = None
-        self._new_infection_behaviour = None
-        self._contact_rate_reduction_behaviour = None
+        self.new_household_behaviour = new_household
+        self.new_infection_behaviour = new_infection
+        self.contact_rate_reduction_behaviour = contact_rate_reduction
 
         # Probability of each household size
         self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886,
@@ -110,14 +111,17 @@ class Infection:
     @new_household_behaviour.setter
     def new_household_behaviour(self, new_household_behaviour: NewHouseholdBehaviour):
         self._new_household_behaviour = new_household_behaviour
+        self._new_household_behaviour.infection = self
 
     @property
     def new_infection_behaviour(self) -> NewInfectionBehaviour:
         return self._new_infection_behaviour
 
+
     @new_infection_behaviour.setter
     def new_infection_behaviour(self, new_infection_behaviour: NewInfectionBehaviour):
         self._new_infection_behaviour = new_infection_behaviour
+        self._new_infection_behaviour.infection = self
 
     @property
     def contact_rate_reduction_behaviour(self) -> ContactRateReductionBehaviour:
@@ -126,6 +130,7 @@ class Infection:
     @contact_rate_reduction_behaviour.setter
     def contact_rate_reduction_behaviour(self, contact_rate_reduction_behaviour: ContactRateReductionBehaviour):
         self._contact_rate_reduction_behaviour = contact_rate_reduction_behaviour
+        self._contact_rate_reduction_behaviour.infection = self
 
     def new_household(self,
                       time,
@@ -446,8 +451,16 @@ class Infection:
 
 
 class NewHouseholdBehaviour:
-    def __init__(self, network: Network, infection: Infection):
+    def __init__(self, network: Network):
         self._network = network
+        self._infection = None
+
+    @property
+    def infection(self) -> Infection:
+        return self._infection
+
+    @infection.setter
+    def infection(self, infection: Infection):
         self._infection = infection
 
     def new_household(self,
@@ -520,8 +533,16 @@ class NewHouseholdContactModelTest(NewHousehold):
 
 
 class NewInfectionBehaviour:
-    def __init__(self, network: Network, infection: Infection):
+    def __init__(self, network: Network):
         self._network = network
+        self._infection = None
+
+    @property
+    def infection(self) -> Infection:
+        return self._infection
+
+    @infection.setter
+    def infection(self, infection: Infection):
         self._infection = infection
 
     def new_infection(self,
@@ -760,7 +781,15 @@ class NewInfectionContactModelTest(NewInfectionBehaviour):
 
 
 class ContactRateReductionBehaviour:
-    def __init__(self, infection: Infection):
+    def __init__(self):
+        self._infection = None
+
+    @property
+    def infection(self) -> Infection:
+        return self._infection
+
+    @infection.setter
+    def infection(self, infection: Infection):
         self._infection = infection
 
     def get_contact_rate_reduction(self, node) -> int:

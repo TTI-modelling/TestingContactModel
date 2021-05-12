@@ -7,17 +7,18 @@ from household_contact_tracing.network import Network, Household, EdgeType, Node
 class ContactTracing:
     """ 'Context' class for contact tracing processes/strategies (Strategy pattern) """
 
-    def __init__(self, network: Network, params: dict):
+    def __init__(self, network: Network, contact_trace_household: ContactTraceHouseholdBehaviour,
+                 increment: IncrementContactTracingBehaviour, update_isolation: UpdateIsolationBehaviour, params: dict):
         self._network = network
 
         # Declare behaviours
-        self._contact_trace_household_behaviour = None
-        self._increment_behaviour = None
-        self._update_isolation_behaviour = None
+        self.contact_trace_household_behaviour = contact_trace_household
+        self.increment_behaviour = increment
+        self.update_isolation_behaviour = update_isolation
 
         # Parameter Inputs:
         # contact tracing parameters
-        self.contact_tracing_success_prob = params["contact_tracing_success_prob"]
+        self.contact_tracing_success_prob = 0.5
         self.do_2_step = False
         self.hh_propensity_to_use_trace_app = 1
         self.test_before_propagate_tracing = True
@@ -40,6 +41,7 @@ class ContactTracing:
     @update_isolation_behaviour.setter
     def update_isolation_behaviour(self, update_isolation_behaviour: UpdateIsolationBehaviour):
         self._update_isolation_behaviour = update_isolation_behaviour
+        self._update_isolation_behaviour.contact_tracing = self
 
     @property
     def contact_trace_household_behaviour(self) -> ContactTraceHouseholdBehaviour:
@@ -47,7 +49,8 @@ class ContactTracing:
 
     @contact_trace_household_behaviour.setter
     def contact_trace_household_behaviour(self, contact_trace_household_behaviour: ContactTraceHouseholdBehaviour):
-        self._contact_trace_household_behaviour= contact_trace_household_behaviour
+        self._contact_trace_household_behaviour = contact_trace_household_behaviour
+        self._contact_trace_household_behaviour.contact_tracing = self
 
     @property
     def increment_behaviour(self) -> IncrementContactTracingBehaviour:
@@ -56,6 +59,7 @@ class ContactTracing:
     @increment_behaviour.setter
     def increment_behaviour(self, increment_behaviour: IncrementContactTracingBehaviour):
         self._increment_behaviour = increment_behaviour
+        self._increment_behaviour.contact_tracing = self
 
     def update_isolation(self, time: int):
         if self.update_isolation_behaviour:
@@ -84,8 +88,16 @@ class ContactTracing:
 
 #Todo - Peter: for Network?  All UpdateIsolation Behaviours below and sub-classes???
 class UpdateIsolationBehaviour:
-    def __init__(self, network: Network, contact_tracing: ContactTracing):
+    def __init__(self, network: Network):
         self._network = network
+        self._contact_tracing = None
+
+    @property
+    def contact_tracing(self) -> ContactTracing:
+        return self._contact_tracing
+
+    @contact_tracing.setter
+    def contact_tracing(self, contact_tracing: ContactTracing):
         self._contact_tracing = contact_tracing
 
     def update_isolation(self, time):
@@ -296,8 +308,16 @@ class ContactTraceHouseholdContactModelTest(ContactTraceHouseholdBehaviour):
 
 
 class IncrementContactTracingBehaviour:
-    def __init__(self, network: Network, contact_tracing: ContactTracing):
+    def __init__(self, network: Network):
         self._network = network
+        self._contact_tracing = None
+
+    @property
+    def contact_tracing(self) -> ContactTracing:
+        return self._contact_tracing
+
+    @contact_tracing.setter
+    def contact_tracing(self, contact_tracing: ContactTracing):
         self._contact_tracing = contact_tracing
 
     def increment_contact_tracing(self, time: int):
@@ -454,12 +474,12 @@ class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
 
 class IncrementContactTracingUK(IncrementContactTracingHousehold):
 
-    def __init__(self, network, contact_tracing,
+    def __init__(self, network,
                  number_of_days_to_trace_backwards,
                  number_of_days_to_trace_forwards,
                  recall_probability_fall_off
     ):
-        super(IncrementContactTracingUK, self).__init__(network, contact_tracing)
+        super(IncrementContactTracingUK, self).__init__(network)
         self.number_of_days_to_trace_backwards = number_of_days_to_trace_backwards
         self.number_of_days_to_trace_forwards = number_of_days_to_trace_forwards
         self.recall_probability_fall_off = recall_probability_fall_off
@@ -597,7 +617,7 @@ class IncrementContactTracingUK(IncrementContactTracingHousehold):
         if app_traced:
             success_prob = 1
         else:
-            success_prob = self._contact_tracing.contact_tracing_success_prob * \
+            success_prob = self.contact_tracing.contact_tracing_success_prob * \
                            self.recall_probability_fall_off ** days_since_contact_occurred
 
         # is the trace successful
@@ -631,7 +651,7 @@ class IncrementContactTracingUK(IncrementContactTracingHousehold):
 
 
 class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
-    def __init__(self, network: Network, contact_tracing: ContactTracing,
+    def __init__(self, network: Network,
                  lfa_testing_requires_confirmatory_pcr,
                  lfa_tested_nodes_book_pcr_on_symptom_onset,
                  prob_testing_positive_pcr_func,
@@ -640,7 +660,6 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                  recall_probability_fall_off,
                  number_of_days_prior_to_LFA_result_to_trace):
         super(IncrementContactTracingContactModelTest, self).__init__(network,
-                                                                      contact_tracing,
                                                                       number_of_days_to_trace_backwards,
                                                                       number_of_days_to_trace_forwards,
                                                                       recall_probability_fall_off)

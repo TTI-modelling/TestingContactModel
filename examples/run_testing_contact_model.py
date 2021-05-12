@@ -30,14 +30,12 @@ params = {"outside_household_infectivity_scaling": 0.3,
 
 def main():
     model = ContactModelTest(params, prob_testing_positive_function, prob_testing_positive_function)
-
     controller = SimulationController(model)
-    controller.set_show_all_graphs(True)
+    #controller.set_show_all_graphs(True)
     controller.run_simulation(9)
     controller.run_simulation(11)
 
     recreate_pytest()
-
 
 def recreate_pytest():
 
@@ -73,9 +71,7 @@ def recreate_pytest():
     model = ContactModelTest(default_params, prob_testing_positive_pcr_func,
                              prob_testing_positive_lfa_func)
 
-    model.contact_tracing_success_prob = 1
-
-    controller = SimulationController(model=model)
+    model.contact_tracing.contact_tracing_success_prob = 1
 
     model.infection.new_outside_household_infection(
         time=0,
@@ -90,11 +86,11 @@ def recreate_pytest():
         contact_trace_delay=0,
         time=0
     )
+
+    controller = SimulationController(model=model)
     controller.run_simulation(2)
 
     print('Assert node 2 being lft\'d', model.network.node(2).being_lateral_flow_tested)
-
-
 
 
 main()
