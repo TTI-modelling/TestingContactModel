@@ -111,7 +111,8 @@ class household_sim_contact_tracing(BPSimulationModel):
         """
         Loops over all nodes in the branching process and determine recoveries.
 
-        time - The current time of the process, if a nodes recovery time equals the current time, then it is set to the recovered state
+        time - The current time of the process, if a nodes recovery time equals the current time, then it is set to the
+        recovered state
         """
         for node in self.network.all_nodes():
             if node.recovery_time == self.time:
@@ -142,28 +143,33 @@ class household_sim_contact_tracing(BPSimulationModel):
         self.release_nodes_who_completed_quarantine()
 
     def release_nodes_who_completed_quarantine(self):
-        """If a node is currently in quarantine, and has completed the quarantine period then we release them from quarantine.
+        """If a node is currently in quarantine, and has completed the quarantine period then we release them from
+        quarantine.
 
         An individual is in quarantine if they have been contact traced, and have not had symptom onset.
 
-        A quarantined individual is released from quarantine if it has been quarantine_duration since they last had contact with a known case.
+        A quarantined individual is released from quarantine if it has been quarantine_duration since they last had
+        contact with a known case.
         In our model, this corresponds to the time of infection.
         """
         for node in self.network.all_nodes():
             # For nodes who do not self-report, and are in the same household as their infector
-            # (if they do not self-report they will not isolate; if contact traced, they will be quarantining for the quarantine duration)          
+            # (if they do not self-report they will not isolate; if contact traced, they will be quarantining for the
+            # quarantine duration)
             #if node.household_id == node.infected_by_node().household_id:
             if node.infected_by_node():
                 if (node.infection_status(self.time) == InfectionStatus.unknown_infection) & node.isolated:
                     if node.locally_infected():
 
-                        if self.time >= (node.household().earliest_recognised_symptom_onset(model_time = self.time) + self.quarantine_duration):
+                        if self.time >= (node.household().earliest_recognised_symptom_onset(model_time = self.time)
+                                         + self.quarantine_duration):
                             node.isolated = False
                             node.completed_isolation = True  
                             node.completed_isolation_reason = 'completed_quarantine'
                             node.completed_isolation_time = self.time
                 # For nodes who do not self-report, and are not in the same household as their infector
-                # (if they do not self-report they will not isolate; if contact traced, they will be quarantining for the quarantine duration)          
+                # (if they do not self-report they will not isolate; if contact traced, they will be quarantining for
+                    # the quarantine duration)
                     elif node.contact_traced & (self.time >= node.time_infected + self.quarantine_duration):
                         node.isolated = False
                         node.completed_isolation = True 
@@ -428,7 +434,8 @@ class ContactModelTest(uk_model):
         """
 
         for node in self.network.all_nodes():
-            if time >= node.time_started_lfa_testing + self.lateral_flow_testing_duration and node.being_lateral_flow_tested:
+            if time >= node.time_started_lfa_testing + self.lateral_flow_testing_duration \
+                    and node.being_lateral_flow_tested:
                 node.being_lateral_flow_tested = False
                 node.completed_lateral_flow_testing_time = time
 
@@ -443,12 +450,15 @@ class ContactModelTest(uk_model):
         #         if node.being_lateral_flow_tested:
         #             if node.locally_infected():
 
-        #                 if self.time >= (node.household().earliest_recognised_symptom_onset_or_lateral_flow_test(model_time = self.time) + self.lateral_flow_testing_duration):
+        #                 if self.time >=
+        #                 (node.household().earliest_recognised_symptom_onset_or_lateral_flow_test(model_time =
+        #                 self.time) + self.lateral_flow_testing_duration):
         #                     node.being_lateral_flow_tested = False
         #                     node.completed_lateral_flow_testing_time = self.time
 
         #         # For nodes who do not self-report, and are not in the same household as their infector
-        #         # (if they do not self-report they will not isolate; if contact traced, they will be lateral flow testing for the lateral_flow_testing_duration unless they test positive)
+        #         # (if they do not self-report they will not isolate; if contact traced, they will be lateral flow
+        #         testing for the lateral_flow_testing_duration unless they test positive)
         #             elif node.contact_traced & (self.time >= node.time_infected + self.lateral_flow_testing_duration):
         #                 node.being_lateral_flow_tested = False
         #                 node.completed_lateral_flow_testing_time = self.time
