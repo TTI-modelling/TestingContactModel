@@ -1,5 +1,6 @@
 from __future__ import annotations
 import numpy.random as npr
+from collections.abc import Callable
 
 from household_contact_tracing.network import Network, Household, EdgeType, Node, TestType
 
