@@ -830,7 +830,7 @@ class IncrementContactTracingUK(IncrementContactTracingHousehold):
 
         infectious_age_when_tested = time - node.testing_delay - node.time_infected
 
-        prob_positive_result = self.prob_testing_positive_pcr_func(infectious_age_when_tested)
+        prob_positive_result = self.contact_tracing.prob_testing_positive_pcr_func(infectious_age_when_tested)
 
         if npr.binomial(1, prob_positive_result) == 1:
             node.received_positive_test_result = True
@@ -1058,7 +1058,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
 
         infectious_age_when_tested = time - node.testing_delay - node.time_infected
 
-        prob_positive_result = self.prob_testing_positive_pcr_func(infectious_age_when_tested)
+        prob_positive_result = self.contact_tracing.prob_testing_positive_pcr_func(infectious_age_when_tested)
 
         node.avenue_of_testing = TestType.pcr
 

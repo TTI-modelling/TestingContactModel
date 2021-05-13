@@ -334,7 +334,7 @@ class ContactModelTest(uk_model):
     def instantiate_contact_rate_reduction(self) -> ContactRateReductionContactModelTest:
         return ContactRateReductionContactModelTest()
 
-    def simulate_one_step(self, time=0):
+    def simulate_one_step(self):
         """Simulates one day of the epidemic and contact tracing.
 
         Useful for bug testing and visualisation.
@@ -342,7 +342,7 @@ class ContactModelTest(uk_model):
 
         prev_graph = self.network.graph.copy()
 
-        self.contact_tracing.increment_behaviour.receive_pcr_test_results(time)
+        self.contact_tracing.increment_behaviour.receive_pcr_test_results(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         self.isolate_self_reporting_cases()
         # isolate self-reporting-nodes while they wait for tests
