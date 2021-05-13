@@ -141,7 +141,8 @@ class ContactTracing:
         elif self.policy_for_household_contacts_of_a_positive_case == 'no lfa testing only quarantine':
             self.contact_trace_household_behaviour.isolate_household(household, time)
         else:
-            raise Exception("""policy_for_household_contacts_of_a_positive_case not recognised. Must be one of the following options:
+            raise Exception("""policy_for_household_contacts_of_a_positive_case not recognised. Must be one of the 
+            following options:
                 * "lfa testing no quarantine"
                 * "lfa testing and quarantine"
                 * "no lfa testing only quarantine" """)
@@ -159,7 +160,8 @@ class ContactTracing:
         household.being_lateral_flow_tested_start_time = time
 
         for node in household.nodes():
-            if node.node_will_take_up_lfa_testing and not node.received_positive_test_result and not node.being_lateral_flow_tested:
+            if node.node_will_take_up_lfa_testing and not node.received_positive_test_result and \
+                    not node.being_lateral_flow_tested:
                 node.being_lateral_flow_tested = True
                 node.time_started_lfa_testing = time
 
@@ -178,7 +180,8 @@ class ContactTracing:
         household.contact_traced = True
 
         for node in household.nodes():
-            if node.node_will_take_up_lfa_testing and not node.received_positive_test_result and not node.being_lateral_flow_tested:
+            if node.node_will_take_up_lfa_testing and not node.received_positive_test_result and \
+                    not node.being_lateral_flow_tested:
                 node.being_lateral_flow_tested = True
                 node.time_started_lfa_testing = time
 
@@ -245,7 +248,8 @@ class ContactTracing:
     def isolate_positive_lateral_flow_tests(self, time: int):
         """A if a node tests positive on LFA, we assume that they isolate and stop LFA testing
 
-        If confirmatory PCR testing is not required, then we do not start LFA testing the household at this point in time.
+        If confirmatory PCR testing is not required, then we do not start LFA testing the household at this point
+        in time.
         """
 
         for node in self.current_LFA_positive_nodes:
@@ -335,7 +339,8 @@ class UpdateIsolationHousehold(UpdateIsolationBehaviour):
         # Update the contact traced status for all households that have had the contact tracing process get there
         self.update_all_households_contact_traced(time)
 
-        # Isolate all non isolated households where the infection has been reported (excludes those who will not take up isolation if prob <1)
+        # Isolate all non isolated households where the infection has been reported (excludes those who will not
+        # take up isolation if prob <1)
         [
             self._contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
             for node in self._network.all_nodes()
@@ -368,7 +373,8 @@ class UpdateIsolationContactModelTest(UpdateIsolationBehaviour):
         # Update the contact traced status for all households that have had the contact tracing process get there
         self.update_all_households_contact_traced(time)
 
-        # Isolate all non isolated households where the infection has been reported (excludes those who will not take up isolation if prob <1)
+        # Isolate all non isolated households where the infection has been reported (excludes those who will not
+        # take up isolation if prob <1)
         new_pcr_test_results = [
             node for node in self._network.all_nodes()
             if node.positive_test_time == time
@@ -447,7 +453,8 @@ class ContactTraceHouseholdBehaviour:
 
         For households that were connected to this household, they are assigned a time until contact traced
 
-        When a house has been contact traced, all nodes in the house are under surveillance for symptoms. When a node becomes symptomatic, the house moves to isolation status.
+        When a house has been contact traced, all nodes in the house are under surveillance for symptoms. When a node
+        becomes symptomatic, the house moves to isolation status.
         """
 
         # Makes sure the isolate household is never applied multiple times to the same household
@@ -460,7 +467,8 @@ class ContactTraceHouseholdBehaviour:
 
             # Households have a probability to take up isolation if traced
 
-            # The house moves to isolated status if it has been assigned to take up isolation if trace, given a probability
+            # The house moves to isolated status if it has been assigned to take up isolation if trace, given a
+            # probability
             household.isolated = True
             # household.contact_traced = True
             household.isolated_time = time
@@ -476,7 +484,8 @@ class ContactTraceHouseholdBehaviour:
             if household.being_contact_traced_from is not None:
                 house_which_contact_traced = self._network.houses.household(household.being_contact_traced_from)
 
-                # Initially the edge is assigned the contact tracing label, may be updated if the contact tracing does not succeed
+                # Initially the edge is assigned the contact tracing label, may be updated if the contact tracing
+                # does not succeed
                 if self._network.is_edge_app_traced(
                         self._network.get_edge_between_household(household, house_which_contact_traced)):
                     self.label_node_edges_between_houses(household, house_which_contact_traced,
@@ -485,7 +494,8 @@ class ContactTraceHouseholdBehaviour:
                     self.label_node_edges_between_houses(household, house_which_contact_traced,
                                                          EdgeType.between_house.name)
 
-                    # We update the label of every edge so that we can tell which household have been contact traced when we visualise
+                    # We update the label of every edge so that we can tell which household have been contact traced
+                    # when we visualise
             [
                 self._network.graph.edges[edge[0], edge[1]].update({"edge_type": EdgeType.within_house.name})
                 for edge in household.within_house_edges
@@ -549,14 +559,16 @@ class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
         """
         Performs a days worth of contact tracing by:
         * Looks for houses where the contact tracing delay is over and moves them to the contact traced state
-        * Looks for houses in the contact traced state, and checks them for symptoms. If any of them have symptoms, the house is isolated
+        * Looks for houses in the contact traced state, and checks them for symptoms. If any of them have symptoms,
+        the house is isolated
 
         The isolation function also assigns contact tracing times to any houses that had contact with that household
 
         For each node that is contact traced
         """
 
-        # Isolate all households under observation that now display symptoms (excludes those who will not take up isolation if prob <1)
+        # Isolate all households under observation that now display symptoms (excludes those who will not take up
+        # isolation if prob <1)
         [
             self._contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
             for node in self._network.all_nodes()
@@ -577,7 +589,8 @@ class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
             and not node.household().propagated_contact_tracing
         ]
 
-        # Propagate the contact tracing for all households that are isolated due to exposure, have developed symptoms and had a test come back
+        # Propagate the contact tracing for all households that are isolated due to exposure, have developed symptoms
+        # and had a test come back
         [
             self.propagate_contact_tracing(node.household(), time)
             for node in self._network.all_nodes()
@@ -587,7 +600,8 @@ class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
         ]
 
         # Update the contact tracing index of households
-        # That is, re-evaluate how far away they are from a known infected case (traced + symptom_onset_time + testing_delay)
+        # That is, re-evaluate how far away they are from a known infected case
+        # (traced + symptom_onset_time + testing_delay)
         self.update_contact_tracing_index(time)
 
         if self._contact_tracing.do_2_step:
@@ -705,16 +719,19 @@ class IncrementContactTracingUK(IncrementContactTracingHousehold):
         # TODO update the below - going to hospital is not included in the model
         """
         Performs a days worth of contact tracing by:
-        * Looking for nodes that have been admitted to hospital. Once a node is admitted to hospital, its house is isolated
+        * Looking for nodes that have been admitted to hospital. Once a node is admitted to hospital, its house is
+        isolated
         * Looks for houses where the contact tracing delay is over and moves them to the contact traced state
-        * Looks for houses in the contact traced state, and checks them for symptoms. If any of them have symptoms, the house is isolated
+        * Looks for houses in the contact traced state, and checks them for symptoms. If any of them have symptoms, the
+        house is isolated
 
         The isolation function also assigns contact tracing times to any houses that had contact with that household
 
         For each node that is contact traced
         """
 
-        # Isolate all households under observation that now display symptoms (excludes those who will not take up isolation if prob <1)
+        # Isolate all households under observation that now display symptoms (excludes those who will not take up
+        # isolation if prob <1)
         self.receive_pcr_test_results(time)
 
         [
@@ -933,7 +950,8 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
             # the node.time_infected is when they had a contact with their infector.
             if node.avenue_of_testing == TestType.pcr:
 
-                if not infected_by_node.isolated and node.time_infected >= node.symptom_onset_time - self.number_of_days_to_trace_backwards:
+                if not infected_by_node.isolated and \
+                        node.time_infected >= node.symptom_onset_time - self.number_of_days_to_trace_backwards:
 
                     # Then attempt to contact trace the household of the node that infected you
                     self.attempt_contact_trace_of_household(
