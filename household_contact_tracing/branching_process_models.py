@@ -15,7 +15,7 @@ from household_contact_tracing.contact_tracing import ContactTracing, \
     ContactTraceHouseholdLevel, ContactTraceHouseholdIndividualLevel, ContactTraceHouseholdIndividualTracingDailyTest, \
     IncrementContactTracingHouseholdLevel, IncrementContactTracingIndividualLevel, \
     IncrementContactTracingIndividualDailyTesting, \
-    UpdateIsolationHousehold, UpdateIsolationUK, \
+    UpdateIsolationHouseholdLevel, UpdateIsolationIndividualLevelTracing, UpdateIsolationIndividualTracingDailyTesting, \
     PCRTestingIndividualLevelTracing, PCRTestingIndividualDailyTesting
 
 
@@ -89,8 +89,8 @@ class HouseholdLevelContactTracing(SimulationModel):
     def contact_tracing(self, contact_tracing: ContactTracing):
         self._contact_tracing = contact_tracing
 
-    def instantiate_update_isolation(self) -> UpdateIsolationHousehold:
-        return UpdateIsolationHousehold(self.network)
+    def instantiate_update_isolation(self) -> UpdateIsolationHouseholdLevel:
+        return UpdateIsolationHouseholdLevel(self.network)
 
     def instantiate_contact_trace_household(self) -> ContactTraceHouseholdLevel:
         return ContactTraceHouseholdLevel(self.network)
@@ -285,8 +285,8 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
     def prob_testing_positive_pcr_func(self, fn: Callable[[int], float]):
         self.contact_tracing.prob_testing_positive_pcr_func = fn
 
-    def instantiate_update_isolation(self) -> UpdateIsolationUK:
-        return UpdateIsolationUK(self.network)
+    def instantiate_update_isolation(self) -> UpdateIsolationIndividualLevelTracing:
+        return UpdateIsolationIndividualLevelTracing(self.network)
 
     def instantiate_contact_trace_household(self) -> ContactTraceHouseholdIndividualLevel:
         return ContactTraceHouseholdIndividualLevel(self.network)
@@ -318,6 +318,9 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
 
     def instantiate_network(self):
         return NetworkContactModel()
+
+    def instantiate_update_isolation(self) -> UpdateIsolationIndividualTracingDailyTesting:
+        return UpdateIsolationIndividualTracingDailyTesting(self.network)
 
     def instantiate_new_household(self) -> NewHouseholdContactModelTest:
         return NewHouseholdContactModelTest(self.network)

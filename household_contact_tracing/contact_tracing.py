@@ -31,6 +31,7 @@ class ContactTracing:
         self.number_of_days_to_trace_backwards = 2
         self.number_of_days_to_trace_forwards = 7
         self.recall_probability_fall_off = 1
+        self.number_of_days_prior_to_LFA_result_to_trace: int = 2,
 
         # contact tracing functions (runtime updatable)
         self.prob_testing_positive_lfa_func = self.prob_testing_positive_lfa
@@ -347,7 +348,7 @@ class UpdateIsolationBehaviour:
         ]
 
 
-class UpdateIsolationHousehold(UpdateIsolationBehaviour):
+class UpdateIsolationHouseholdLevel(UpdateIsolationBehaviour):
 
     def update_isolation(self, time):
         # Update the contact traced status for all households that have had the contact tracing process get there
@@ -364,7 +365,7 @@ class UpdateIsolationHousehold(UpdateIsolationBehaviour):
         ]
 
 
-class UpdateIsolationUK(UpdateIsolationBehaviour):
+class UpdateIsolationIndividualLevelTracing(UpdateIsolationBehaviour):
     def update_isolation(self, time):
         # Update the contact traced status for all households that have had the contact
         # tracing process get there
@@ -382,7 +383,7 @@ class UpdateIsolationUK(UpdateIsolationBehaviour):
         ]
 
 
-class UpdateIsolationContactModelTest(UpdateIsolationBehaviour):
+class UpdateIsolationIndividualTracingDailyTesting(UpdateIsolationBehaviour):
     def update_isolation(self, time):
         # Update the contact traced status for all households that have had the contact tracing process get there
         self.update_all_households_contact_traced(time)
@@ -392,12 +393,12 @@ class UpdateIsolationContactModelTest(UpdateIsolationBehaviour):
         new_pcr_test_results = [
             node for node in self._network.all_nodes()
             if node.positive_test_time == time
-            and node.avenue_of_testing == TestType.PCR
+            and node.avenue_of_testing == TestType.pcr
             and node.received_positive_test_result
         ]
 
         [
-            self.apply_policy_for_household_contacts_of_a_positive_case(node.household())
+            self.contact_tracing.apply_policy_for_household_contacts_of_a_positive_case(node.household(), time)
             for node in new_pcr_test_results
             if not node.household().applied_policy_for_household_contacts_of_a_positive_case
         ]
