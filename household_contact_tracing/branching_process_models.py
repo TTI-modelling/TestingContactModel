@@ -8,9 +8,9 @@ from household_contact_tracing.simulation_model import SimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
 from household_contact_tracing.infection import Infection, \
-    NewHousehold, NewHouseholdContactModelTest, \
-    NewInfectionHousehold, NewInfectionContactModelTest, \
-    ContactRateReductionHousehold, ContactRateReductionContactModelTest
+    NewHouseholdLevel, NewHouseholdIndividualTracingDailyTesting, \
+    NewInfectionHouseholdLevel, NewInfectionIndividualTracingDailyTesting, \
+    ContactRateReductionHouseholdLevelContactTracing, ContactRateReductionIndividualTracingDaily
 from household_contact_tracing.contact_tracing import ContactTracing, \
     ContactTraceHouseholdLevel, ContactTraceHouseholdIndividualLevel, ContactTraceHouseholdIndividualTracingDailyTest, \
     IncrementContactTracingHouseholdLevel, IncrementContactTracingIndividualLevel, \
@@ -104,14 +104,14 @@ class HouseholdLevelContactTracing(SimulationModel):
     def instantiate_network(self) -> Network:
         return Network()
 
-    def instantiate_new_household(self) -> NewHousehold:
-        return NewHousehold(self.network)
+    def instantiate_new_household(self) -> NewHouseholdLevel:
+        return NewHouseholdLevel(self.network)
 
-    def instantiate_new_infection(self) -> NewInfectionHousehold:
-        return NewInfectionHousehold(self.network)
+    def instantiate_new_infection(self) -> NewInfectionHouseholdLevel:
+        return NewInfectionHouseholdLevel(self.network)
 
-    def instantiate_contact_rate_reduction(self) -> ContactRateReductionHousehold:
-        return ContactRateReductionHousehold()
+    def instantiate_contact_rate_reduction(self) -> ContactRateReductionHouseholdLevelContactTracing:
+        return ContactRateReductionHouseholdLevelContactTracing()
 
     def perform_recoveries(self):
         """
@@ -322,14 +322,14 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
     def instantiate_update_isolation(self) -> UpdateIsolationIndividualTracingDailyTesting:
         return UpdateIsolationIndividualTracingDailyTesting(self.network)
 
-    def instantiate_new_household(self) -> NewHouseholdContactModelTest:
-        return NewHouseholdContactModelTest(self.network)
+    def instantiate_new_household(self) -> NewHouseholdIndividualTracingDailyTesting:
+        return NewHouseholdIndividualTracingDailyTesting(self.network)
 
-    def instantiate_new_infection(self) -> NewInfectionContactModelTest:
-        return NewInfectionContactModelTest(self.network)
+    def instantiate_new_infection(self) -> NewInfectionIndividualTracingDailyTesting:
+        return NewInfectionIndividualTracingDailyTesting(self.network)
 
-    def instantiate_contact_rate_reduction(self) -> ContactRateReductionContactModelTest:
-        return ContactRateReductionContactModelTest()
+    def instantiate_contact_rate_reduction(self) -> ContactRateReductionIndividualTracingDaily:
+        return ContactRateReductionIndividualTracingDaily()
 
     def simulate_one_step(self):
         """ Simulates one day of the infection and contact tracing.
