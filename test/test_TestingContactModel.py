@@ -1,6 +1,6 @@
 import copy
 
-from household_contact_tracing.BranchingProcessSimulation import HouseholdContactTracingUKTest
+from household_contact_tracing.branching_process_models import HouseholdContactTracingUKTest
 import pytest
 
 default_params = {"outside_household_infectivity_scaling": 0.3,
