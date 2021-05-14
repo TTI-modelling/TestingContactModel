@@ -266,7 +266,7 @@ class HouseholdLevelContactTracing(SimulationModel):
         SimulationModel.simulation_stopped(self)
 
 
-class HouseholdContactTracingUK(HouseholdLevelContactTracing):
+class IndividualLevelContactTracing(HouseholdLevelContactTracing):
 
     def __init__(self, params: dict):
 
@@ -309,7 +309,7 @@ class HouseholdContactTracingUK(HouseholdLevelContactTracing):
     def instantiate_pcr_testing(self) -> PCRTestingUK:
         return PCRTestingUK(self.network)
 
-class HouseholdContactTracingUKTest(HouseholdContactTracingUK):
+class HouseholdContactTracingUKTest(IndividualLevelContactTracing):
 
     def __init__(self, params):
 
