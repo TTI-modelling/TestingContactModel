@@ -53,8 +53,7 @@ class Infection:
         self.test_before_propagate_tracing = True
         self.test_delay = 1
         self.prob_has_trace_app = 0
-
-
+        self.proportion_with_propensity_miss_lfa_tests = 0.
 
         # Update instance variables with anything in params
         for param_name in self.__dict__:
@@ -704,7 +703,7 @@ class NewInfectionContactModelTest(NewInfectionBehaviour):
             'confirmatory_PCR_test_result_time': None,
             'propensity_risky_behaviour_lfa_testing':
                 self._infection.will_engage_in_risky_behaviour_while_being_lfa_tested(),
-            'propensity_to_miss_lfa_tests': self._infection.propensity_to_miss_lfa_tests
+            'propensity_to_miss_lfa_tests': self._infection.propensity_to_miss_lfa_tests()
         }
 
         if additional_attributes:
