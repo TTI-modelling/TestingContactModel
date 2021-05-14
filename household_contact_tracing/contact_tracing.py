@@ -27,6 +27,8 @@ class ContactTracing:
         self.policy_for_household_contacts_of_a_positive_case = 'lfa testing no quarantine'
         self.LFA_testing_requires_confirmatory_PCR = False
         self.node_daily_prob_lfa_test = 1
+
+        # contact tracing functions (runtime updatable)
         self.prob_testing_positive_lfa_func = self.prob_testing_positive_lfa
         self.prob_testing_positive_pcr_func = self.prob_testing_positive_pcr
 
