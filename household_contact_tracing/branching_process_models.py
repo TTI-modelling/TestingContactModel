@@ -268,16 +268,6 @@ class HouseholdLevelContactTracing(SimulationModel):
 
 class IndividualLevelContactTracing(HouseholdLevelContactTracing):
 
-    def __init__(self, params: dict):
-
-        # Set default params
-        self.number_of_days_to_trace_backwards = 2
-        self.number_of_days_to_trace_forwards = 7
-        self.recall_probability_fall_off = 1
-
-        # Call superclass constructor (which overwrites defaults with new params if present)
-        super().__init__(params)
-
     @property
     def prob_testing_positive_lfa_func(self) -> Callable[[int], float]:
         return self.contact_tracing.prob_testing_positive_lfa_func
@@ -301,10 +291,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
         return ContactTraceHouseholdUK(self.network)
 
     def instantiate_increment_contact_tracing(self) -> IncrementContactTracingUK:
-        return IncrementContactTracingUK(self.network,
-                                         self.number_of_days_to_trace_backwards,
-                                         self.number_of_days_to_trace_forwards,
-                                         self.recall_probability_fall_off)
+        return IncrementContactTracingUK(self.network)
 
     def instantiate_pcr_testing(self) -> PCRTestingUK:
         return PCRTestingUK(self.network)
@@ -314,9 +301,6 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
     def __init__(self, params):
 
         # Set param defaults
-        self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
-        self.number_of_days_prior_to_LFA_result_to_trace = 2
-
         self.lateral_flow_testing_duration = 7
 
         # Call superclass constructor (which overwrites defaults with new params if present)
@@ -326,14 +310,10 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
         return ContactTraceHouseholdContactModelTest(self.network)
 
     def instantiate_increment_contact_tracing(self) -> IncrementContactTracingContactModelTest:
-        return IncrementContactTracingContactModelTest(self.network,
-                                                       self.number_of_days_to_trace_backwards,
-                                                       self.number_of_days_to_trace_forwards,
-                                                       self.recall_probability_fall_off,
-                                                       self.number_of_days_prior_to_LFA_result_to_trace)
+        return IncrementContactTracingContactModelTest(self.network)
 
     def instantiate_pcr_testing(self) -> PCRTestingContactModelTest:
-        return PCRTestingContactModelTest(self.network, self.lfa_tested_nodes_book_pcr_on_symptom_onset)
+        return PCRTestingContactModelTest(self.network)
 
     def instantiate_network(self):
         return NetworkContactModel()
