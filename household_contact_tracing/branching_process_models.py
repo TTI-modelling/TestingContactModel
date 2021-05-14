@@ -268,16 +268,6 @@ class HouseholdLevelContactTracing(SimulationModel):
 
 class IndividualLevelContactTracing(HouseholdLevelContactTracing):
 
-    def __init__(self, params: dict):
-
-        # Set default params
-        self.number_of_days_to_trace_backwards = 2
-        self.number_of_days_to_trace_forwards = 7
-        self.recall_probability_fall_off = 1
-
-        # Call superclass constructor (which overwrites defaults with new params if present)
-        super().__init__(params)
-
     @property
     def prob_testing_positive_lfa_func(self) -> Callable[[int], float]:
         return self.contact_tracing.prob_testing_positive_lfa_func
@@ -311,9 +301,6 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
     def __init__(self, params):
 
         # Set param defaults
-
-        self.number_of_days_prior_to_LFA_result_to_trace = 2
-
         self.lateral_flow_testing_duration = 7
 
         # Call superclass constructor (which overwrites defaults with new params if present)
