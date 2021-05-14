@@ -18,7 +18,7 @@ from household_contact_tracing.contact_tracing import ContactTracing, \
     PCRTestingUK, PCRTestingContactModelTest
 
 
-class HouseholdContactTracing(SimulationModel):
+class HouseholdLevelContactTracing(SimulationModel):
 
     def __init__(self, params: dict):
 
@@ -204,8 +204,10 @@ class HouseholdContactTracing(SimulationModel):
                         node.completed_isolation_reason = 'completed_isolation'
 
     def simulate_one_step(self):
+        """ Simulates one day of the infection and contact tracing.
+        """
 
-        # Perform one day of the infection and contact tracing."""
+        # Perform one day of the infection
         self.infection.increment(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         self.isolate_self_reporting_cases()
@@ -264,7 +266,7 @@ class HouseholdContactTracing(SimulationModel):
         SimulationModel.simulation_stopped(self)
 
 
-class HouseholdContactTracingUK(HouseholdContactTracing):
+class IndividualLevelContactTracing(HouseholdLevelContactTracing):
 
     def __init__(self, params: dict):
 
@@ -307,7 +309,7 @@ class HouseholdContactTracingUK(HouseholdContactTracing):
     def instantiate_pcr_testing(self) -> PCRTestingUK:
         return PCRTestingUK(self.network)
 
-class HouseholdContactTracingUKTest(HouseholdContactTracingUK):
+class IndividualTracingDailyTesting(IndividualLevelContactTracing):
 
     def __init__(self, params):
 
@@ -346,9 +348,7 @@ class HouseholdContactTracingUKTest(HouseholdContactTracingUK):
         return ContactRateReductionContactModelTest()
 
     def simulate_one_step(self):
-        """Simulates one day of the epidemic and contact tracing.
-
-        Useful for bug testing and visualisation.
+        """ Simulates one day of the infection and contact tracing.
         """
 
         self.contact_tracing.receive_pcr_test_results(self.time)
@@ -361,7 +361,7 @@ class HouseholdContactTracingUKTest(HouseholdContactTracingUK):
         # if we require PCR tests, to confirm infection we act on those
         if self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
             self.contact_tracing.act_on_confirmatory_pcr_results(self.time)
-        # perform a days worth of infections
+        # Perform one day of the infection
         self.infection.increment(self.time)
         # propagate contact tracing
         for _ in range(5):
