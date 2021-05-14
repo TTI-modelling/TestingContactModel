@@ -50,7 +50,10 @@ class Infection:
         self.node_prob_will_take_up_lfa_testing = 1
         self.propensity_risky_behaviour_lfa_testing = 0
         self.hh_propensity_to_use_trace_app = 1
+        self.test_before_propagate_tracing = True
+        self.test_delay = 1
         self.prob_has_trace_app = 0
+        self.proportion_with_propensity_miss_lfa_tests = 0.
 
         # Update instance variables with anything in params
         for param_name in self.__dict__:
@@ -140,7 +143,6 @@ class Infection:
                       new_household_number,
                       generation,
                       infected_by,
-                      propensity_trace_app,
                       infected_by_node,
                       additional_attributes=None):
         if self.new_household_behaviour:
@@ -148,7 +150,6 @@ class Infection:
                                                        new_household_number,
                                                        generation,
                                                        infected_by,
-                                                       propensity_trace_app,
                                                        infected_by_node,
                                                        additional_attributes)
 
@@ -166,7 +167,6 @@ class Infection:
                                                        node_count,
                                                        generation,
                                                        household_id,
-                                                       test_delay,
                                                        serial_interval,
                                                        infecting_node,
                                                        additional_attributes)
@@ -381,7 +381,6 @@ class Infection:
                            new_household_number=house_id,
                            generation=infecting_household.generation + 1,
                            infected_by=infecting_node.household_id,
-                           propensity_trace_app=self.hh_propensity_to_use_trace_app,
                            infected_by_node=infecting_node.node_id)
 
         # add a new infection in the house just created
@@ -452,6 +451,18 @@ class Infection:
     def has_contact_tracing_app(self) -> bool:
         return npr.binomial(1, self.prob_has_trace_app) == 1
 
+    def hh_propensity_use_trace_app(self) -> bool:
+        if npr.binomial(1, self.hh_propensity_to_use_trace_app) == 1:
+            return True
+        else:
+            return False
+
+    def testing_delay(self) -> int:
+        if self.test_before_propagate_tracing is False:
+            return 0
+        else:
+            return round(self.test_delay)
+
 
 class NewHouseholdBehaviour:
     def __init__(self, network: Network):
@@ -471,7 +482,6 @@ class NewHouseholdBehaviour:
                       new_household_number: int,
                       generation: int,
                       infected_by: int,
-                      propensity_trace_app,
                       infected_by_node: int,
                       additional_attributes: Optional[dict] = None):
         pass
@@ -483,7 +493,6 @@ class NewHousehold(NewHouseholdBehaviour):
                       time: int,
                       new_household_number: int,
                       generation: int,
-                      propensity_trace_app,
                       infected_by: int,
                       infected_by_node: int,
                       additional_attributes: Optional[dict] = None):
@@ -504,7 +513,7 @@ class NewHousehold(NewHouseholdBehaviour):
             generation=generation,
             infected_by=infected_by,
             infected_by_node=infected_by_node,
-            propensity_trace_app=propensity_trace_app,
+            propensity_trace_app=self.infection.hh_propensity_use_trace_app(),
             additional_attributes=additional_attributes
         )
 
@@ -515,7 +524,6 @@ class NewHouseholdContactModelTest(NewHousehold):
                       time: int,
                       new_household_number: int,
                       generation: int,
-                      propensity_trace_app,
                       infected_by: int,
                       infected_by_node: int,
                       additional_attributes: Optional[dict] = None):
@@ -526,7 +534,6 @@ class NewHouseholdContactModelTest(NewHousehold):
             generation=generation,
             infected_by=infected_by,
             infected_by_node=infected_by_node,
-            propensity_trace_app=propensity_trace_app,
             additional_attributes={
                 'being_lateral_flow_tested': False,
                 'being_lateral_flow_tested_start_time': None,
@@ -553,7 +560,6 @@ class NewInfectionBehaviour:
                       node_count: int,
                       generation: int,
                       household_id: int,
-                      test_delay: int = 0,
                       serial_interval=None,
                       infecting_node: Optional[Node] = None,
                       additional_attributes: Optional[dict] = None):
@@ -567,7 +573,6 @@ class NewInfectionHousehold(NewInfectionBehaviour):
                       node_count: int,
                       generation: int,
                       household_id: int,
-                      test_delay: int = 0,
                       serial_interval=None,
                       infecting_node: Optional[Node] = None,
                       additional_attributes: Optional[dict] = None):
@@ -638,7 +643,7 @@ class NewInfectionHousehold(NewInfectionBehaviour):
                                will_report_infection=will_report_infection,
                                time_of_reporting=time_of_reporting,
                                has_contact_tracing_app=has_trace_app,
-                               testing_delay=test_delay,
+                               testing_delay=self.infection.testing_delay(),
                                additional_attributes=default_additional_attributes,
                                infecting_node=infecting_node)
 
@@ -650,7 +655,7 @@ class NewInfectionHousehold(NewInfectionBehaviour):
 class NewInfectionContactModelTest(NewInfectionBehaviour):
 
     def new_infection(self, time: int, node_count: int, generation: int, household_id: int,
-                      test_delay: int = 0, serial_interval=None,
+                      serial_interval=None,
                       infecting_node: Optional[Node] = None,
                       additional_attributes: Optional[dict] = None):
         """Add a new infection to the model and network. Attributes are randomly generated.
@@ -698,7 +703,7 @@ class NewInfectionContactModelTest(NewInfectionBehaviour):
             'confirmatory_PCR_test_result_time': None,
             'propensity_risky_behaviour_lfa_testing':
                 self._infection.will_engage_in_risky_behaviour_while_being_lfa_tested(),
-            'propensity_to_miss_lfa_tests': self._infection.propensity_to_miss_lfa_tests
+            'propensity_to_miss_lfa_tests': self._infection.propensity_to_miss_lfa_tests()
         }
 
         if additional_attributes:
@@ -773,7 +778,7 @@ class NewInfectionContactModelTest(NewInfectionBehaviour):
             will_report_infection=will_report_infection,
             time_of_reporting=time_of_reporting,
             has_contact_tracing_app=has_trace_app,
-            testing_delay=test_delay,
+            testing_delay=self.infection.testing_delay(),
             additional_attributes=default_additional_attributes,
             infecting_node=infecting_node,
         )

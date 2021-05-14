@@ -23,13 +23,12 @@ class ContactTracing:
         # contact tracing parameters
         self.contact_tracing_success_prob = 0.5
         self.do_2_step = False
-        self.hh_propensity_to_use_trace_app = 1
-        self.test_before_propagate_tracing = True
-        self.test_delay = 1
         self.contact_trace_delay = 1
         self.policy_for_household_contacts_of_a_positive_case = 'lfa testing no quarantine'
         self.LFA_testing_requires_confirmatory_PCR = False
         self.node_daily_prob_lfa_test = 1
+
+        # contact tracing functions (runtime updatable)
         self.prob_testing_positive_lfa_func = self.prob_testing_positive_lfa
         self.prob_testing_positive_pcr_func = self.prob_testing_positive_pcr
 
@@ -131,18 +130,6 @@ class ContactTracing:
     def pcr_test_node(self, node: Node, time: int):
         if self.pcr_testing_behaviour:
             self.pcr_testing_behaviour.pcr_test_node(node, time)
-
-    def hh_propensity_use_trace_app(self) -> bool:
-        if npr.binomial(1, self.hh_propensity_to_use_trace_app) == 1:
-            return True
-        else:
-            return False
-
-    def testing_delay(self) -> int:
-        if self.test_before_propagate_tracing is False:
-            return 0
-        else:
-            return round(self.test_delay)
 
     def apply_policy_for_household_contacts_of_a_positive_case(self, household: Household, time: int):
         """We apply different policies to the household contacts of a discovered case.
@@ -333,7 +320,7 @@ class ContactTracing:
 class UpdateIsolationBehaviour:
     def __init__(self, network: Network):
         self._network = network
-        self._contact_tracing = None
+        self.contact_tracing = None
 
     @property
     def contact_tracing(self) -> ContactTracing:
@@ -349,7 +336,7 @@ class UpdateIsolationBehaviour:
     def update_all_households_contact_traced(self, time):
         # Update the contact traced status for all households that have had the contact tracing process get there
         [
-            self._contact_tracing.contact_trace_household(household, time)
+            self.contact_tracing.contact_trace_household(household, time)
             for household in self._network.houses.all_households()
             if household.time_until_contact_traced <= time
                and not household.contact_traced
@@ -365,7 +352,7 @@ class UpdateIsolationHousehold(UpdateIsolationBehaviour):
         # Isolate all non isolated households where the infection has been reported (excludes those who will not
         # take up isolation if prob <1)
         [
-            self._contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
+            self.contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
             for node in self._network.all_nodes()
             if node.time_of_reporting + node.testing_delay == time
             and not node.household().isolated
@@ -590,7 +577,7 @@ class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
         # Isolate all households under observation that now display symptoms (excludes those who will not take up
         # isolation if prob <1)
         [
-            self._contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
+            self.contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
             for node in self._network.all_nodes()
             if node.symptom_onset_time <= time
             and node.contact_traced
