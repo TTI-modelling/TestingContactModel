@@ -140,7 +140,6 @@ class Infection:
                       new_household_number,
                       generation,
                       infected_by,
-                      propensity_trace_app,
                       infected_by_node,
                       additional_attributes=None):
         if self.new_household_behaviour:
@@ -148,7 +147,6 @@ class Infection:
                                                        new_household_number,
                                                        generation,
                                                        infected_by,
-                                                       propensity_trace_app,
                                                        infected_by_node,
                                                        additional_attributes)
 
@@ -381,7 +379,6 @@ class Infection:
                            new_household_number=house_id,
                            generation=infecting_household.generation + 1,
                            infected_by=infecting_node.household_id,
-                           propensity_trace_app=self.hh_propensity_to_use_trace_app,
                            infected_by_node=infecting_node.node_id)
 
         # add a new infection in the house just created
@@ -452,6 +449,12 @@ class Infection:
     def has_contact_tracing_app(self) -> bool:
         return npr.binomial(1, self.prob_has_trace_app) == 1
 
+    def hh_propensity_use_trace_app(self) -> bool:
+        if npr.binomial(1, self.hh_propensity_to_use_trace_app) == 1:
+            return True
+        else:
+            return False
+
 
 class NewHouseholdBehaviour:
     def __init__(self, network: Network):
@@ -471,7 +474,6 @@ class NewHouseholdBehaviour:
                       new_household_number: int,
                       generation: int,
                       infected_by: int,
-                      propensity_trace_app,
                       infected_by_node: int,
                       additional_attributes: Optional[dict] = None):
         pass
@@ -483,7 +485,6 @@ class NewHousehold(NewHouseholdBehaviour):
                       time: int,
                       new_household_number: int,
                       generation: int,
-                      propensity_trace_app,
                       infected_by: int,
                       infected_by_node: int,
                       additional_attributes: Optional[dict] = None):
@@ -504,7 +505,7 @@ class NewHousehold(NewHouseholdBehaviour):
             generation=generation,
             infected_by=infected_by,
             infected_by_node=infected_by_node,
-            propensity_trace_app=propensity_trace_app,
+            propensity_trace_app=self.infection.hh_propensity_use_trace_app(),
             additional_attributes=additional_attributes
         )
 
@@ -515,7 +516,6 @@ class NewHouseholdContactModelTest(NewHousehold):
                       time: int,
                       new_household_number: int,
                       generation: int,
-                      propensity_trace_app,
                       infected_by: int,
                       infected_by_node: int,
                       additional_attributes: Optional[dict] = None):
@@ -526,7 +526,6 @@ class NewHouseholdContactModelTest(NewHousehold):
             generation=generation,
             infected_by=infected_by,
             infected_by_node=infected_by_node,
-            propensity_trace_app=propensity_trace_app,
             additional_attributes={
                 'being_lateral_flow_tested': False,
                 'being_lateral_flow_tested_start_time': None,

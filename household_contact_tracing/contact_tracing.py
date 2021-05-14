@@ -132,12 +132,6 @@ class ContactTracing:
         if self.pcr_testing_behaviour:
             self.pcr_testing_behaviour.pcr_test_node(node, time)
 
-    def hh_propensity_use_trace_app(self) -> bool:
-        if npr.binomial(1, self.hh_propensity_to_use_trace_app) == 1:
-            return True
-        else:
-            return False
-
     def testing_delay(self) -> int:
         if self.test_before_propagate_tracing is False:
             return 0
