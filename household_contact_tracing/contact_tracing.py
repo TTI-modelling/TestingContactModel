@@ -894,7 +894,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                    and not node.propagated_contact_tracing
             ]
 
-        elif self.LFA_testing_requires_confirmatory_PCR:
+        elif self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
             [
                 self.propagate_contact_tracing(node, time)
                 for node in self._network.all_nodes()
@@ -941,7 +941,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
 
             elif node.avenue_of_testing == TestType.lfa:
 
-                if not self.LFA_testing_requires_confirmatory_PCR:
+                if not self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
 
                     if not infected_by_node.isolated and node.time_infected >= \
                             node.positive_test_time - self.number_of_days_prior_to_LFA_result_to_trace:
@@ -977,7 +977,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
 
             elif node.avenue_of_testing == TestType.lfa:
 
-                if not self.LFA_testing_requires_confirmatory_PCR:
+                if not self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
 
                     # If the node was infected 2 days prior to symptom onset, or 7 days post and is not already isolated
                     if time_t >= node.positive_test_time - self.number_of_days_prior_to_LFA_result_to_trace:
