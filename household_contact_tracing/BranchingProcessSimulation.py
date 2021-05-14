@@ -14,7 +14,8 @@ from household_contact_tracing.infection import Infection, \
 from household_contact_tracing.contact_tracing import ContactTracing, \
     ContactTraceHousehold, ContactTraceHouseholdUK, ContactTraceHouseholdContactModelTest, \
     IncrementContactTracingHousehold, IncrementContactTracingUK, IncrementContactTracingContactModelTest, \
-    UpdateIsolationHousehold, UpdateIsolationUK
+    UpdateIsolationHousehold, UpdateIsolationUK, \
+    PCRTestingUK, PCRTestingContactModelTest
 
 
 class household_sim_contact_tracing(BPSimulationModel):
@@ -58,6 +59,7 @@ class household_sim_contact_tracing(BPSimulationModel):
                                                self.instantiate_contact_trace_household(),
                                                self.instantiate_increment_contact_tracing(),
                                                self.instantiate_update_isolation(),
+                                               self.instantiate_pcr_testing(),
                                                params)
 
         # Set the simulated time to the start (days)
@@ -94,6 +96,9 @@ class household_sim_contact_tracing(BPSimulationModel):
 
     def instantiate_increment_contact_tracing(self) -> IncrementContactTracingHousehold:
         return IncrementContactTracingHousehold(self.network)
+
+    def instantiate_pcr_testing(self) -> None:
+        return None
 
     def instantiate_network(self) -> Network:
         return Network()
@@ -199,8 +204,8 @@ class household_sim_contact_tracing(BPSimulationModel):
                         node.completed_isolation_reason = 'completed_isolation'
 
     def simulate_one_step(self):
-        """ Private method: Simulates one day of the epidemic and contact tracing."""
-        # perform a days worth of infections
+
+        # Perform one day of the infection and contact tracing."""
         self.infection.increment(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         self.isolate_self_reporting_cases()
@@ -215,6 +220,7 @@ class household_sim_contact_tracing(BPSimulationModel):
         self.release_nodes_from_quarantine_or_isolation()
         # increment time
         self.time += 1
+
 
     def run_simulation(self, num_steps: int, infection_threshold: int = 1000) -> None:
         """ Runs the simulation:
@@ -298,6 +304,9 @@ class uk_model(household_sim_contact_tracing):
                                          self.number_of_days_to_trace_forwards,
                                          self.recall_probability_fall_off)
 
+    def instantiate_pcr_testing(self) -> PCRTestingUK:
+        return PCRTestingUK(self.network)
+
 class ContactModelTest(uk_model):
 
     def __init__(self, params):
@@ -316,11 +325,13 @@ class ContactModelTest(uk_model):
 
     def instantiate_increment_contact_tracing(self) -> IncrementContactTracingContactModelTest:
         return IncrementContactTracingContactModelTest(self.network,
-                                                       self.lfa_tested_nodes_book_pcr_on_symptom_onset,
                                                        self.number_of_days_to_trace_backwards,
                                                        self.number_of_days_to_trace_forwards,
                                                        self.recall_probability_fall_off,
                                                        self.number_of_days_prior_to_LFA_result_to_trace)
+
+    def instantiate_pcr_testing(self) -> PCRTestingContactModelTest:
+        return PCRTestingContactModelTest(self.network, self.lfa_tested_nodes_book_pcr_on_symptom_onset)
 
     def instantiate_network(self):
         return NetworkContactModel()
@@ -334,15 +345,13 @@ class ContactModelTest(uk_model):
     def instantiate_contact_rate_reduction(self) -> ContactRateReductionContactModelTest:
         return ContactRateReductionContactModelTest()
 
-    def simulate_one_step(self, time=0):
+    def simulate_one_step(self):
         """Simulates one day of the epidemic and contact tracing.
 
         Useful for bug testing and visualisation.
         """
 
-        prev_graph = self.network.graph.copy()
-
-        self.contact_tracing.increment_behaviour.receive_pcr_test_results(time)
+        self.contact_tracing.receive_pcr_test_results(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         self.isolate_self_reporting_cases()
         # isolate self-reporting-nodes while they wait for tests
@@ -364,14 +373,6 @@ class ContactModelTest(uk_model):
 
         # increment time
         self.time += 1
-
-        # Check if network/graph has changed
-        new_graph = self.network.graph
-        if not graphs_isomorphic(prev_graph, new_graph):
-            BPSimulationModel.graph_changed(self)
-
-        # Inform parent model that step is completed
-        BPSimulationModel.completed_step_increment(self)
 
     def release_nodes_from_lateral_flow_testing_or_isolation(self, time: int):
         """If a node has completed the quarantine according to the following rules, they are
