@@ -1,6 +1,6 @@
 import copy
 
-from household_contact_tracing.BranchingProcessSimulation import UKHouseholdContactTracingTest
+from household_contact_tracing.BranchingProcessSimulation import HouseholdContactTracingUKTest
 import pytest
 
 default_params = {"outside_household_infectivity_scaling": 0.3,
@@ -36,7 +36,7 @@ def simple_model():
         else:
             return 0
 
-    model = UKHouseholdContactTracingTest(default_params)
+    model = HouseholdContactTracingUKTest(default_params)
     model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
     model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
 
@@ -60,7 +60,7 @@ def simple_model_high_test_prob():
         else:
             return 0
 
-    model = UKHouseholdContactTracingTest(default_params)
+    model = HouseholdContactTracingUKTest(default_params)
     model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
     model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
 
@@ -92,7 +92,7 @@ def simple_model_risky_behaviour():
     # all lfa tested nodes engage in risky behaviour
     params["propensity_risky_behaviour_lfa_testing"] = 1
 
-    model = UKHouseholdContactTracingTest(params)
+    model = HouseholdContactTracingUKTest(params)
     model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
     model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
 
@@ -123,7 +123,7 @@ def test_pseudo_symptom_onset_asymptomatics():
     params = copy.deepcopy(default_params)
     params["asymptomatic_prob"] = 1
 
-    model = UKHouseholdContactTracingTest(params)
+    model = HouseholdContactTracingUKTest(params)
     model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
     model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
 
@@ -240,7 +240,7 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
     assert model.network.node(2).being_lateral_flow_tested is True
 
 
-def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: UKHouseholdContactTracingTest):
+def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: HouseholdContactTracingUKTest):
 
     model = simple_model_high_test_prob
     model.policy_for_household_contacts_of_a_positive_case = 'lfa testing and quarantine'
@@ -294,7 +294,7 @@ def simple_model_lfa_testing_and_quarantine():
     params = copy.deepcopy(default_params)
     params["policy_for_household_contacts_of_a_positive_case"] = 'lfa testing and quarantine'
 
-    model = UKHouseholdContactTracingTest(params)
+    model = HouseholdContactTracingUKTest(params)
     model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
     model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
 
@@ -357,7 +357,7 @@ def simple_model_no_lfa_testing_only_quarantine():
 
     params["policy_for_household_contacts_of_a_positive_case"] = 'no lfa testing only quarantine'
 
-    model = UKHouseholdContactTracingTest(params)
+    model = HouseholdContactTracingUKTest(params)
     model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
     model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
 
@@ -439,7 +439,7 @@ def simple_model_risky_behaviour_2_infections():
     params["propensity_risky_behaviour_lfa_testing"] = 1
 
 
-    model = UKHouseholdContactTracingTest(params)
+    model = HouseholdContactTracingUKTest(params)
     model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
     model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
 
