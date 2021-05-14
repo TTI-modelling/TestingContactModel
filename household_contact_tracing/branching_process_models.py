@@ -301,10 +301,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
         return ContactTraceHouseholdUK(self.network)
 
     def instantiate_increment_contact_tracing(self) -> IncrementContactTracingUK:
-        return IncrementContactTracingUK(self.network,
-                                         self.number_of_days_to_trace_backwards,
-                                         self.number_of_days_to_trace_forwards,
-                                         self.recall_probability_fall_off)
+        return IncrementContactTracingUK(self.network)
 
     def instantiate_pcr_testing(self) -> PCRTestingUK:
         return PCRTestingUK(self.network)
@@ -326,11 +323,7 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
         return ContactTraceHouseholdContactModelTest(self.network)
 
     def instantiate_increment_contact_tracing(self) -> IncrementContactTracingContactModelTest:
-        return IncrementContactTracingContactModelTest(self.network,
-                                                       self.number_of_days_to_trace_backwards,
-                                                       self.number_of_days_to_trace_forwards,
-                                                       self.recall_probability_fall_off,
-                                                       self.number_of_days_prior_to_LFA_result_to_trace)
+        return IncrementContactTracingContactModelTest(self.network)
 
     def instantiate_pcr_testing(self) -> PCRTestingContactModelTest:
         return PCRTestingContactModelTest(self.network)
