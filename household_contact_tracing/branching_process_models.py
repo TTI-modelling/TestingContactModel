@@ -309,7 +309,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
     def instantiate_pcr_testing(self) -> PCRTestingUK:
         return PCRTestingUK(self.network)
 
-class HouseholdContactTracingUKTest(IndividualLevelContactTracing):
+class IndividualTracingDailyTesting(IndividualLevelContactTracing):
 
     def __init__(self, params):
 
