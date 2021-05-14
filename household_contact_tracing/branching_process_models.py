@@ -4,7 +4,7 @@ import os
 
 from household_contact_tracing.network import Network, NetworkContactModel, Household, Node, \
     graphs_isomorphic, InfectionStatus, TestType
-from household_contact_tracing.bp_simulation_model import BPSimulationModel
+from household_contact_tracing.simulation_model import SimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
 from household_contact_tracing.infection import Infection, \
@@ -18,7 +18,7 @@ from household_contact_tracing.contact_tracing import ContactTracing, \
     PCRTestingUK, PCRTestingContactModelTest
 
 
-class HouseholdContactTracing(BPSimulationModel):
+class HouseholdContactTracing(SimulationModel):
 
     def __init__(self, params: dict):
 
@@ -30,7 +30,7 @@ class HouseholdContactTracing(BPSimulationModel):
         """
 
         # Call parent init
-        BPSimulationModel.__init__(self)
+        SimulationModel.__init__(self)
 
         # Parse parameters against schema to check they are valid
         validate_parameters(params, os.path.join(self.ROOT_DIR, "schemas/household_sim_contact_tracing.json"))
@@ -66,7 +66,7 @@ class HouseholdContactTracing(BPSimulationModel):
         self.time = 0
 
         # Call parent initialised_simulation
-        BPSimulationModel.simulation_initialised(self)
+        SimulationModel.simulation_initialised(self)
 
     @property
     def network(self):
@@ -236,7 +236,7 @@ class HouseholdContactTracing(BPSimulationModel):
         """
 
         # Tell parent simulation started
-        BPSimulationModel.simulation_started(self)
+        SimulationModel.simulation_started(self)
 
         while type(self.state) is RunningState:
             prev_graph = self.network.graph.copy()
@@ -247,10 +247,10 @@ class HouseholdContactTracing(BPSimulationModel):
             # If graph changed, tell parent
             new_graph = self.network.graph
             if not graphs_isomorphic(prev_graph, new_graph):
-                BPSimulationModel.graph_changed(self)
+                SimulationModel.graph_changed(self)
 
             # Call parent completed step
-            BPSimulationModel.completed_step_increment(self)
+            SimulationModel.completed_step_increment(self)
 
             # Simulation ends if num_steps is reached
             if self.time >= num_steps:
@@ -261,7 +261,7 @@ class HouseholdContactTracing(BPSimulationModel):
                 self.state.max_nodes_infectious()
 
         # Tell parent simulation stopped
-        BPSimulationModel.simulation_stopped(self)
+        SimulationModel.simulation_stopped(self)
 
 
 class HouseholdContactTracingUK(HouseholdContactTracing):
