@@ -111,7 +111,8 @@ class Infection:
     @new_household_behaviour.setter
     def new_household_behaviour(self, new_household_behaviour: NewHouseholdBehaviour):
         self._new_household_behaviour = new_household_behaviour
-        self._new_household_behaviour.infection = self
+        if self._new_household_behaviour:
+            self._new_household_behaviour.infection = self
 
     @property
     def new_infection_behaviour(self) -> NewInfectionBehaviour:
@@ -121,7 +122,8 @@ class Infection:
     @new_infection_behaviour.setter
     def new_infection_behaviour(self, new_infection_behaviour: NewInfectionBehaviour):
         self._new_infection_behaviour = new_infection_behaviour
-        self._new_infection_behaviour.infection = self
+        if self._new_infection_behaviour:
+            self._new_infection_behaviour.infection = self
 
     @property
     def contact_rate_reduction_behaviour(self) -> ContactRateReductionBehaviour:
@@ -130,7 +132,8 @@ class Infection:
     @contact_rate_reduction_behaviour.setter
     def contact_rate_reduction_behaviour(self, contact_rate_reduction_behaviour: ContactRateReductionBehaviour):
         self._contact_rate_reduction_behaviour = contact_rate_reduction_behaviour
-        self._contact_rate_reduction_behaviour.infection = self
+        if self._contact_rate_reduction_behaviour:
+            self._contact_rate_reduction_behaviour.infection = self
 
     def new_household(self,
                       time,

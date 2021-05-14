@@ -14,7 +14,8 @@ from household_contact_tracing.infection import Infection, \
 from household_contact_tracing.contact_tracing import ContactTracing, \
     ContactTraceHousehold, ContactTraceHouseholdUK, ContactTraceHouseholdContactModelTest, \
     IncrementContactTracingHousehold, IncrementContactTracingUK, IncrementContactTracingContactModelTest, \
-    UpdateIsolationHousehold, UpdateIsolationUK
+    UpdateIsolationHousehold, UpdateIsolationUK, \
+    PCRTestingUK, PCRTestingContactModelTest
 
 
 class household_sim_contact_tracing(BPSimulationModel):
@@ -58,6 +59,7 @@ class household_sim_contact_tracing(BPSimulationModel):
                                                self.instantiate_contact_trace_household(),
                                                self.instantiate_increment_contact_tracing(),
                                                self.instantiate_update_isolation(),
+                                               self.instantiate_pcr_testing(),
                                                params)
 
         # Set the simulated time to the start (days)
@@ -94,6 +96,9 @@ class household_sim_contact_tracing(BPSimulationModel):
 
     def instantiate_increment_contact_tracing(self) -> IncrementContactTracingHousehold:
         return IncrementContactTracingHousehold(self.network)
+
+    def instantiate_pcr_testing(self) -> None:
+        return None
 
     def instantiate_network(self) -> Network:
         return Network()
@@ -299,6 +304,9 @@ class uk_model(household_sim_contact_tracing):
                                          self.number_of_days_to_trace_forwards,
                                          self.recall_probability_fall_off)
 
+    def instantiate_pcr_testing(self) -> PCRTestingUK:
+        return PCRTestingUK(self.network)
+
 class ContactModelTest(uk_model):
 
     def __init__(self, params):
@@ -317,11 +325,13 @@ class ContactModelTest(uk_model):
 
     def instantiate_increment_contact_tracing(self) -> IncrementContactTracingContactModelTest:
         return IncrementContactTracingContactModelTest(self.network,
-                                                       self.lfa_tested_nodes_book_pcr_on_symptom_onset,
                                                        self.number_of_days_to_trace_backwards,
                                                        self.number_of_days_to_trace_forwards,
                                                        self.recall_probability_fall_off,
                                                        self.number_of_days_prior_to_LFA_result_to_trace)
+
+    def instantiate_pcr_testing(self) -> PCRTestingContactModelTest:
+        return PCRTestingContactModelTest(self.network, self.lfa_tested_nodes_book_pcr_on_symptom_onset)
 
     def instantiate_network(self):
         return NetworkContactModel()
@@ -341,7 +351,7 @@ class ContactModelTest(uk_model):
         Useful for bug testing and visualisation.
         """
 
-        self.contact_tracing.increment_behaviour.receive_pcr_test_results(self.time)
+        self.contact_tracing.receive_pcr_test_results(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         self.isolate_self_reporting_cases()
         # isolate self-reporting-nodes while they wait for tests
