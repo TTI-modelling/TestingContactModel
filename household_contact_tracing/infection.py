@@ -50,7 +50,11 @@ class Infection:
         self.node_prob_will_take_up_lfa_testing = 1
         self.propensity_risky_behaviour_lfa_testing = 0
         self.hh_propensity_to_use_trace_app = 1
+        self.test_before_propagate_tracing = True
+        self.test_delay = 1
         self.prob_has_trace_app = 0
+
+
 
         # Update instance variables with anything in params
         for param_name in self.__dict__:
@@ -164,7 +168,6 @@ class Infection:
                                                        node_count,
                                                        generation,
                                                        household_id,
-                                                       test_delay,
                                                        serial_interval,
                                                        infecting_node,
                                                        additional_attributes)
@@ -455,6 +458,12 @@ class Infection:
         else:
             return False
 
+    def testing_delay(self) -> int:
+        if self.test_before_propagate_tracing is False:
+            return 0
+        else:
+            return round(self.test_delay)
+
 
 class NewHouseholdBehaviour:
     def __init__(self, network: Network):
@@ -552,7 +561,6 @@ class NewInfectionBehaviour:
                       node_count: int,
                       generation: int,
                       household_id: int,
-                      test_delay: int = 0,
                       serial_interval=None,
                       infecting_node: Optional[Node] = None,
                       additional_attributes: Optional[dict] = None):
@@ -566,7 +574,6 @@ class NewInfectionHousehold(NewInfectionBehaviour):
                       node_count: int,
                       generation: int,
                       household_id: int,
-                      test_delay: int = 0,
                       serial_interval=None,
                       infecting_node: Optional[Node] = None,
                       additional_attributes: Optional[dict] = None):
@@ -637,7 +644,7 @@ class NewInfectionHousehold(NewInfectionBehaviour):
                                will_report_infection=will_report_infection,
                                time_of_reporting=time_of_reporting,
                                has_contact_tracing_app=has_trace_app,
-                               testing_delay=test_delay,
+                               testing_delay=self.infection.testing_delay(),
                                additional_attributes=default_additional_attributes,
                                infecting_node=infecting_node)
 
@@ -649,7 +656,7 @@ class NewInfectionHousehold(NewInfectionBehaviour):
 class NewInfectionContactModelTest(NewInfectionBehaviour):
 
     def new_infection(self, time: int, node_count: int, generation: int, household_id: int,
-                      test_delay: int = 0, serial_interval=None,
+                      serial_interval=None,
                       infecting_node: Optional[Node] = None,
                       additional_attributes: Optional[dict] = None):
         """Add a new infection to the model and network. Attributes are randomly generated.
@@ -772,7 +779,7 @@ class NewInfectionContactModelTest(NewInfectionBehaviour):
             will_report_infection=will_report_infection,
             time_of_reporting=time_of_reporting,
             has_contact_tracing_app=has_trace_app,
-            testing_delay=test_delay,
+            testing_delay=self.infection.testing_delay(),
             additional_attributes=default_additional_attributes,
             infecting_node=infecting_node,
         )

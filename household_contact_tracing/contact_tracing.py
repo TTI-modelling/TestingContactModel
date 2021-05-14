@@ -23,9 +23,6 @@ class ContactTracing:
         # contact tracing parameters
         self.contact_tracing_success_prob = 0.5
         self.do_2_step = False
-        self.hh_propensity_to_use_trace_app = 1
-        self.test_before_propagate_tracing = True
-        self.test_delay = 1
         self.contact_trace_delay = 1
         self.policy_for_household_contacts_of_a_positive_case = 'lfa testing no quarantine'
         self.LFA_testing_requires_confirmatory_PCR = False
@@ -131,12 +128,6 @@ class ContactTracing:
     def pcr_test_node(self, node: Node, time: int):
         if self.pcr_testing_behaviour:
             self.pcr_testing_behaviour.pcr_test_node(node, time)
-
-    def testing_delay(self) -> int:
-        if self.test_before_propagate_tracing is False:
-            return 0
-        else:
-            return round(self.test_delay)
 
     def apply_policy_for_household_contacts_of_a_positive_case(self, household: Household, time: int):
         """We apply different policies to the household contacts of a discovered case.
