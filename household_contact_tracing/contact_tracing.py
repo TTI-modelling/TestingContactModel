@@ -27,6 +27,7 @@ class ContactTracing:
         self.policy_for_household_contacts_of_a_positive_case = 'lfa testing no quarantine'
         self.LFA_testing_requires_confirmatory_PCR = False
         self.node_daily_prob_lfa_test = 1
+        self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
 
         # contact tracing functions (runtime updatable)
         self.prob_testing_positive_lfa_func = self.prob_testing_positive_lfa
@@ -1038,17 +1039,15 @@ class PCRTestingUK(PCRTestingBehaviour):
 
 class PCRTestingContactModelTest(PCRTestingBehaviour):
 
-    def __init__(self, network: Network,
-                 lfa_tested_nodes_book_pcr_on_symptom_onset):
+    def __init__(self, network: Network):
         super(PCRTestingContactModelTest, self).__init__(network)
-        self.lfa_tested_nodes_book_pcr_on_symptom_onset = lfa_tested_nodes_book_pcr_on_symptom_onset
 
     def receive_pcr_test_results(self, time: int):
         """
         For nodes who would receive a PCR test result today, update
         """
 
-        if self.lfa_tested_nodes_book_pcr_on_symptom_onset:
+        if self.contact_tracing.lfa_tested_nodes_book_pcr_on_symptom_onset:
 
             # self reporting infections who have not been contact traced
             [

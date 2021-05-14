@@ -314,7 +314,7 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
     def __init__(self, params):
 
         # Set param defaults
-        self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
+
         self.number_of_days_prior_to_LFA_result_to_trace = 2
 
         self.lateral_flow_testing_duration = 7
@@ -333,7 +333,7 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
                                                        self.number_of_days_prior_to_LFA_result_to_trace)
 
     def instantiate_pcr_testing(self) -> PCRTestingContactModelTest:
-        return PCRTestingContactModelTest(self.network, self.lfa_tested_nodes_book_pcr_on_symptom_onset)
+        return PCRTestingContactModelTest(self.network)
 
     def instantiate_network(self):
         return NetworkContactModel()
