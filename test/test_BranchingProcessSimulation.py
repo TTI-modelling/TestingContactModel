@@ -1,8 +1,8 @@
 import copy
-import sys
+import pytest
 
 import household_contact_tracing.BranchingProcessSimulation as hct    # The code to test
-import pytest
+
 
 default_params = {"outside_household_infectivity_scaling": 0.8,
                   "contact_tracing_success_prob": 0.7,
@@ -21,7 +21,7 @@ default_params = {"outside_household_infectivity_scaling": 0.8,
 def test_asymptomatic_nodes_attributes():
 
     # everyone's asymptomatic
-    test_model = hct.household_sim_contact_tracing(default_params)
+    test_model = hct.HouseholdContactTracing(default_params)
 
     lfa_test_node = test_model.network.node(1)
 
@@ -38,7 +38,7 @@ def test_symptomatic_nodes_attributes():
     params["infection_reporting_prob"] = 1
 
     # no asymptomatics
-    test_model = hct.household_sim_contact_tracing(params)
+    test_model = hct.HouseholdContactTracing(params)
 
     lfa_test_node = test_model.network.node(1)
 
@@ -56,7 +56,7 @@ def simple_branching_process():
     params["asymptomatic_relative_infectivity"] = 0.5
 
     # 50% asymptomatic
-    test_model = hct.household_sim_contact_tracing(params)
+    test_model = hct.HouseholdContactTracing(params)
     return test_model
 
 
