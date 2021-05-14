@@ -6,7 +6,7 @@ from household_contact_tracing.simulation_states import SimulationStateInterface
     ExtinctState, TimedOutState, MaxNodesInfectiousState
 
 
-class BPSimulationModel(SimulationModelInterface):
+class SimulationModel(SimulationModelInterface):
     """
         Branching Process Simulation Controller
     """

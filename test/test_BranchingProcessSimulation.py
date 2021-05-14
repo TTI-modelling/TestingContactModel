@@ -1,7 +1,7 @@
 import copy
 import pytest
 
-import household_contact_tracing.BranchingProcessSimulation as hct    # The code to test
+import household_contact_tracing.branching_process_models as hct    # The code to test
 
 
 default_params = {"outside_household_infectivity_scaling": 0.8,

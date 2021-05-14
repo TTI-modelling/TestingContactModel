@@ -1,5 +1,5 @@
 from household_contact_tracing.simulation_controller import SimulationController
-from household_contact_tracing.BranchingProcessSimulation import HouseholdContactTracingUKTest
+from household_contact_tracing.branching_process_models import HouseholdContactTracingUKTest
 
 
 def prob_testing_positive_function(time_relative_to_symptom_onset):
