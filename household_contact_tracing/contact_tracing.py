@@ -921,7 +921,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                 if not self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
 
                     if not infected_by_node.isolated and node.time_infected >= \
-                            node.positive_test_time - self.number_of_days_prior_to_LFA_result_to_trace:
+                            node.positive_test_time - self.contact_tracing.number_of_days_prior_to_LFA_result_to_trace:
 
                         # Then attempt to contact trace the household of the node that infected you
                         self.attempt_contact_trace_of_household(
@@ -957,7 +957,8 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                 if not self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
 
                     # If the node was infected 2 days prior to symptom onset, or 7 days post and is not already isolated
-                    if time_t >= node.positive_test_time - self.number_of_days_prior_to_LFA_result_to_trace:
+                    if time_t >= node.positive_test_time - \
+                            self.contact_tracing.number_of_days_prior_to_LFA_result_to_trace:
 
                         self.attempt_contact_trace_of_household(
                             house_to=child_node.household(),
@@ -985,7 +986,7 @@ class PCRTestingBehaviour:
         pass
 
 
-class PCRTestingUK(PCRTestingBehaviour):
+class PCRTestingIndividualLevelTracing(PCRTestingBehaviour):
 
     def receive_pcr_test_results(self, time: int):
         """For nodes who would receive a PCR test result today, update
@@ -995,8 +996,8 @@ class PCRTestingUK(PCRTestingBehaviour):
             self.pcr_test_node(node, time)
             for node in self._network.all_nodes()
             if node.time_of_reporting + node.testing_delay == time
-            and not node.received_result
             and not node.contact_traced
+            and not node.received_result
         ]
 
         # contact traced nodes
@@ -1009,67 +1010,6 @@ class PCRTestingUK(PCRTestingBehaviour):
         ]
 
     def pcr_test_node(self, node: Node, time: int):
-        """Given the nodes infectious age, will that node test positive
-
-        Args:
-            node (Node): The node to be tested today
-            time (int): Current time in days
-        """
-        node.received_result = True
-
-        infectious_age_when_tested = time - node.testing_delay - node.time_infected
-
-        prob_positive_result = self.contact_tracing.prob_testing_positive_pcr_func(infectious_age_when_tested)
-
-        if npr.binomial(1, prob_positive_result) == 1:
-            node.received_positive_test_result = True
-        else:
-            node.received_positive_test_result = False
-
-class PCRTestingContactModelTest(PCRTestingBehaviour):
-
-    def __init__(self, network: Network):
-        super(PCRTestingContactModelTest, self).__init__(network)
-
-    def receive_pcr_test_results(self, time: int):
-        """
-        For nodes who would receive a PCR test result today, update
-        """
-
-        if self.contact_tracing.lfa_tested_nodes_book_pcr_on_symptom_onset:
-
-            # self reporting infections who have not been contact traced
-            [
-                self.pcr_test_node(node, time)
-                for node in self._network.all_nodes()
-                if node.time_of_reporting + node.testing_delay == time
-                   and not node.received_result
-                   and not node.contact_traced
-            ]
-
-            # contact traced nodes should book a pcr test if they develop symptoms
-            # we assume that this occurs at symptom onset time since they are traced
-            # and on the lookout for developing symptoms
-            [
-                self.pcr_test_node(node, time)
-                for node in self._network.all_nodes()
-                if node.symptom_onset_time + node.testing_delay == time
-                   and not node.received_result
-                   and node.contact_traced
-            ]
-
-        else:
-
-            [
-                self.pcr_test_node(node, time)
-                for node in self._network.all_nodes()
-                if node.time_of_reporting + node.testing_delay == time
-                   and not node.received_result
-                   and not node.contact_traced
-                   and not node.being_lateral_flow_tested
-            ]
-
-    def pcr_test_node(self, node: Node, time: int):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
@@ -1077,11 +1017,8 @@ class PCRTestingContactModelTest(PCRTestingBehaviour):
             time (int): Current time in days
         """
         node.received_result = True
-
         infectious_age_when_tested = time - node.testing_delay - node.time_infected
-
         prob_positive_result = self.contact_tracing.prob_testing_positive_pcr_func(infectious_age_when_tested)
-
         node.avenue_of_testing = TestType.pcr
 
         if npr.binomial(1, prob_positive_result) == 1:
@@ -1090,3 +1027,22 @@ class PCRTestingContactModelTest(PCRTestingBehaviour):
         else:
             node.received_positive_test_result = False
 
+
+class PCRTestingIndividualDailyTesting(PCRTestingIndividualLevelTracing):
+
+    def receive_pcr_test_results(self, time: int):
+        """
+        For nodes who would receive a PCR test result today, update
+        """
+
+        if self.contact_tracing.lfa_tested_nodes_book_pcr_on_symptom_onset:
+           super(PCRTestingIndividualDailyTesting, self).receive_pcr_test_results(time)
+        else:
+            [
+                self.pcr_test_node(node, time)
+                for node in self._network.all_nodes()
+                if node.time_of_reporting + node.testing_delay == time
+                   and not node.received_result
+                   and not node.contact_traced
+                   and not node.being_lateral_flow_tested
+            ]

@@ -34,8 +34,8 @@ def main():
     model.prob_testing_positive_pcr_func = prob_testing_positive_function
     controller = SimulationController(model)
     #controller.set_show_all_graphs(True)
-    controller.run_simulation(9)
-    controller.run_simulation(11)
+    controller.run_simulation(10)
+    controller.run_simulation(12)
     recreate_pytest_1()
     recreate_pytest_2()
 

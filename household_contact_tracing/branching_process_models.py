@@ -15,7 +15,7 @@ from household_contact_tracing.contact_tracing import ContactTracing, \
     ContactTraceHousehold, ContactTraceHouseholdUK, ContactTraceHouseholdContactModelTest, \
     IncrementContactTracingHousehold, IncrementContactTracingUK, IncrementContactTracingContactModelTest, \
     UpdateIsolationHousehold, UpdateIsolationUK, \
-    PCRTestingUK, PCRTestingContactModelTest
+    PCRTestingIndividualLevelTracing, PCRTestingIndividualDailyTesting
 
 
 class HouseholdLevelContactTracing(SimulationModel):
@@ -293,8 +293,8 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
     def instantiate_increment_contact_tracing(self) -> IncrementContactTracingUK:
         return IncrementContactTracingUK(self.network)
 
-    def instantiate_pcr_testing(self) -> PCRTestingUK:
-        return PCRTestingUK(self.network)
+    def instantiate_pcr_testing(self) -> PCRTestingIndividualLevelTracing:
+        return PCRTestingIndividualLevelTracing(self.network)
 
 class IndividualTracingDailyTesting(IndividualLevelContactTracing):
 
@@ -312,8 +312,8 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
     def instantiate_increment_contact_tracing(self) -> IncrementContactTracingContactModelTest:
         return IncrementContactTracingContactModelTest(self.network)
 
-    def instantiate_pcr_testing(self) -> PCRTestingContactModelTest:
-        return PCRTestingContactModelTest(self.network)
+    def instantiate_pcr_testing(self) -> PCRTestingIndividualDailyTesting:
+        return PCRTestingIndividualDailyTesting(self.network)
 
     def instantiate_network(self):
         return NetworkContactModel()
