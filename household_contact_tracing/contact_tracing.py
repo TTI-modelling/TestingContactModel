@@ -921,7 +921,7 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                 if not self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
 
                     if not infected_by_node.isolated and node.time_infected >= \
-                            node.positive_test_time - self.number_of_days_prior_to_LFA_result_to_trace:
+                            node.positive_test_time - self.contact_tracing.number_of_days_prior_to_LFA_result_to_trace:
 
                         # Then attempt to contact trace the household of the node that infected you
                         self.attempt_contact_trace_of_household(
@@ -957,7 +957,8 @@ class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
                 if not self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
 
                     # If the node was infected 2 days prior to symptom onset, or 7 days post and is not already isolated
-                    if time_t >= node.positive_test_time - self.number_of_days_prior_to_LFA_result_to_trace:
+                    if time_t >= node.positive_test_time - \
+                            self.contact_tracing.number_of_days_prior_to_LFA_result_to_trace:
 
                         self.attempt_contact_trace_of_household(
                             house_to=child_node.household(),
@@ -985,7 +986,7 @@ class PCRTestingBehaviour:
         pass
 
 
-class PCRTestingUK(PCRTestingBehaviour):
+class PCRTestingIndividualLevelTracing(PCRTestingBehaviour):
 
     def receive_pcr_test_results(self, time: int):
         """For nodes who would receive a PCR test result today, update
@@ -1026,7 +1027,8 @@ class PCRTestingUK(PCRTestingBehaviour):
         else:
             node.received_positive_test_result = False
 
-class PCRTestingContactModelTest(PCRTestingUK):
+
+class PCRTestingIndividualDailyTesting(PCRTestingIndividualLevelTracing):
 
     def receive_pcr_test_results(self, time: int):
         """
@@ -1034,7 +1036,7 @@ class PCRTestingContactModelTest(PCRTestingUK):
         """
 
         if self.contact_tracing.lfa_tested_nodes_book_pcr_on_symptom_onset:
-           super(PCRTestingContactModelTest, self).receive_pcr_test_results(time)
+           super(PCRTestingIndividualDailyTesting, self).receive_pcr_test_results(time)
         else:
             [
                 self.pcr_test_node(node, time)
@@ -1044,4 +1046,3 @@ class PCRTestingContactModelTest(PCRTestingUK):
                    and not node.contact_traced
                    and not node.being_lateral_flow_tested
             ]
-
