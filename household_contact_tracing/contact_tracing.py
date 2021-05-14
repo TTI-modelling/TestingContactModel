@@ -333,7 +333,7 @@ class ContactTracing:
 class UpdateIsolationBehaviour:
     def __init__(self, network: Network):
         self._network = network
-        self._contact_tracing = None
+        self.contact_tracing = None
 
     @property
     def contact_tracing(self) -> ContactTracing:
@@ -349,7 +349,7 @@ class UpdateIsolationBehaviour:
     def update_all_households_contact_traced(self, time):
         # Update the contact traced status for all households that have had the contact tracing process get there
         [
-            self._contact_tracing.contact_trace_household(household, time)
+            self.contact_tracing.contact_trace_household(household, time)
             for household in self._network.houses.all_households()
             if household.time_until_contact_traced <= time
                and not household.contact_traced
@@ -365,7 +365,7 @@ class UpdateIsolationHousehold(UpdateIsolationBehaviour):
         # Isolate all non isolated households where the infection has been reported (excludes those who will not
         # take up isolation if prob <1)
         [
-            self._contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
+            self.contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
             for node in self._network.all_nodes()
             if node.time_of_reporting + node.testing_delay == time
             and not node.household().isolated
@@ -590,7 +590,7 @@ class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
         # Isolate all households under observation that now display symptoms (excludes those who will not take up
         # isolation if prob <1)
         [
-            self._contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
+            self.contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
             for node in self._network.all_nodes()
             if node.symptom_onset_time <= time
             and node.contact_traced
