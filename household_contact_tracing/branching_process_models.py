@@ -12,8 +12,9 @@ from household_contact_tracing.infection import Infection, \
     NewInfectionHousehold, NewInfectionContactModelTest, \
     ContactRateReductionHousehold, ContactRateReductionContactModelTest
 from household_contact_tracing.contact_tracing import ContactTracing, \
-    ContactTraceHousehold, ContactTraceHouseholdUK, ContactTraceHouseholdContactModelTest, \
-    IncrementContactTracingHousehold, IncrementContactTracingUK, IncrementContactTracingContactModelTest, \
+    ContactTraceHouseholdLevel, ContactTraceHouseholdIndividualLevel, ContactTraceHouseholdIndividualTracingDailyTest, \
+    IncrementContactTracingHouseholdLevel, IncrementContactTracingIndividualLevel, \
+    IncrementContactTracingIndividualDailyTesting, \
     UpdateIsolationHousehold, UpdateIsolationUK, \
     PCRTestingIndividualLevelTracing, PCRTestingIndividualDailyTesting
 
@@ -91,11 +92,11 @@ class HouseholdLevelContactTracing(SimulationModel):
     def instantiate_update_isolation(self) -> UpdateIsolationHousehold:
         return UpdateIsolationHousehold(self.network)
 
-    def instantiate_contact_trace_household(self) -> ContactTraceHousehold:
-        return ContactTraceHousehold(self.network)
+    def instantiate_contact_trace_household(self) -> ContactTraceHouseholdLevel:
+        return ContactTraceHouseholdLevel(self.network)
 
-    def instantiate_increment_contact_tracing(self) -> IncrementContactTracingHousehold:
-        return IncrementContactTracingHousehold(self.network)
+    def instantiate_increment_contact_tracing(self) -> IncrementContactTracingHouseholdLevel:
+        return IncrementContactTracingHouseholdLevel(self.network)
 
     def instantiate_pcr_testing(self) -> None:
         return None
@@ -287,11 +288,11 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
     def instantiate_update_isolation(self) -> UpdateIsolationUK:
         return UpdateIsolationUK(self.network)
 
-    def instantiate_contact_trace_household(self) -> ContactTraceHouseholdUK:
-        return ContactTraceHouseholdUK(self.network)
+    def instantiate_contact_trace_household(self) -> ContactTraceHouseholdIndividualLevel:
+        return ContactTraceHouseholdIndividualLevel(self.network)
 
-    def instantiate_increment_contact_tracing(self) -> IncrementContactTracingUK:
-        return IncrementContactTracingUK(self.network)
+    def instantiate_increment_contact_tracing(self) -> IncrementContactTracingIndividualLevel:
+        return IncrementContactTracingIndividualLevel(self.network)
 
     def instantiate_pcr_testing(self) -> PCRTestingIndividualLevelTracing:
         return PCRTestingIndividualLevelTracing(self.network)
@@ -306,11 +307,11 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
         # Call superclass constructor (which overwrites defaults with new params if present)
         super().__init__(params)
 
-    def instantiate_contact_trace_household(self) -> ContactTraceHouseholdContactModelTest:
-        return ContactTraceHouseholdContactModelTest(self.network)
+    def instantiate_contact_trace_household(self) -> ContactTraceHouseholdIndividualTracingDailyTest:
+        return ContactTraceHouseholdIndividualTracingDailyTest(self.network)
 
-    def instantiate_increment_contact_tracing(self) -> IncrementContactTracingContactModelTest:
-        return IncrementContactTracingContactModelTest(self.network)
+    def instantiate_increment_contact_tracing(self) -> IncrementContactTracingIndividualDailyTesting:
+        return IncrementContactTracingIndividualDailyTesting(self.network)
 
     def instantiate_pcr_testing(self) -> PCRTestingIndividualDailyTesting:
         return PCRTestingIndividualDailyTesting(self.network)

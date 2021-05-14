@@ -524,20 +524,20 @@ class ContactTraceHouseholdBehaviour:
                     self._network.graph.edges[node_1.node_id, node_2.node_id].update({"edge_type": new_edge_type})
 
 
-class ContactTraceHousehold(ContactTraceHouseholdBehaviour):
+class ContactTraceHouseholdLevel(ContactTraceHouseholdBehaviour):
     def contact_trace_household(self, household: Household, time: int):
         self.update_network(household)
         self.isolate_household_if_symptomatic_nodes(household, time)
         self.quarantine_traced_node(household)
 
 
-class ContactTraceHouseholdUK(ContactTraceHouseholdBehaviour):
+class ContactTraceHouseholdIndividualLevel(ContactTraceHouseholdBehaviour):
     def contact_trace_household(self, household: Household, time: int):
         self.update_network(household)
         self.quarantine_traced_node(household)
 
 
-class ContactTraceHouseholdContactModelTest(ContactTraceHouseholdBehaviour):
+class ContactTraceHouseholdIndividualTracingDailyTest(ContactTraceHouseholdBehaviour):
     def contact_trace_household(self, household: Household, time: int):
         self.update_network(household)
         traced_node = self.find_traced_node(household)
@@ -564,7 +564,7 @@ class IncrementContactTracingBehaviour:
         pass
 
 
-class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
+class IncrementContactTracingHouseholdLevel(IncrementContactTracingBehaviour):
 
     def increment_contact_tracing(self, time: int):
         """
@@ -713,10 +713,7 @@ class IncrementContactTracingHousehold(IncrementContactTracingBehaviour):
                                 index_1_hh.contact_tracing_index = 1
 
 
-class IncrementContactTracingUK(IncrementContactTracingHousehold):
-
-    def __init__(self, network):
-        super(IncrementContactTracingUK, self).__init__(network)
+class IncrementContactTracingIndividualLevel(IncrementContactTracingHouseholdLevel):
 
     def increment_contact_tracing(self, time: int):
 
@@ -848,9 +845,7 @@ class IncrementContactTracingUK(IncrementContactTracingHousehold):
                 house_to, house_from, EdgeType.failed_contact_tracing.name)
 
 
-class IncrementContactTracingContactModelTest(IncrementContactTracingUK):
-    def __init__(self, network: Network):
-        super(IncrementContactTracingContactModelTest, self).__init__(network)
+class IncrementContactTracingIndividualDailyTesting(IncrementContactTracingIndividualLevel):
 
     def increment_contact_tracing(self, time: int):
         [
