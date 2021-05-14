@@ -1,5 +1,5 @@
 from household_contact_tracing.simulation_controller import SimulationController
-from household_contact_tracing.branching_process_models import HouseholdContactTracingUKTest
+from household_contact_tracing.branching_process_models import IndividualTracingDailyTesting
 
 
 def prob_testing_positive_function(time_relative_to_symptom_onset):
@@ -29,7 +29,7 @@ params = {"outside_household_infectivity_scaling": 0.3,
 
 
 def main():
-    model = HouseholdContactTracingUKTest(params)
+    model = IndividualTracingDailyTesting(params)
     model.prob_testing_positive_lfa_func = prob_testing_positive_function
     model.prob_testing_positive_pcr_func = prob_testing_positive_function
     controller = SimulationController(model)
@@ -70,7 +70,7 @@ def recreate_pytest_1():
                       "policy_for_household_contacts_of_a_positive_case": 'lfa testing no quarantine'
                       }
 
-    model = HouseholdContactTracingUKTest(default_params)
+    model = IndividualTracingDailyTesting(default_params)
     model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
     model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
 
@@ -130,7 +130,7 @@ def recreate_pytest_2():
                       }
     params["policy_for_household_contacts_of_a_positive_case"] = 'lfa testing and quarantine'
 
-    model = HouseholdContactTracingUKTest(params)
+    model = IndividualTracingDailyTesting(params)
     model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
     model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
 
