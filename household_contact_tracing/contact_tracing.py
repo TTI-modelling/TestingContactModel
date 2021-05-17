@@ -31,7 +31,7 @@ class ContactTracing:
         self.number_of_days_to_trace_backwards = 2
         self.number_of_days_to_trace_forwards = 7
         self.recall_probability_fall_off = 1
-        self.number_of_days_prior_to_LFA_result_to_trace: int = 2,
+        self.number_of_days_prior_to_LFA_result_to_trace: int = 2
 
         # contact tracing functions (runtime updatable)
         self.prob_testing_positive_lfa_func = self.prob_testing_positive_lfa
