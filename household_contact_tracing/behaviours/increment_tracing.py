@@ -140,7 +140,7 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
         for household in self._network.houses.all_households():
             # loop over households with non-zero indexes, those that have been contact traced but with
             if household.contact_tracing_index != 0:
-                for node in household.nodes():
+                for node in household.nodes:
 
                     # Necessary conditions for an index 1 household to propagate tracing:
                     # The node must have onset of symptoms

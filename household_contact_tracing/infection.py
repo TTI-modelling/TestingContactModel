@@ -138,13 +138,11 @@ class Infection:
         if self._contact_rate_reduction_behaviour:
             self._contact_rate_reduction_behaviour.infection = self
 
-    def new_household(self, time, new_household_number, generation,
-                      infected_by: Optional[Household], infected_by_node,
+    def new_household(self, time, new_household_number, infected_by: Optional[Household],
                       additional_attributes=None) -> Household:
         if self.new_household_behaviour:
             new_household = self.new_household_behaviour.new_household(time, new_household_number,
-                                                                       generation, infected_by,
-                                                                       infected_by_node,
+                                                                       infected_by,
                                                                        additional_attributes)
             return new_household
 
@@ -181,7 +179,7 @@ class Infection:
         for time in range(self.starting_infections):
             house_id += 1
             node_id = self.network.node_count + 1
-            self.new_household(time, house_id, 1, None, None, None)
+            self.new_household(time, house_id, None)
             self.new_infection(time, node_id, generation, house_id)
 
     def increment(self, time):
@@ -367,9 +365,7 @@ class Infection:
 
         # Create a new household, since the infection was outside the household
         new_household = self.new_household(time=time, new_household_number=house_id,
-                                           generation=infecting_household.generation + 1,
-                                           infected_by=infecting_node.household,
-                                           infected_by_node=infecting_node.id)
+                                           infected_by=infecting_node.household)
 
         # We record which house spread to which other house
         infecting_household.spread_to.append(new_household)
@@ -476,16 +472,14 @@ class NewHouseholdBehaviour:
     def infection(self, infection: Infection):
         self._infection = infection
 
-    def new_household(self, time: int, new_household_number: int, generation: int,
-                      infected_by: Optional[Household], infected_by_node: int,
+    def new_household(self, time: int, new_household_number: int, infected_by: Optional[Household],
                       additional_attributes: Optional[dict] = None) -> Household:
         pass
 
 
 class NewHouseholdLevel(NewHouseholdBehaviour):
 
-    def new_household(self, time: int, new_household_number: int, generation: int,
-                      infected_by: Optional[Household], infected_by_node: int,
+    def new_household(self, time: int, new_household_number: int, infected_by: Optional[Household],
                       additional_attributes: Optional[dict] = None) -> Household:
         """Adds a new household to the household dictionary
 
@@ -501,9 +495,7 @@ class NewHouseholdLevel(NewHouseholdBehaviour):
             house_id=new_household_number,
             house_size=house_size,
             time_infected=time,
-            generation=generation,
             infected_by=infected_by,
-            infected_by_node=infected_by_node,
             propensity_trace_app=self.infection.hh_propensity_use_trace_app(),
             additional_attributes=additional_attributes
         )
@@ -512,16 +504,13 @@ class NewHouseholdLevel(NewHouseholdBehaviour):
 
 class NewHouseholdIndividualTracingDailyTesting(NewHouseholdLevel):
 
-    def new_household(self, time: int, new_household_number: int, generation: int,
-                      infected_by: Optional[Household], infected_by_node: int,
+    def new_household(self, time: int, new_household_number: int, infected_by: Optional[Household],
                       additional_attributes: Optional[dict] = None) -> Household:
 
         new_household = super().new_household(
             time,
             new_household_number=new_household_number,
-            generation=generation,
             infected_by=infected_by,
-            infected_by_node=infected_by_node,
             additional_attributes={
                 'being_lateral_flow_tested': False,
                 'being_lateral_flow_tested_start_time': None,

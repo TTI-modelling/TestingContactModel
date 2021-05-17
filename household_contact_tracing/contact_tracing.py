@@ -190,7 +190,7 @@ class ContactTracing:
         household.being_lateral_flow_tested = True
         household.being_lateral_flow_tested_start_time = time
 
-        for node in household.nodes():
+        for node in household.nodes:
             if node.node_will_take_up_lfa_testing and not node.received_positive_test_result and \
                     not node.being_lateral_flow_tested:
                 node.being_lateral_flow_tested = True
@@ -210,7 +210,7 @@ class ContactTracing:
         household.isolated_time = True
         household.contact_traced = True
 
-        for node in household.nodes():
+        for node in household.nodes:
             if node.node_will_take_up_lfa_testing and not node.received_positive_test_result and \
                     not node.being_lateral_flow_tested:
                 node.being_lateral_flow_tested = True

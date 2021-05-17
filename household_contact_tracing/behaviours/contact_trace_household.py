@@ -23,7 +23,7 @@ class ContactTraceHousehold(ABC):
         household.contact_traced = True
 
         # Update the nodes to the contact traced status
-        for node in household.nodes():
+        for node in household.nodes:
             node.contact_traced = True
 
         # Colour the edges within household
@@ -52,7 +52,7 @@ class ContactTraceHouseholdLevel(ContactTraceHousehold):
     @staticmethod
     def isolate_household_if_symptomatic_nodes(household: Household, time: int):
         """If there are any symptomatic nodes in the household then isolate the household."""
-        for node in household.nodes():
+        for node in household.nodes:
             if node.symptom_onset_time <= time and not node.completed_isolation:
                 household.isolate_household(time)
                 break
