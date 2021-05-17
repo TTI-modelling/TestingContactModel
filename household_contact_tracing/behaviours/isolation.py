@@ -48,7 +48,7 @@ class UpdateIsolationHouseholdLevel(UpdateIsolation):
             if node.time_of_reporting + node.testing_delay == time:
                 if not node.household().isolated:
                     if not node.household().contact_traced:
-                        self.contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
+                        node.household().isolate_household(time)
 
 
 class UpdateIsolationIndividualLevelTracing(UpdateIsolation):
@@ -60,7 +60,7 @@ class UpdateIsolationIndividualLevelTracing(UpdateIsolation):
                 if node.received_positive_test_result:
                     if not node.household().isolated:
                         if not node.household().contact_traced:
-                            self._contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
+                            node.household().isolate_household(time)
 
 
 class UpdateIsolationIndividualTracingDailyTesting(UpdateIsolation):

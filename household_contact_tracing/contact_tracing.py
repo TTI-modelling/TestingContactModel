@@ -169,7 +169,7 @@ class ContactTracing:
         elif self.policy_for_household_contacts_of_a_positive_case == 'lfa testing and quarantine':
             self.start_lateral_flow_testing_household_and_quarantine(household, time)
         elif self.policy_for_household_contacts_of_a_positive_case == 'no lfa testing only quarantine':
-            self.contact_trace_household_behaviour.isolate_household(household, time)
+            household.isolate_household(time)
         else:
             raise Exception("""policy_for_household_contacts_of_a_positive_case not recognised. Must be one of the 
             following options:
@@ -540,7 +540,7 @@ class IncrementContactTracingHouseholdLevel(IncrementContactTracingBehaviour):
         # Isolate all households under observation that now display symptoms (excludes those who will not take up
         # isolation if prob <1)
         [
-            self.contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
+            node.household().isolate_household(time)
             for node in self._network.all_nodes()
             if node.symptom_onset_time <= time
             and node.contact_traced
@@ -691,7 +691,7 @@ class IncrementContactTracingIndividualLevel(IncrementContactTracingHouseholdLev
         self.contact_tracing.receive_pcr_test_results(time)
 
         [
-            self._contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
+            node.household().isolate_household(time)
             for node in self._network.all_nodes()
             if node.symptom_onset_time <= time
                and node.received_positive_test_result

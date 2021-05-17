@@ -369,7 +369,7 @@ class Household:
                  infected_by_node: int, propensity_trace_app: bool,
                  additional_attributes: Optional[dict] = None):
         self.houses = houses
-        self.nodecollection = nodecollection
+        self._network = nodecollection
         self.house_id = house_id
         self.size = house_size                  # Size of the household
         self.time_infected = time_infected      # The time at which the infection entered the household
@@ -402,7 +402,7 @@ class Household:
                 setattr(self, key, value)
 
     def nodes(self) -> Iterator[Node]:
-        return (self.nodecollection.node(n) for n in self.node_ids)
+        return (self._network.node(n) for n in self.node_ids)
 
     def add_node_id(self, node_id: int):
         self.node_ids.append(node_id)
@@ -471,6 +471,44 @@ class Household:
             return min(recognised_symptom_and_positive_test_times)
         else:
             return float('inf')
+
+    def isolate_household(self, time: int):
+        """If a Household is contact traced, all Nodes may be required to isolate."""
+        if self.isolated:
+            return
+
+        # update isolated and contact traced status for Household
+        self.contact_traced = True
+        self.isolated = True
+        self.isolated_time = time
+
+        # Update isolated and contact traced status for Nodes in Household
+        for node in self.nodes():
+            node.contact_traced = True
+            if node.will_uptake_isolation:
+                node.isolated = True
+
+        self._update_edges_on_isolation()
+
+    def _update_edges_on_isolation(self):
+        """If a house is isolated after being contact traced, update edge colours between
+        Households and within the Household."""
+
+        if self.being_contact_traced_from is not None:
+            source_household = self._network.houses.household(self.being_contact_traced_from)
+
+            # Initially the edge is assigned the contact tracing label, may be updated if the
+            # contact tracing does not succeed
+            edge = self._network.get_edge_between_household(self, source_household)
+            if self._network.is_edge_app_traced(edge):
+                self._network.label_edges_between_houses(self, source_household,
+                                                         EdgeType.app_traced)
+            else:
+                self._network.label_edges_between_houses(self, source_household,
+                                                         EdgeType.between_house)
+
+        # Update edges within household
+        self._network.label_edges_inside_household(self, EdgeType.within_house)
 
 
 class HouseholdCollection:
