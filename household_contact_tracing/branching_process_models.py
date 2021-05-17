@@ -7,13 +7,13 @@ from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
 from household_contact_tracing.infection import Infection, \
     NewHouseholdLevel, NewHouseholdIndividualTracingDailyTesting, \
-    NewInfectionHouseholdLevel, NewInfectionIndividualTracingDailyTesting, \
     ContactRateReductionHouseholdLevelContactTracing, ContactRateReductionIndividualTracingDaily
 from household_contact_tracing.contact_tracing import ContactTracing
 import household_contact_tracing.behaviours.isolation as isolation
 import household_contact_tracing.behaviours.pcr_testing as pcr_testing
 import household_contact_tracing.behaviours.contact_trace_household as tracing
 import household_contact_tracing.behaviours.increment_tracing as increment
+import household_contact_tracing.behaviours.new_infection as new_infection
 
 
 class HouseholdLevelContactTracing(SimulationModel):
@@ -70,7 +70,7 @@ class HouseholdLevelContactTracing(SimulationModel):
     def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
                          NewHouseholdLevel(network),
-                         NewInfectionHouseholdLevel(network),
+                         new_infection.NewInfectionHouseholdLevel(network),
                          ContactRateReductionHouseholdLevelContactTracing(),
                          params)
 
@@ -166,7 +166,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
     def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
                          NewHouseholdLevel(network),
-                         NewInfectionHouseholdLevel(network),
+                         new_infection.NewInfectionHouseholdLevel(network),
                          ContactRateReductionHouseholdLevelContactTracing(),
                          params)
 
@@ -189,7 +189,7 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
     def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
                          NewHouseholdIndividualTracingDailyTesting(self.network),
-                         NewInfectionIndividualTracingDailyTesting(self.network),
+                         new_infection.NewInfectionIndividualTracingDailyTesting(self.network),
                          ContactRateReductionIndividualTracingDaily(),
                          params)
 

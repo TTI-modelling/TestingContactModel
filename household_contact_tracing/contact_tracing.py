@@ -85,11 +85,11 @@ class ContactTracing:
             self._contact_trace_household_behaviour.contact_tracing = self
 
     @property
-    def increment_behaviour(self) -> IncrementContactTracingBehaviour:
+    def increment_behaviour(self) -> increment.IncrementTracing:
         return self._increment_behaviour
 
     @increment_behaviour.setter
-    def increment_behaviour(self, increment_behaviour: IncrementContactTracingBehaviour):
+    def increment_behaviour(self, increment_behaviour: increment.IncrementTracing):
         self._increment_behaviour = increment_behaviour
         if self._increment_behaviour:
             self._increment_behaviour.contact_tracing = self
