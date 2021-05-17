@@ -2,7 +2,7 @@ from typing import List, Callable
 import numpy.random as npr
 import os
 
-from household_contact_tracing.network import Network, NetworkContactModel, Household, Node, \
+from household_contact_tracing.network import Network, Household, Node, \
     graphs_isomorphic, InfectionStatus, TestType
 from household_contact_tracing.simulation_model import SimulationModel
 from household_contact_tracing.parameters import validate_parameters
@@ -47,7 +47,7 @@ class HouseholdLevelContactTracing(SimulationModel):
                 self.__dict__[param_name] = params[param_name]
 
         # Set network
-        self._network = self.instantiate_network()
+        self._network = Network()
 
         # Set strategies (Strategy pattern)
         self._infection = Infection(self._network,
@@ -100,9 +100,6 @@ class HouseholdLevelContactTracing(SimulationModel):
 
     def instantiate_pcr_testing(self) -> None:
         return None
-
-    def instantiate_network(self) -> Network:
-        return Network()
 
     def instantiate_new_household(self) -> NewHouseholdLevel:
         return NewHouseholdLevel(self.network)
@@ -315,9 +312,6 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
 
     def instantiate_pcr_testing(self) -> PCRTestingIndividualDailyTesting:
         return PCRTestingIndividualDailyTesting(self.network)
-
-    def instantiate_network(self):
-        return NetworkContactModel()
 
     def instantiate_update_isolation(self) -> UpdateIsolationIndividualTracingDailyTesting:
         return UpdateIsolationIndividualTracingDailyTesting(self.network)
