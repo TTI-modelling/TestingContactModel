@@ -1,16 +1,18 @@
+"""These methods provide various ways of implementing contact tracing."""
+
 from abc import ABC, abstractmethod
 
 from household_contact_tracing.network import Network, Household, EdgeType
 
 
-class ContactTraceHouseholdBehaviour(ABC):
+class ContactTraceHousehold(ABC):
 
     def __init__(self, network: Network):
         self._network = network
 
     @abstractmethod
     def contact_trace_household(self, household: Household, time: int):
-        pass
+        """The things that are done when a Household is contact traced"""
 
     def update_network(self, household: Household):
         """
@@ -35,7 +37,7 @@ class ContactTraceHouseholdBehaviour(ABC):
             traced_node.isolated = True
 
     def find_traced_node(self, household):
-        # work out which was the traced node
+        """Work out which was the traced node."""
         tracing_household = self._network.houses.household(household.being_contact_traced_from)
         traced_node_id = self._network.get_edge_between_household(household, tracing_household)[0]
         return self._network.node(traced_node_id)
@@ -73,46 +75,48 @@ class ContactTraceHouseholdBehaviour(ABC):
         # A household may be being isolated because someone in the household self reported symptoms,
         # so `being_contact_traced_from` may be None.
         if household.being_contact_traced_from is not None:
-            house_which_contact_traced = self._network.houses.household(household.being_contact_traced_from)
+            source_household = self._network.houses.household(household.being_contact_traced_from)
 
             # Initially the edge is assigned the contact tracing label, may be updated if the
             # contact tracing does not succeed
-            edge = self._network.get_edge_between_household(household, house_which_contact_traced)
+            edge = self._network.get_edge_between_household(household, source_household)
             if self._network.is_edge_app_traced(edge):
-                self._network.label_edges_between_houses(household, house_which_contact_traced,
-                                                         EdgeType.app_traced.name)
+                self._network.label_edges_between_houses(household, source_household,
+                                                         EdgeType.app_traced)
             else:
-                self._network.label_edges_between_houses(household, house_which_contact_traced,
-                                                         EdgeType.between_house.name)
+                self._network.label_edges_between_houses(household, source_household,
+                                                         EdgeType.between_house)
 
         # Update edges within household
-        self._network.label_edges_inside_household(household, EdgeType.within_house.name)
+        self._network.label_edges_inside_household(household, EdgeType.within_house)
 
 
-class ContactTraceHouseholdLevel(ContactTraceHouseholdBehaviour):
+class ContactTraceHouseholdLevel(ContactTraceHousehold):
     def contact_trace_household(self, household: Household, time: int):
         self.update_network(household)
         self.isolate_household_if_symptomatic_nodes(household, time)
         self.quarantine_traced_node(household)
 
     def isolate_household_if_symptomatic_nodes(self, household: Household, time: int):
-        symptomatic_nodes = [node for node in household.nodes() if
-                             node.symptom_onset_time <= time and not node.completed_isolation]
-        if symptomatic_nodes:
-            self.isolate_household(household, time)
+        """If there are any symptomatic nodes in the household then isolate the household."""
+        for node in household.nodes():
+            if node.symptom_onset_time <= time and not node.completed_isolation:
+                self.isolate_household(household, time)
+                break
 
 
-class ContactTraceHouseholdIndividualLevel(ContactTraceHouseholdBehaviour):
+class ContactTraceHouseholdIndividualLevel(ContactTraceHousehold):
     def contact_trace_household(self, household: Household, time: int):
         self.update_network(household)
         self.quarantine_traced_node(household)
 
 
-class ContactTraceHouseholdIndividualTracingDailyTest(ContactTraceHouseholdBehaviour):
+class ContactTraceHouseholdIndividualTracingDailyTest(ContactTraceHousehold):
     def contact_trace_household(self, household: Household, time: int):
         self.update_network(household)
         traced_node = self.find_traced_node(household)
         # the traced node is now being lateral flow tested
-        if traced_node.node_will_take_up_lfa_testing and not traced_node.received_positive_test_result:
-            traced_node.being_lateral_flow_tested = True
-            traced_node.time_started_lfa_testing = time
+        if traced_node.node_will_take_up_lfa_testing:
+            if not traced_node.received_positive_test_result:
+                traced_node.being_lateral_flow_tested = True
+                traced_node.time_started_lfa_testing = time

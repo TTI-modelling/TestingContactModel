@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 from household_contact_tracing.network import Network, TestType
 
 
-class UpdateIsolationBehaviour(ABC):
+class UpdateIsolation(ABC):
     def __init__(self, network: Network):
         self._network = network
         self.contact_tracing = None
@@ -40,7 +40,7 @@ class UpdateIsolationBehaviour(ABC):
                     self.contact_tracing.contact_trace_household(household, time)
 
 
-class UpdateIsolationHouseholdLevel(UpdateIsolationBehaviour):
+class UpdateIsolationHouseholdLevel(UpdateIsolation):
     def update_isolation(self, time: int):
         self.update_all_households_contact_traced(time)
 
@@ -51,7 +51,7 @@ class UpdateIsolationHouseholdLevel(UpdateIsolationBehaviour):
                         self.contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
 
 
-class UpdateIsolationIndividualLevelTracing(UpdateIsolationBehaviour):
+class UpdateIsolationIndividualLevelTracing(UpdateIsolation):
     def update_isolation(self, time: int):
         self.update_all_households_contact_traced(time)
 
@@ -63,7 +63,7 @@ class UpdateIsolationIndividualLevelTracing(UpdateIsolationBehaviour):
                             self._contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
 
 
-class UpdateIsolationIndividualTracingDailyTesting(UpdateIsolationBehaviour):
+class UpdateIsolationIndividualTracingDailyTesting(UpdateIsolation):
     def update_isolation(self, time: int):
         self.update_all_households_contact_traced(time)
 

@@ -17,10 +17,10 @@ class ContactTracing:
     """ 'Context' class for contact tracing processes/strategies (Strategy pattern) """
 
     def __init__(self, network: Network,
-                 contact_trace_household: tracing.ContactTraceHouseholdBehaviour,
+                 contact_trace_household: tracing.ContactTraceHousehold,
                  increment: IncrementContactTracingBehaviour,
-                 update_isolation: isolation.UpdateIsolationBehaviour,
-                 pcr_testing: Optional[pcr.PCRTestingBehaviour], params: dict):
+                 update_isolation: isolation.UpdateIsolation,
+                 pcr_testing: Optional[pcr.PCRTesting], params: dict):
         self._network = network
 
         # Declare behaviours
@@ -64,21 +64,21 @@ class ContactTracing:
         return self._network
 
     @property
-    def update_isolation_behaviour(self) -> isolation.UpdateIsolationBehaviour:
+    def update_isolation_behaviour(self) -> isolation.UpdateIsolation:
         return self._update_isolation_behaviour
 
     @update_isolation_behaviour.setter
-    def update_isolation_behaviour(self, update_isolation_behaviour: isolation.UpdateIsolationBehaviour):
+    def update_isolation_behaviour(self, update_isolation_behaviour: isolation.UpdateIsolation):
         self._update_isolation_behaviour = update_isolation_behaviour
         if self._update_isolation_behaviour:
             self._update_isolation_behaviour.contact_tracing = self
 
     @property
-    def contact_trace_household_behaviour(self) -> tracing.ContactTraceHouseholdBehaviour:
+    def contact_trace_household_behaviour(self) -> tracing.ContactTraceHousehold:
         return self._contact_trace_household_behaviour
 
     @contact_trace_household_behaviour.setter
-    def contact_trace_household_behaviour(self, contact_trace_household_behaviour: tracing.ContactTraceHouseholdBehaviour):
+    def contact_trace_household_behaviour(self, contact_trace_household_behaviour: tracing.ContactTraceHousehold):
         self._contact_trace_household_behaviour = contact_trace_household_behaviour
         if self._contact_trace_household_behaviour:
             self._contact_trace_household_behaviour.contact_tracing = self
@@ -94,11 +94,11 @@ class ContactTracing:
             self._increment_behaviour.contact_tracing = self
 
     @property
-    def pcr_testing_behaviour(self) -> pcr.PCRTestingBehaviour:
+    def pcr_testing_behaviour(self) -> pcr.PCRTesting:
         return self._pcr_testing_behaviour
 
     @pcr_testing_behaviour.setter
-    def pcr_testing_behaviour(self, pcr_testing_behaviour: pcr.PCRTestingBehaviour):
+    def pcr_testing_behaviour(self, pcr_testing_behaviour: pcr.PCRTesting):
         self._pcr_testing_behaviour = pcr_testing_behaviour
         if self._pcr_testing_behaviour:
             self._pcr_testing_behaviour.contact_tracing = self
@@ -606,11 +606,8 @@ class IncrementContactTracingHouseholdLevel(IncrementContactTracingBehaviour):
         for child in child_households_not_traced:
             self.attempt_contact_trace_of_household(child, household, time)
 
-    def attempt_contact_trace_of_household(self,
-                                           house_to: Household,
-                                           house_from: Household,
-                                           time: int,
-                                           contact_trace_delay: int = 0):
+    def attempt_contact_trace_of_household(self, house_to: Household, house_from: Household,
+                                           time: int, contact_trace_delay: int = 0):
         # Decide if the edge was traced by the app
         app_traced = self._network.is_edge_app_traced(self._network.get_edge_between_household(house_from, house_to))
 
@@ -641,8 +638,7 @@ class IncrementContactTracingHouseholdLevel(IncrementContactTracingBehaviour):
 
             # Edge labelling
             if app_traced:
-                self._network.label_edges_between_houses(house_to, house_from,
-                                                         EdgeType.app_traced)
+                self._network.label_edges_between_houses(house_to, house_from, EdgeType.app_traced)
             else:
                 self._network.label_edges_between_houses(house_to, house_from,
                                                          EdgeType.between_house)

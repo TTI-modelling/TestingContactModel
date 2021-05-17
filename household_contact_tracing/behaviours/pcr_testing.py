@@ -8,7 +8,7 @@ from household_contact_tracing.contact_tracing import ContactTracing
 from household_contact_tracing.network import Network, Node, TestType
 
 
-class PCRTestingBehaviour(ABC):
+class PCRTesting(ABC):
     def __init__(self, network: Network):
         self._network = network
         self._contact_tracing = None
@@ -35,7 +35,7 @@ class PCRTestingBehaviour(ABC):
         """
 
 
-class PCRTestingIndividualLevelTracing(PCRTestingBehaviour):
+class PCRTestingIndividualLevelTracing(PCRTesting):
 
     def receive_pcr_test_results(self, time: int):
         # self reporting infections
