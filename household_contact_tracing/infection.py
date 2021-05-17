@@ -463,6 +463,17 @@ class Infection:
         else:
             return round(self.test_delay)
 
+    def perform_recoveries(self, time):
+        """
+        Loops over all nodes in the branching process and determine recoveries.
+
+        time - The current time of the process, if a nodes recovery time equals the current time, then it is set to the
+        recovered state
+        """
+        for node in self.network.all_nodes():
+            if node.recovery_time == time:
+                node.recovered = True
+
 
 class NewHouseholdBehaviour:
     def __init__(self, network: Network):
