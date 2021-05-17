@@ -89,7 +89,7 @@ class Network:
         node_2_app = self.node(edge[1]).has_contact_tracing_app
         return node_1_app and node_2_app
 
-    def add_node(self, node_id, time, generation, household_id, isolated, will_uptake_isolation,
+    def add_node(self, node_id, time, household_id, isolated, will_uptake_isolation,
                  propensity_imperfect_isolation, asymptomatic, symptom_onset_time,
                  pseudo_symptom_onset_time, serial_interval, recovery_time, will_report_infection,
                  time_of_reporting, has_contact_tracing_app, contact_traced, testing_delay=0,
@@ -98,7 +98,7 @@ class Network:
         self.graph.add_node(node_id)
         new_node_household = self.houses.household(household_id)
         node = Node(nodes=self, node_id=node_id, time_infected=time,
-                    generation=generation, household=new_node_household, isolated=isolated,
+                    household=new_node_household, isolated=isolated,
                     will_uptake_isolation=will_uptake_isolation,
                     propensity_imperfect_isolation=propensity_imperfect_isolation,
                     asymptomatic=asymptomatic, symptom_onset_time=symptom_onset_time,
@@ -148,7 +148,6 @@ class Node:
         nodes: Network,
         node_id: int,
         time_infected: int,
-        generation: int,
         household: Household,
         isolated: bool,
         will_uptake_isolation: bool,
@@ -173,7 +172,6 @@ class Node:
         self.nodes = nodes
         self.id = node_id
         self.time_infected = time_infected
-        self.generation = generation
         self.household = household
         self.isolated = isolated
         self.will_uptake_isolation = will_uptake_isolation

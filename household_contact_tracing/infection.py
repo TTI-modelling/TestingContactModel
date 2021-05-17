@@ -149,7 +149,6 @@ class Infection:
     def new_infection(self,
                       time: int,
                       node_count: int,
-                      generation: int,
                       household_id: int,
                       test_delay: int = 0,
                       serial_interval=None,
@@ -158,7 +157,6 @@ class Infection:
         if self.new_infection_behaviour:
             self.new_infection_behaviour.new_infection(time,
                                                        node_count,
-                                                       generation,
                                                        household_id,
                                                        serial_interval,
                                                        infecting_node,
@@ -173,14 +171,13 @@ class Infection:
         # Create first household
         # Initial values
         house_id = 0
-        generation = 0
 
         # Create the starting infectives
         for time in range(self.starting_infections):
             house_id += 1
             node_id = self.network.node_count + 1
             self.new_household(time, house_id, None)
-            self.new_infection(time, node_id, generation, house_id)
+            self.new_infection(time, node_id, house_id)
 
     def increment(self, time):
         """
@@ -373,7 +370,6 @@ class Infection:
         # add a new infection in the house just created
         self.new_infection(time=time,
                            node_count=node_count,
-                           generation=infecting_node.generation + 1,
                            household_id=house_id,
                            serial_interval=serial_interval,
                            infecting_node=infecting_node)
@@ -396,7 +392,6 @@ class Infection:
         # Adds the new infection to the network
         self.new_infection(time=time,
                            node_count=node_count,
-                           generation=infecting_node.generation + 1,
                            household_id=infecting_node_household.house_id,
                            serial_interval=serial_interval,
                            infecting_node=infecting_node)
@@ -485,7 +480,6 @@ class NewHouseholdLevel(NewHouseholdBehaviour):
 
         Arguments:
             new_household_number {int} -- The house id
-            generation {int} -- The household generation of this household
             infected_by {int} -- Which household spread the infection to this household
             infected_by_node {int} -- Which node spread the infection to this household
         """

@@ -24,7 +24,6 @@ class NewInfection:
     def new_infection(self,
                       time: int,
                       node_count: int,
-                      generation: int,
                       household_id: int,
                       serial_interval=None,
                       infecting_node: Optional[Node] = None,
@@ -37,7 +36,6 @@ class NewInfectionHouseholdLevel(NewInfection):
     def new_infection(self,
                       time: int,
                       node_count: int,
-                      generation: int,
                       household_id: int,
                       serial_interval=None,
                       infecting_node: Optional[Node] = None,
@@ -98,8 +96,8 @@ class NewInfectionHouseholdLevel(NewInfection):
         else:
             node_is_isolated = False
 
-        new_node = self._network.add_node(node_id=node_count, time=time, generation=generation,
-                               household_id=household_id, isolated=node_is_isolated,
+        new_node = self._network.add_node(node_id=node_count, time=time,
+                                          household_id=household_id, isolated=node_is_isolated,
                                will_uptake_isolation=isolation_uptake,
                                propensity_imperfect_isolation=self._infection.get_propensity_imperfect_isolation(),
                                asymptomatic=asymptomatic, contact_traced=household.contact_traced,
@@ -120,7 +118,7 @@ class NewInfectionHouseholdLevel(NewInfection):
 
 class NewInfectionIndividualTracingDailyTesting(NewInfection):
 
-    def new_infection(self, time: int, node_count: int, generation: int, household_id: int,
+    def new_infection(self, time: int, node_count: int, household_id: int,
                       serial_interval=None,
                       infecting_node: Optional[Node] = None,
                       additional_attributes: Optional[dict] = None):
@@ -130,7 +128,6 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
 
         Args:
             node_count (int): The number of nodes already in the model
-            generation (int): The generation of the node
             household_id (int): The household id that the node is being added to
             serial_interval ([type]): The serial interval
             infecting_node (Optional[NodeContactModel]): The id of the infecting node
@@ -230,7 +227,6 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
         new_node = self._network.add_node(
             node_id=node_count,
             time=time,
-            generation=generation,
             household_id=household_id,
             isolated=node_is_isolated,
             will_uptake_isolation=isolation_uptake,
