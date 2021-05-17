@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-import numpy.random as npr
+import numpy as np
 from collections.abc import Callable
 
 from household_contact_tracing.network import Network, Household, EdgeType, Node, TestType, InfectionStatus
@@ -229,7 +229,7 @@ class ContactTracing:
 
         prob_positive_result = self.prob_testing_positive_lfa_func(infectious_age)
 
-        if npr.binomial(1, prob_positive_result) == 1:
+        if np.random.binomial(1, prob_positive_result) == 1:
             return True
         else:
             return False
@@ -238,7 +238,7 @@ class ContactTracing:
 
         if node.propensity_to_miss_lfa_tests:
 
-            if npr.binomial(1, self.node_daily_prob_lfa_test) == 1:
+            if np.random.binomial(1, self.node_daily_prob_lfa_test) == 1:
                 return True
             else:
                 return False
@@ -252,12 +252,10 @@ class ContactTracing:
         * Household members start lateral flow testing
         * Contact tracing is propagated
         """
+        for node in self.network.all_nodes():
+            if node.confirmatory_PCR_test_result_time == time:
+                self.apply_policy_for_household_contacts_of_a_positive_case(node.household(), time)
 
-        [
-            self.apply_policy_for_household_contacts_of_a_positive_case(node.household(), time)
-            for node in self.network.all_nodes()
-            if node.confirmatory_PCR_test_result_time == time
-        ]
 
     def get_positive_lateral_flow_nodes(self, time: int):
         """Performs a days worth of lateral flow testing.
@@ -296,7 +294,6 @@ class ContactTracing:
                     not self.LFA_testing_requires_confirmatory_PCR:
                 self.apply_policy_for_household_contacts_of_a_positive_case(node.household(), time)
 
-
     def take_confirmatory_pcr_test(self, node: Node, time: int):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
@@ -311,29 +308,28 @@ class ContactTracing:
         node.confirmatory_PCR_test_result_time = time + node.testing_delay
         node.taken_confirmatory_PCR_test = True
 
-        if npr.binomial(1, prob_positive_result) == 1:
+        if np.random.binomial(1, prob_positive_result) == 1:
             node.confirmatory_PCR_result_was_positive = True
 
         else:
             node.confirmatory_PCR_result_was_positive = False
 
-
-    def confirmatory_pcr_test_LFA_nodes(self):
-        """Nodes who receive a positive LFA result will be tested using a PCR test.
-        """
+    def confirmatory_pcr_test_LFA_nodes(self, time: int):
+        """Nodes who receive a positive LFA result will be tested using a PCR test."""
         for node in self.current_LFA_positive_nodes:
             if not node.taken_confirmatory_PCR_test:
-                self.take_confirmatory_pcr_test(node)
+                self.take_confirmatory_pcr_test(node, time)
 
     def act_on_positive_LFA_tests(self, time: int):
-        """For nodes who test positive on their LFA test, take the appropriate action depending on the policy
+        """For nodes who test positive on their LFA test, take the appropriate action depending
+        on the policy
         """
         self.current_LFA_positive_nodes = self.get_positive_lateral_flow_nodes(time)
 
         self.isolate_positive_lateral_flow_tests(time)
 
         if self.LFA_testing_requires_confirmatory_PCR:
-            self.confirmatory_pcr_test_LFA_nodes()
+            self.confirmatory_pcr_test_LFA_nodes(time)
 
     def isolate_self_reporting_cases(self, time):
         """Applies the isolation status to nodes who have reached their self-report time.
@@ -342,12 +338,12 @@ class ContactTracing:
         """
         for node in self.network.all_nodes():
             if node.will_uptake_isolation:
-                 if node.time_of_reporting == time:
+                if node.time_of_reporting == time:
                     node.isolated = True
 
     def release_nodes_from_quarantine_or_isolation(self, time):
-        """If a node has completed the quarantine according to the following rules, they are released from
-        quarantine.
+        """If a node has completed the quarantine according to the following rules, they are
+        released from quarantine.
 
         You are released from isolation if:
             * it has been 10 days since your symptoms onset
@@ -481,30 +477,6 @@ class ContactTracing:
                 node.being_lateral_flow_tested = False
                 node.completed_lateral_flow_testing_time = time
 
-        # for node in self.network.all_nodes():
-
-        #     # For nodes who do not self-report, and are in the same household as their infector
-        #     # (if they do not self-report they will not isolate; if contact traced, they will be lateral flow testing
-        #     for the lateral_flow_testing_duration unless they test positive)
-        #     #if node.household_id == node.infected_by_node().household_id:
-        #     if node.infected_by_node():
-        #         #if (node.infection_status(self.time) == "unknown_infection") & node.being_lateral_flow_tested:
-        #         if node.being_lateral_flow_tested:
-        #             if node.locally_infected():
-
-        #                 if self.time >=
-        #                 (node.household().earliest_recognised_symptom_onset_or_lateral_flow_test(model_time =
-        #                 self.time) + self.lateral_flow_testing_duration):
-        #                     node.being_lateral_flow_tested = False
-        #                     node.completed_lateral_flow_testing_time = self.time
-
-        #         # For nodes who do not self-report, and are not in the same household as their infector
-        #         # (if they do not self-report they will not isolate; if contact traced, they will be lateral flow
-        #         testing for the lateral_flow_testing_duration unless they test positive)
-        #             elif node.contact_traced & (self.time >= node.time_infected + self.lateral_flow_testing_duration):
-        #                 node.being_lateral_flow_tested = False
-        #                 node.completed_lateral_flow_testing_time = self.time
-
 
 class IncrementContactTracingBehaviour:
     def __init__(self, network: Network):
@@ -539,35 +511,27 @@ class IncrementContactTracingHouseholdLevel(IncrementContactTracingBehaviour):
 
         # Isolate all households under observation that now display symptoms (excludes those who will not take up
         # isolation if prob <1)
-        [
-            node.household().isolate_household(time)
-            for node in self._network.all_nodes()
-            if node.symptom_onset_time <= time
-            and node.contact_traced
-            and not node.isolated
-            and not node.completed_isolation
-        ]
+        for node in self._network.all_nodes():
+            if node.symptom_onset_time <= time:
+                if node.contact_traced:
+                    if not node.isolated:
+                        if not node.completed_isolation:
+                            node.household().isolate_household(time)
 
-        # Look for houses that need to propagate the contact tracing because their test result has come back
-        # Necessary conditions: household isolated, symptom onset + testing delay = time
+        # Propagate the contact tracing for all households that self-reported and have had their 
+        # test results come back
+        for node in self._network.all_nodes():
+            if node.time_of_reporting + node.testing_delay == time:
+                if not node.household().propagated_contact_tracing:
+                    self.propagate_contact_tracing(node.household(), time)
 
-        # Propagate the contact tracing for all households that self-reported and have had their test results come back
-        [
-            self.propagate_contact_tracing(node.household(), time)
-            for node in self._network.all_nodes()
-            if node.time_of_reporting + node.testing_delay == time
-            and not node.household().propagated_contact_tracing
-        ]
-
-        # Propagate the contact tracing for all households that are isolated due to exposure, have developed symptoms
-        # and had a test come back
-        [
-            self.propagate_contact_tracing(node.household(), time)
-            for node in self._network.all_nodes()
-            if node.symptom_onset_time <= time
-            and not node.household().propagated_contact_tracing
-            and node.household().isolated_time + node.testing_delay <= time
-        ]
+        # Propagate the contact tracing for all households that are isolated due to exposure,
+        # have developed symptoms and had a test come back
+        for node in self._network.all_nodes():
+            if node.symptom_onset_time <= time:
+                if not node.household().propagated_contact_tracing:
+                    if node.household().isolated_time + node.testing_delay <= time:
+                        self.propagate_contact_tracing(node.household(), time)
 
         # Update the contact tracing index of households
         # That is, re-evaluate how far away they are from a known infected case
@@ -576,13 +540,11 @@ class IncrementContactTracingHouseholdLevel(IncrementContactTracingBehaviour):
 
         if self._contact_tracing.do_2_step:
             # Propagate the contact tracing from any households with a contact tracing index of 1
-            [
-                self.propagate_contact_tracing(household, time)
-                for household in self._network.houses.all_households()
-                if household.contact_tracing_index == 1
-                and not household.propagated_contact_tracing
-                and household.isolated
-            ]
+            for household in self._network.houses.all_households():
+                if household.contact_tracing_index == 1:
+                    if not household.propagated_contact_tracing:
+                        if household.isolated:
+                            self.propagate_contact_tracing(household, time)
 
     def propagate_contact_tracing(self, household: Household, time: int):
         """
@@ -618,7 +580,7 @@ class IncrementContactTracingHouseholdLevel(IncrementContactTracingBehaviour):
             success_prob = self._contact_tracing.contact_tracing_success_prob
 
         # is the trace successful
-        if (npr.binomial(1, success_prob) == 1):
+        if np.random.binomial(1, success_prob) == 1:
             # Update the list of traced households from this one
             house_from.contact_traced_household_ids.append(house_to.house_id)
 
@@ -690,20 +652,18 @@ class IncrementContactTracingIndividualLevel(IncrementContactTracingHouseholdLev
         # isolation if prob <1)
         self.contact_tracing.receive_pcr_test_results(time)
 
-        [
-            node.household().isolate_household(time)
-            for node in self._network.all_nodes()
-            if node.symptom_onset_time <= time
-               and node.received_positive_test_result
-               and not node.isolated
-               and not node.completed_isolation
-        ]
+        for node in self._network.all_nodes():
+            if node.symptom_onset_time <= time:
+                if node.received_positive_test_result:
+                    if not node.isolated:
+                        if not node.completed_isolation:
+                            node.household().isolate_household(time)
 
-        [
-            self.propagate_contact_tracing(node)
-            for node in self._network.all_nodes()
-            if node.received_result and not node.propagated_contact_tracing
-        ]
+        for node in self._network.all_nodes():
+            if node.received_result:
+                if not node.propagated_contact_tracing:
+                    self.propagate_contact_tracing(node, time)
+
 
     def propagate_contact_tracing(self, node: Node, time: int):
         """
@@ -771,7 +731,7 @@ class IncrementContactTracingIndividualLevel(IncrementContactTracingHouseholdLev
                            self.contact_tracing.recall_probability_fall_off ** days_since_contact_occurred
 
         # is the trace successful
-        if (npr.binomial(1, success_prob) == 1):
+        if (np.random.binomial(1, success_prob) == 1):
             # Update the list of traced households from this one
             house_from.contact_traced_household_ids.append(house_to.house_id)
 
@@ -803,32 +763,26 @@ class IncrementContactTracingIndividualLevel(IncrementContactTracingHouseholdLev
 class IncrementContactTracingIndividualDailyTesting(IncrementContactTracingIndividualLevel):
 
     def increment_contact_tracing(self, time: int):
-        [
-            self.propagate_contact_tracing(node, time)
-            for node in self._network.all_nodes()
-            if node.received_positive_test_result
-               and node.avenue_of_testing == TestType.pcr
-               and not node.propagated_contact_tracing
-        ]
+        for node in self._network.all_nodes():
+            if node.received_positive_test_result:
+                if node.avenue_of_testing == TestType.pcr:
+                    if not node.propagated_contact_tracing:
+                        self.propagate_contact_tracing(node, time)
 
         if not self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
-            [
-                self.propagate_contact_tracing(node, time)
-                for node in self._network.all_nodes()
-                if node.received_positive_test_result
-                   and node.avenue_of_testing == TestType.lfa
-                   and not node.propagated_contact_tracing
-            ]
+            for node in self._network.all_nodes():
+                if node.received_positive_test_result:
+                    if node.avenue_of_testing == TestType.lfa:
+                        if not node.propagated_contact_tracing:
+                            self.propagate_contact_tracing(node, time)
 
         elif self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
-            [
-                self.propagate_contact_tracing(node, time)
-                for node in self._network.all_nodes()
-                if node.confirmatory_PCR_test_result_time == time
-                   and node.confirmatory_PCR_result_was_positive
-                   and node.avenue_of_testing == TestType.lfa
-                   and not node.propagated_contact_tracing
-            ]
+            for node in self._network.all_nodes():
+                if node.confirmatory_PCR_test_result_time == time:
+                    if node.confirmatory_PCR_result_was_positive:
+                        if node.avenue_of_testing == TestType.lfa:
+                            if not node.propagated_contact_tracing:
+                                self.propagate_contact_tracing(node, time)
 
     def propagate_contact_tracing(self, node: Node, time: int):
         """
