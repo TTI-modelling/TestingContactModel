@@ -476,13 +476,7 @@ class NewHouseholdLevel(NewHouseholdBehaviour):
 
     def new_household(self, time: int, new_household_number: int, infected_by: Optional[Household],
                       additional_attributes: Optional[dict] = None) -> Household:
-        """Adds a new household to the household dictionary
-
-        Arguments:
-            new_household_number {int} -- The house id
-            infected_by {int} -- Which household spread the infection to this household
-            infected_by_node {int} -- Which node spread the infection to this household
-        """
+        """Adds a new household to the household dictionary"""
         house_size = self._infection.size_of_household()
 
         new_household = self._network.houses.add_household(

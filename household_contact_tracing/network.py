@@ -97,7 +97,7 @@ class Network:
                  infecting_node: Optional[Node] = None, completed_isolation=False) -> Node:
         self.graph.add_node(node_id)
         new_node_household = self.houses.household(household_id)
-        node = Node(nodes=self, node_id=node_id, time_infected=time,
+        node = Node(nodes=self, id=node_id, time_infected=time,
                     household=new_node_household, isolated=isolated,
                     will_uptake_isolation=will_uptake_isolation,
                     propensity_imperfect_isolation=propensity_imperfect_isolation,
@@ -146,7 +146,7 @@ class Node:
     def __init__(
         self,
         nodes: Network,
-        node_id: int,
+        id: int,
         time_infected: int,
         household: Household,
         isolated: bool,
@@ -170,7 +170,7 @@ class Node:
         additional_attributes: dict = None
     ):
         self.nodes = nodes
-        self.id = node_id
+        self.id = id
         self.time_infected = time_infected
         self.household = household
         self.isolated = isolated
@@ -229,22 +229,7 @@ class Node:
         return time - self.pseudo_symptom_onset_time
 
     def locally_infected(self) -> bool:
-        if not self.infecting_node:
-            return False
         return self.infecting_node.household == self.household
-
-    # TODO: is this the method for deciding if you should isolate (as opposed to quarantine?)
-    # MF - I didn't write this method, so I'm unsure
-    def has_known_infection(self, time_now: int) -> bool:
-        """
-        time_now is the model self.time
-        Returns:
-            bool: Does the node have a known infection
-        """
-        if self.contact_traced:
-            return self.symptom_onset_time >= time_now
-        else:
-            return self.will_report_infection and self.symptom_onset_time >= time_now
 
     def infection_status(self, time_now: int) -> InfectionStatus:
         if self.contact_traced:
@@ -333,17 +318,6 @@ class Household:
             return True
         else:
             return False
-
-    def has_known_infection(self) -> bool:
-        """
-        Returns:
-            bool: Does the household contain a known infection
-        """
-        for household_node in self.nodes:
-            time_infection_known = max(household_node.symptom_onset_time, self.isolated_time) + household_node.testing_delay
-            if time_infection_known >= self.time_infected:
-                return True
-        return False
 
     def get_recognised_symptom_onsets(self, model_time: int):
         """Report symptom onset time for all active infections in the Household."""
