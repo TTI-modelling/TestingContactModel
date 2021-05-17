@@ -1,9 +1,11 @@
-from typing import Optional
+from __future__ import annotations
+from typing import Optional, TYPE_CHECKING
 
 import numpy as np
 
-from household_contact_tracing.infection import Infection
-from household_contact_tracing.network import Network, Node
+if TYPE_CHECKING:
+    from household_contact_tracing.network import Network, Node
+    from household_contact_tracing.infection import Infection
 
 
 class NewInfection:
