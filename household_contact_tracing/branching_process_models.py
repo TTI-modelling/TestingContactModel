@@ -9,12 +9,11 @@ from household_contact_tracing.infection import Infection, \
     NewHouseholdLevel, NewHouseholdIndividualTracingDailyTesting, \
     NewInfectionHouseholdLevel, NewInfectionIndividualTracingDailyTesting, \
     ContactRateReductionHouseholdLevelContactTracing, ContactRateReductionIndividualTracingDaily
-from household_contact_tracing.contact_tracing import ContactTracing, \
-    IncrementContactTracingHouseholdLevel, IncrementContactTracingIndividualLevel, \
-    IncrementContactTracingIndividualDailyTesting
+from household_contact_tracing.contact_tracing import ContactTracing
 import household_contact_tracing.behaviours.isolation as isolation
 import household_contact_tracing.behaviours.pcr_testing as pcr_testing
 import household_contact_tracing.behaviours.contact_trace_household as tracing
+import household_contact_tracing.behaviours.increment_tracing as increment
 
 
 class HouseholdLevelContactTracing(SimulationModel):
@@ -78,7 +77,7 @@ class HouseholdLevelContactTracing(SimulationModel):
     def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
                               tracing.ContactTraceHouseholdLevel(network),
-                              IncrementContactTracingHouseholdLevel(network),
+                              increment.IncrementTracingHouseholdLevel(network),
                               isolation.UpdateIsolationHouseholdLevel(network),
                               None,
                               params)
@@ -174,7 +173,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
     def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
                               tracing.ContactTraceHouseholdIndividualLevel(network),
-                              IncrementContactTracingIndividualLevel(self.network),
+                              increment.IncrementTracingIndividualLevel(self.network),
                               isolation.UpdateIsolationIndividualLevelTracing(network),
                               pcr_testing.PCRTestingIndividualLevelTracing(self.network),
                               params)
@@ -197,7 +196,7 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
     def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
                               tracing.ContactTraceHouseholdIndividualTracingDailyTest(self.network),
-                              IncrementContactTracingIndividualDailyTesting(self.network),
+                              increment.IncrementTracingIndividualDailyTesting(self.network),
                               isolation.UpdateIsolationIndividualTracingDailyTesting(self.network),
                               pcr_testing.PCRTestingIndividualDailyTesting(self.network),
                               params)

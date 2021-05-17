@@ -1,0 +1,403 @@
+"""Various methods of doing a day worth of contact tracing."""
+from abc import ABC, abstractmethod
+
+import numpy as np
+
+from household_contact_tracing.contact_tracing import ContactTracing
+from household_contact_tracing.network import Network, Household, EdgeType, Node, TestType
+
+
+class IncrementTracing(ABC):
+    def __init__(self, network: Network):
+        self._network = network
+        self._contact_tracing = None
+
+    @property
+    def contact_tracing(self) -> ContactTracing:
+        return self._contact_tracing
+
+    @contact_tracing.setter
+    def contact_tracing(self, contact_tracing: ContactTracing):
+        self._contact_tracing = contact_tracing
+
+    @abstractmethod
+    def increment_contact_tracing(self, time: int):
+        """Performs a days worth of contact tracing."""
+
+
+class IncrementTracingHouseholdLevel(IncrementTracing):
+
+    def increment_contact_tracing(self, time: int):
+        """
+        Performs a days worth of contact tracing by:
+        * Looks for houses where the contact tracing delay is over and moves them to the contact traced state
+        * Looks for houses in the contact traced state, and checks them for symptoms. If any of them have symptoms,
+        the house is isolated
+
+        The isolation function also assigns contact tracing times to any houses that had contact with that household
+
+        For each node that is contact traced
+        """
+
+        # Isolate all households under observation that now display symptoms (excludes those who will not take up
+        # isolation if prob <1)
+        for node in self._network.all_nodes():
+            if node.symptom_onset_time <= time:
+                if node.contact_traced:
+                    if not node.isolated:
+                        if not node.completed_isolation:
+                            node.household().isolate_household(time)
+
+        # Propagate the contact tracing for all households that self-reported and have had their
+        # test results come back
+        for node in self._network.all_nodes():
+            if node.time_of_reporting + node.testing_delay == time:
+                if not node.household().propagated_contact_tracing:
+                    self.propagate_contact_tracing(node.household(), time)
+
+        # Propagate the contact tracing for all households that are isolated due to exposure,
+        # have developed symptoms and had a test come back
+        for node in self._network.all_nodes():
+            if node.symptom_onset_time <= time:
+                if not node.household().propagated_contact_tracing:
+                    if node.household().isolated_time + node.testing_delay <= time:
+                        self.propagate_contact_tracing(node.household(), time)
+
+        # Update the contact tracing index of households
+        # That is, re-evaluate how far away they are from a known infected case
+        # (traced + symptom_onset_time + testing_delay)
+        self.update_contact_tracing_index(time)
+
+        if self._contact_tracing.do_2_step:
+            # Propagate the contact tracing from any households with a contact tracing index of 1
+            for household in self._network.houses.all_households():
+                if household.contact_tracing_index == 1:
+                    if not household.propagated_contact_tracing:
+                        if household.isolated:
+                            self.propagate_contact_tracing(household, time)
+
+    def propagate_contact_tracing(self, household: Household, time: int):
+        """
+        To be called after a node in a household either reports their symptoms, and gets tested, when a household
+        that is under surveillance develops symptoms + gets tested.
+        """
+        # update the propagation data
+        household.propagated_contact_tracing = True
+        household.time_propagated_tracing = time
+
+        # Contact tracing attempted for the household that infected the household currently propagating the infection
+
+        infected_by = household.infected_by()
+
+        # If infected by = None, then it is the origin node, a special case
+        if infected_by and not infected_by.isolated:
+            self.attempt_contact_trace_of_household(infected_by, household, time)
+
+        # Contact tracing for the households infected by the household currently traced
+        child_households_not_traced = [h for h in household.spread_to() if not h.isolated]
+        for child in child_households_not_traced:
+            self.attempt_contact_trace_of_household(child, household, time)
+
+    def attempt_contact_trace_of_household(self, house_to: Household, house_from: Household,
+                                           time: int, contact_trace_delay: int = 0):
+        # Decide if the edge was traced by the app
+        app_traced = self._network.is_edge_app_traced(self._network.get_edge_between_household(house_from, house_to))
+
+        # Get the success probability
+        if app_traced:
+            success_prob = 1
+        else:
+            success_prob = self._contact_tracing.contact_tracing_success_prob
+
+        # is the trace successful
+        if np.random.binomial(1, success_prob) == 1:
+            # Update the list of traced households from this one
+            house_from.contact_traced_household_ids.append(house_to.house_id)
+
+            # Assign the household a contact tracing index, 1 more than its parent tracer
+            house_to.contact_tracing_index = house_from.contact_tracing_index + 1
+
+            # work out the time delay
+            contact_trace_delay = contact_trace_delay + self._contact_tracing.contact_trace_delay
+            proposed_time_until_contact_trace = time + contact_trace_delay
+
+            # Get the current time until contact trace, and compare against the proposed time until contact trace
+            # Note this starts as infinity
+            # If the new proposed time is quicker, change the route
+            if proposed_time_until_contact_trace < house_to.time_until_contact_traced:
+                house_to.time_until_contact_traced = proposed_time_until_contact_trace
+                house_to.being_contact_traced_from = house_from.house_id
+
+            # Edge labelling
+            if app_traced:
+                self._network.label_edges_between_houses(house_to, house_from, EdgeType.app_traced)
+            else:
+                self._network.label_edges_between_houses(house_to, house_from,
+                                                         EdgeType.between_house)
+        else:
+            self._network.label_edges_between_houses(house_to, house_from,
+                                                     EdgeType.failed_contact_tracing)
+
+    def update_contact_tracing_index(self, time):
+        for household in self._network.houses.all_households():
+            # loop over households with non-zero indexes, those that have been contact traced but with
+            if household.contact_tracing_index != 0:
+                for node in household.nodes():
+
+                    # Necessary conditions for an index 1 household to propagate tracing:
+                    # The node must have onset of symptoms
+                    # The node households must be isolated
+                    # The testing delay must be passed
+                    # The testing delay starts when the house have been isolated and symptoms have onset
+                    critical_time = max(node.symptom_onset_time, household.isolated_time)
+
+                    if critical_time + node.testing_delay <= time:
+                        household.contact_tracing_index = 0
+
+                        for index_1_hh in household.contact_traced_households():
+                            if index_1_hh.contact_tracing_index == 2:
+                                index_1_hh.contact_tracing_index = 1
+
+
+class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
+
+    def increment_contact_tracing(self, time: int):
+
+        # TODO update the below - going to hospital is not included in the model
+        """
+        Performs a days worth of contact tracing by:
+        * Looking for nodes that have been admitted to hospital. Once a node is admitted to hospital, its house is
+        isolated
+        * Looks for houses where the contact tracing delay is over and moves them to the contact traced state
+        * Looks for houses in the contact traced state, and checks them for symptoms. If any of them have symptoms, the
+        house is isolated
+
+        The isolation function also assigns contact tracing times to any houses that had contact with that household
+
+        For each node that is contact traced
+        """
+
+        # Isolate all households under observation that now display symptoms (excludes those who will not take up
+        # isolation if prob <1)
+        self.contact_tracing.receive_pcr_test_results(time)
+
+        for node in self._network.all_nodes():
+            if node.symptom_onset_time <= time:
+                if node.received_positive_test_result:
+                    if not node.isolated:
+                        if not node.completed_isolation:
+                            node.household().isolate_household(time)
+
+        for node in self._network.all_nodes():
+            if node.received_result:
+                if not node.propagated_contact_tracing:
+                    self.propagate_contact_tracing(node, time)
+
+    def propagate_contact_tracing(self, node: Node, time: int):
+        """
+        To be called after a node in a household either reports their symptoms, and gets tested,
+        when a household that is under surveillance develops symptoms + gets tested.
+        """
+        # update the propagation data
+        node.propagated_contact_tracing = True
+        node.time_propagated_tracing = time
+
+        # Contact tracing attempted for the household that infected the household currently
+        # propagating the infection
+        infected_by_node = node.infected_by_node()
+
+        # If the node was globally infected, we are backwards tracing and the infecting node is
+        # not None
+        if not node.locally_infected() and infected_by_node:
+
+            # if the infector is not already isolated and the time the node was infected captured
+            # by going backwards
+            # the node.time_infected is when they had a contact with their infector.
+            if not infected_by_node.isolated and node.time_infected >= node.symptom_onset_time - \
+                    self.contact_tracing.number_of_days_to_trace_backwards:
+
+                # Then attempt to contact trace the household of the node that infected you
+                self.attempt_contact_trace_of_household(
+                    house_to=infected_by_node.household(),
+                    house_from=node.household(),
+                    time=time,
+                    days_since_contact_occurred=time - node.time_infected
+                    )
+
+        # spread_to_global_node_time_tuples stores a list of tuples, where the first element is
+        # the node_id of a node who was globally infected by the node, and the second element is
+        # the time of transmission
+        for global_infection in node.spread_to_global_node_time_tuples:
+
+            # Get the child node_id and the time of transmission/time of contact
+            child_node_id, time_t = global_infection
+
+            child_node = self._network.node(child_node_id)
+
+            # If the node was infected 2 days prior to symptom onset, or 7 days post and is not already isolated
+            if time_t >= node.symptom_onset_time - self.contact_tracing.number_of_days_to_trace_backwards and \
+                    time_t <= node.symptom_onset_time + self.contact_tracing.number_of_days_to_trace_forwards and \
+                    not child_node.isolated:
+
+                self.attempt_contact_trace_of_household(
+                    house_to=child_node.household(),
+                    house_from=node.household(),
+                    days_since_contact_occurred=time - time_t,
+                    time=time
+                    )
+
+    def attempt_contact_trace_of_household(self,
+                                           house_to: Household,
+                                           house_from: Household,
+                                           days_since_contact_occurred: int,
+                                           time: int,
+                                           contact_trace_delay: int = 0):
+        # Decide if the edge was traced by the app
+        app_traced = self._network.is_edge_app_traced(self._network.get_edge_between_household(house_from, house_to))
+
+        # Get the success probability
+        if app_traced:
+            success_prob = 1
+        else:
+            success_prob = self.contact_tracing.contact_tracing_success_prob * \
+                           self.contact_tracing.recall_probability_fall_off ** days_since_contact_occurred
+
+        # is the trace successful
+        if (np.random.binomial(1, success_prob) == 1):
+            # Update the list of traced households from this one
+            house_from.contact_traced_household_ids.append(house_to.house_id)
+
+            # Assign the household a contact tracing index, 1 more than its parent tracer
+            house_to.contact_tracing_index = house_from.contact_tracing_index + 1
+
+            # work out the time delay
+            proposed_time_until_contact_trace = time + contact_trace_delay
+
+            # Get the current time until contact trace, and compare against the proposed time until contact trace
+            # Note this starts as infinity
+            # If the new proposed time is quicker, change the route
+            if proposed_time_until_contact_trace < house_to.time_until_contact_traced:
+                house_to.time_until_contact_traced = proposed_time_until_contact_trace
+                house_to.being_contact_traced_from = house_from.house_id
+
+            # Edge labelling
+            if app_traced:
+                self._network.label_edges_between_houses(house_to, house_from,
+                                                         EdgeType.app_traced)
+            else:
+                self._network.label_edges_between_houses(house_to, house_from,
+                                                         EdgeType.between_house)
+        else:
+            self._network.label_edges_between_houses(house_to, house_from,
+                                                     EdgeType.failed_contact_tracing)
+
+
+class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
+
+    def increment_contact_tracing(self, time: int):
+        for node in self._network.all_nodes():
+            if node.received_positive_test_result:
+                if node.avenue_of_testing == TestType.pcr:
+                    if not node.propagated_contact_tracing:
+                        self.propagate_contact_tracing(node, time)
+
+        if not self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
+            for node in self._network.all_nodes():
+                if node.received_positive_test_result:
+                    if node.avenue_of_testing == TestType.lfa:
+                        if not node.propagated_contact_tracing:
+                            self.propagate_contact_tracing(node, time)
+
+        elif self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
+            for node in self._network.all_nodes():
+                if node.confirmatory_PCR_test_result_time == time:
+                    if node.confirmatory_PCR_result_was_positive:
+                        if node.avenue_of_testing == TestType.lfa:
+                            if not node.propagated_contact_tracing:
+                                self.propagate_contact_tracing(node, time)
+
+    def propagate_contact_tracing(self, node: Node, time: int):
+        """
+        To be called after a node in a household either reports their symptoms, and gets tested, when a household
+        that is under surveillance develops symptoms + gets tested.
+        """
+
+        # TODO: Refactor this monster
+        # There are really 3 contact tracing algorithms going on here
+        # 1) Trace on non-confirmatory PCR result
+        # 2) Trace on confirmatory PCR result
+
+        # update the propagation data
+        node.propagated_contact_tracing = True
+        node.time_propagated_tracing = time
+
+        # Contact tracing attempted for the household that infected the household currently propagating the infection
+        infected_by_node = node.infected_by_node()
+
+        # If the node was globally infected, we are backwards tracing and the infecting node is not None
+        if not node.locally_infected() and infected_by_node:
+
+            # if the infector is not already isolated and the time the node was infected captured by going backwards
+            # the node.time_infected is when they had a contact with their infector.
+            if node.avenue_of_testing == TestType.pcr:
+
+                if not infected_by_node.isolated and \
+                        node.time_infected >= node.symptom_onset_time - \
+                            self.contact_tracing.number_of_days_to_trace_backwards:
+
+                    # Then attempt to contact trace the household of the node that infected you
+                    self.attempt_contact_trace_of_household(
+                        house_to=infected_by_node.household(),
+                        house_from=node.household(),
+                        days_since_contact_occurred=time - node.time_infected,
+                        time=time)
+
+            elif node.avenue_of_testing == TestType.lfa:
+
+                if not self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
+
+                    if not infected_by_node.isolated and node.time_infected >= \
+                            node.positive_test_time - self.contact_tracing.number_of_days_prior_to_LFA_result_to_trace:
+
+                        # Then attempt to contact trace the household of the node that infected you
+                        self.attempt_contact_trace_of_household(
+                            house_to=infected_by_node.household(),
+                            house_from=node.household(),
+                            days_since_contact_occurred=time - node.time_infected,
+                            time=time )
+
+        # spread_to_global_node_time_tuples stores a list of tuples, where the first element is the node_id
+        # of a node who was globally infected by the node, and the second element is the time of transmission
+        for global_infection in node.spread_to_global_node_time_tuples:
+
+            # Get the child node_id and the time of transmission/time of contact
+            child_node_id, time_t = global_infection
+
+            child_node = self._network.node(child_node_id)
+
+            if node.avenue_of_testing == TestType.pcr:
+
+                # If the node was infected 2 days prior to symptom onset, or 7 days post and is not already isolated
+                if time_t >= node.symptom_onset_time - self.contact_tracing.number_of_days_to_trace_backwards and \
+                        time_t <= node.symptom_onset_time + self.contact_tracing.number_of_days_to_trace_forwards and \
+                        not child_node.isolated:
+
+                    self.attempt_contact_trace_of_household(
+                        house_to=child_node.household(),
+                        house_from=node.household(),
+                        days_since_contact_occurred=time - time_t,
+                        time=time)
+
+            elif node.avenue_of_testing == TestType.lfa:
+
+                if not self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
+
+                    # If the node was infected 2 days prior to symptom onset, or 7 days post and is not already isolated
+                    if time_t >= node.positive_test_time - \
+                            self.contact_tracing.number_of_days_prior_to_LFA_result_to_trace:
+
+                        self.attempt_contact_trace_of_household(
+                            house_to=child_node.household(),
+                            house_from=node.household(),
+                            days_since_contact_occurred=time - time_t,
+                            time=time)
