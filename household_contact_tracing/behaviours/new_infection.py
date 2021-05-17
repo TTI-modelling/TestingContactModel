@@ -113,7 +113,7 @@ class NewInfectionHouseholdLevel(NewInfection):
 
         # Each house now stores the ID's of which nodes are stored inside the house,
         # so that quarantining can be done at the household level
-        household.node_ids.append(new_node)
+        household.nodes.append(new_node)
 
 
 class NewInfectionIndividualTracingDailyTesting(NewInfection):
@@ -247,4 +247,4 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
 
         # Each house now stores the ID's of which nodes are stored inside the house,
         # so that quarantining can be done at the household level
-        household.node_ids.append(new_node)
+        household.nodes.append(new_node)

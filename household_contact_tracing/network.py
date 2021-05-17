@@ -47,10 +47,7 @@ def graphs_isomorphic(graph1: nx.Graph, graph2: nx.Graph) -> bool:
 
 class Network:
     def __init__(self):
-        # Reset houses
         self.houses = HouseholdCollection(self)
-
-        # Rest the graph of infections
         self.graph = nx.Graph()
 
     @property
@@ -229,7 +226,10 @@ class Node:
         return time - self.pseudo_symptom_onset_time
 
     def locally_infected(self) -> bool:
-        return self.infecting_node.household == self.household
+        if self.infecting_node:
+            return self.infecting_node.household == self.household
+        else:
+            return False
 
     def infection_status(self, time_now: int) -> InfectionStatus:
         if self.contact_traced:
