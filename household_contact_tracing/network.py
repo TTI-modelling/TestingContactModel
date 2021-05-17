@@ -138,6 +138,11 @@ class Network:
                     self.graph.edges[node_1.node_id, node_2.node_id].update({"edge_type":
                                                                                  new_edge_type})
 
+    def label_edges_inside_household(self, household: Household, new_edge_type: str):
+        """Label all edges within a household with `new_edge_type`."""
+        for edge in household.within_house_edges:
+            self.graph.edges[edge[0], edge[1]].update({"edge_type": new_edge_type})
+
 
 class NetworkContactModel(Network):
     def add_node(

@@ -25,8 +25,7 @@ class ContactTraceHouseholdBehaviour(ABC):
             node.contact_traced = True
 
         # Colour the edges within household
-        for edge in household.within_house_edges:
-            self._network.graph.edges[edge[0], edge[1]].update({"edge_type": EdgeType.within_house.name})
+        self._network.label_edges_inside_household(household, EdgeType.within_house.name)
 
     def quarantine_traced_node(self, household):
         traced_node = self.find_traced_node(household)
@@ -78,17 +77,16 @@ class ContactTraceHouseholdBehaviour(ABC):
 
             # Initially the edge is assigned the contact tracing label, may be updated if the
             # contact tracing does not succeed
-            if self._network.is_edge_app_traced(self._network.get_edge_between_household(household, house_which_contact_traced)):
+            edge = self._network.get_edge_between_household(household, house_which_contact_traced)
+            if self._network.is_edge_app_traced(edge):
                 self._network.label_edges_between_houses(household, house_which_contact_traced,
                                                          EdgeType.app_traced.name)
             else:
                 self._network.label_edges_between_houses(household, house_which_contact_traced,
                                                          EdgeType.between_house.name)
 
-        # We update the label of every edge so that we can tell which household have been contact
-        # traced when we visualise
-        for edge in household.within_house_edges:
-            self._network.graph.edges[edge[0], edge[1]].update({"edge_type": EdgeType.within_house.name})
+        # Update edges within household
+        self._network.label_edges_inside_household(household, EdgeType.within_house.name)
 
 
 class ContactTraceHouseholdLevel(ContactTraceHouseholdBehaviour):
