@@ -79,22 +79,16 @@ class ContactTraceHouseholdBehaviour(ABC):
             # Initially the edge is assigned the contact tracing label, may be updated if the
             # contact tracing does not succeed
             if self._network.is_edge_app_traced(self._network.get_edge_between_household(household, house_which_contact_traced)):
-                self.label_node_edges_between_houses(household, house_which_contact_traced, EdgeType.app_traced.name)
+                self._network.label_edges_between_houses(household, house_which_contact_traced,
+                                                         EdgeType.app_traced.name)
             else:
-                self.label_node_edges_between_houses(household, house_which_contact_traced,
-                                                     EdgeType.between_house.name)
+                self._network.label_edges_between_houses(household, house_which_contact_traced,
+                                                         EdgeType.between_house.name)
 
         # We update the label of every edge so that we can tell which household have been contact
         # traced when we visualise
         for edge in household.within_house_edges:
             self._network.graph.edges[edge[0], edge[1]].update({"edge_type": EdgeType.within_house.name})
-
-    def label_node_edges_between_houses(self, house_to: Household, house_from: Household, new_edge_type):
-        # Annoying bit of logic to find the edge and label it
-        for node_1 in house_to.nodes():
-            for node_2 in house_from.nodes():
-                if self._network.graph.has_edge(node_1.node_id, node_2.node_id):
-                    self._network.graph.edges[node_1.node_id, node_2.node_id].update({"edge_type": new_edge_type})
 
 
 class ContactTraceHouseholdLevel(ContactTraceHouseholdBehaviour):

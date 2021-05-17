@@ -129,6 +129,15 @@ class Network:
     def symptomatic_nodes(self) -> Iterator[Node]:
         return [self.node(n) for n in self.graph if not self.node(n).asymptomatic]
 
+    def label_edges_between_houses(self, house_to: Household, house_from: Household,
+                                   new_edge_type: str):
+        """Given two Households, label any edges between the households with `new_edge_type`."""
+        for node_1 in house_to.nodes():
+            for node_2 in house_from.nodes():
+                if self.graph.has_edge(node_1.node_id, node_2.node_id):
+                    self.graph.edges[node_1.node_id, node_2.node_id].update({"edge_type":
+                                                                                 new_edge_type})
+
 
 class NetworkContactModel(Network):
     def add_node(
