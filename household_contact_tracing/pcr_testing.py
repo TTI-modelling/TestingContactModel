@@ -1,4 +1,6 @@
-from abc import ABC
+"""These methods implement PCR testing for the various models."""
+
+from abc import ABC, abstractmethod
 
 import numpy as np
 
@@ -19,43 +21,38 @@ class PCRTestingBehaviour(ABC):
     def contact_tracing(self, contact_tracing: ContactTracing):
         self._contact_tracing = contact_tracing
 
+    @abstractmethod
     def receive_pcr_test_results(self, time: int):
-        pass
+        """For nodes who would receive a PCR test result today, update."""
 
+    @abstractmethod
     def pcr_test_node(self, node: Node, time: int):
-        pass
+        """Given a the time relative to a nodes symptom onset, will that node test positive
+
+           Args:
+               node: The node to be tested today
+               time: Current time in days
+        """
 
 
 class PCRTestingIndividualLevelTracing(PCRTestingBehaviour):
 
     def receive_pcr_test_results(self, time: int):
-        """For nodes who would receive a PCR test result today, update
-        """
         # self reporting infections
-        [
-            self.pcr_test_node(node, time)
-            for node in self._network.all_nodes()
-            if node.time_of_reporting + node.testing_delay == time
-            and not node.contact_traced
-            and not node.received_result
-        ]
+        for node in self._network.all_nodes():
+            if node.time_of_reporting + node.testing_delay == time:
+                if not node.contact_traced:
+                    if not node.received_result:
+                        self.pcr_test_node(node, time)
 
         # contact traced nodes
-        [
-            self.pcr_test_node(node, time)
-            for node in self._network.all_nodes()
-            if node.symptom_onset_time + node.testing_delay == time
-            and node.contact_traced
-            and not node.received_result
-        ]
+        for node in self._network.all_nodes():
+            if node.symptom_onset_time + node.testing_delay == time:
+                if node.contact_traced:
+                    if not node.received_result:
+                        self.pcr_test_node(node, time)
 
     def pcr_test_node(self, node: Node, time: int):
-        """Given a the time relative to a nodes symptom onset, will that node test positive
-
-        Args:
-            node (NodeContactModel): The node to be tested today
-            time (int): Current time in days
-        """
         node.received_result = True
         infectious_age_when_tested = time - node.testing_delay - node.time_infected
         prob_positive_result = self.contact_tracing.prob_testing_positive_pcr_func(infectious_age_when_tested)
@@ -71,18 +68,14 @@ class PCRTestingIndividualLevelTracing(PCRTestingBehaviour):
 class PCRTestingIndividualDailyTesting(PCRTestingIndividualLevelTracing):
 
     def receive_pcr_test_results(self, time: int):
-        """
-        For nodes who would receive a PCR test result today, update
-        """
+        """For nodes who would receive a PCR test result today, update"""
 
         if self.contact_tracing.lfa_tested_nodes_book_pcr_on_symptom_onset:
-           super(PCRTestingIndividualDailyTesting, self).receive_pcr_test_results(time)
+            super().receive_pcr_test_results(time)
         else:
-            [
-                self.pcr_test_node(node, time)
-                for node in self._network.all_nodes()
-                if node.time_of_reporting + node.testing_delay == time
-                   and not node.received_result
-                   and not node.contact_traced
-                   and not node.being_lateral_flow_tested
-            ]
+            for node in self._network.all_nodes():
+                if node.time_of_reporting + node.testing_delay == time:
+                    if not node.contact_traced:
+                        if not node.received_result:
+                            if not node.being_lateral_flow_tested:
+                                self.pcr_test_node(node, time)
