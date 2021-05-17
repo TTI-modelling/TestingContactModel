@@ -487,7 +487,7 @@ class NewHouseholdBehaviour:
         pass
 
 
-class NewHousehold(NewHouseholdBehaviour):
+class NewHouseholdLevel(NewHouseholdBehaviour):
 
     def new_household(self,
                       time: int,
@@ -518,7 +518,7 @@ class NewHousehold(NewHouseholdBehaviour):
         )
 
 
-class NewHouseholdContactModelTest(NewHousehold):
+class NewHouseholdIndividualTracingDailyTesting(NewHouseholdLevel):
 
     def new_household(self,
                       time: int,
@@ -566,7 +566,7 @@ class NewInfectionBehaviour:
         pass
 
 
-class NewInfectionHousehold(NewInfectionBehaviour):
+class NewInfectionHouseholdLevel(NewInfectionBehaviour):
 
     def new_infection(self,
                       time: int,
@@ -652,7 +652,7 @@ class NewInfectionHousehold(NewInfectionBehaviour):
         household.node_ids.append(node_count)
 
 
-class NewInfectionContactModelTest(NewInfectionBehaviour):
+class NewInfectionIndividualTracingDailyTesting(NewInfectionBehaviour):
 
     def new_infection(self, time: int, node_count: int, generation: int, household_id: int,
                       serial_interval=None,
@@ -804,7 +804,7 @@ class ContactRateReductionBehaviour:
         pass
 
 
-class ContactRateReductionHousehold(ContactRateReductionBehaviour):
+class ContactRateReductionHouseholdLevelContactTracing(ContactRateReductionBehaviour):
 
     def get_contact_rate_reduction(self, node) -> int:
         """Returns a contact rate reduction, depending upon a nodes current status and various
@@ -820,7 +820,7 @@ class ContactRateReductionHousehold(ContactRateReductionBehaviour):
             return self._infection.reduce_contacts_by
 
 
-class ContactRateReductionContactModelTest(ContactRateReductionBehaviour):
+class ContactRateReductionIndividualTracingDaily (ContactRateReductionBehaviour):
 
     def get_contact_rate_reduction(self, node) -> int:
         """This method overrides the default behaviour. Previously the override behaviour allowed
