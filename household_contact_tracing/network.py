@@ -97,7 +97,7 @@ class Network:
                  infecting_node: Optional[Node] = None, completed_isolation=False) -> Node:
         self.graph.add_node(node_id)
         new_node_household = self.houses.household(household_id)
-        node = Node(nodes=self, id=node_id, time_infected=time,
+        node = Node(nodes=self, node_id=node_id, time_infected=time,
                     generation=generation, household=new_node_household, isolated=isolated,
                     will_uptake_isolation=will_uptake_isolation,
                     propensity_imperfect_isolation=propensity_imperfect_isolation,
@@ -146,7 +146,7 @@ class Node:
     def __init__(
         self,
         nodes: Network,
-        id: int,
+        node_id: int,
         time_infected: int,
         generation: int,
         household: Household,
@@ -171,7 +171,7 @@ class Node:
         additional_attributes: dict = None
     ):
         self.nodes = nodes
-        self.id = id
+        self.id = node_id
         self.time_infected = time_infected
         self.generation = generation
         self.household = household
@@ -195,7 +195,7 @@ class Node:
         self.time_propagated_tracing = None
         self.propagated_contact_tracing = False
         self.spread_to = []
-        self.infected_by_node_id = infecting_node.id if infecting_node else None
+        self.infecting_node = infecting_node if infecting_node else None
         self.completed_isolation = completed_isolation
         self.completed_isolation_time = None
         self.completed_isolation_reason = None
@@ -231,15 +231,10 @@ class Node:
         # so we can work out when they test positive
         return time - self.pseudo_symptom_onset_time
 
-    def infected_by_node(self) -> Optional[Node]:
-        if self.infected_by_node_id is None:
-            return None
-        return self.nodes.node(self.infected_by_node_id)
-
     def locally_infected(self) -> bool:
-        if not self.infected_by_node():
+        if not self.infecting_node:
             return False
-        return self.infected_by_node().household == self.household
+        return self.infecting_node.household == self.household
 
     # TODO: is this the method for deciding if you should isolate (as opposed to quarantine?)
     # MF - I didn't write this method, so I'm unsure
@@ -269,8 +264,7 @@ class Node:
         return InfectionStatus.unknown_infection
 
     def node_type(self) -> NodeType:
-        """Returns a node type, given the current status of the node.
-        """
+        """Returns a node type, given the current status of the node."""
         if self.being_lateral_flow_tested:
             if self.isolated:
                 return NodeType.being_lateral_flow_tested_isolated

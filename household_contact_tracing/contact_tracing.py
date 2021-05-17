@@ -369,7 +369,7 @@ class ContactTracing:
             # (if they do not self-report they will not isolate; if contact traced, they will be quarantining for the
             # quarantine duration)
             # if node.household_id == node.infected_by_node().household_id:
-            if node.infected_by_node():
+            if node.infecting_node:
                 if (node.infection_status(time) == InfectionStatus.unknown_infection) & node.isolated:
                     if node.locally_infected():
 
