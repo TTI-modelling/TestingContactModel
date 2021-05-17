@@ -50,8 +50,8 @@ class HouseholdLevelContactTracing(SimulationModel):
         self._network = Network()
 
         # Set strategies (Strategy pattern)
-        self._infection = self._get_infection(self._network, params)
-        self._contact_tracing = self._get_contact_tracing(self._network, params)
+        self._infection = self._initialise_infection(self._network, params)
+        self._contact_tracing = self._initialise_contact_tracing(self._network, params)
 
         # Set the simulated time to the start (days)
         self.time = 0
@@ -79,14 +79,14 @@ class HouseholdLevelContactTracing(SimulationModel):
     def contact_tracing(self, contact_tracing: ContactTracing):
         self._contact_tracing = contact_tracing
 
-    def _get_infection(self, network: Network, params: dict):
+    def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
                          NewHouseholdLevel(network),
                          NewInfectionHouseholdLevel(network),
                          ContactRateReductionHouseholdLevelContactTracing(),
                          params)
 
-    def _get_contact_tracing(self, network: Network, params: dict):
+    def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
                               ContactTraceHouseholdLevel(network),
                               IncrementContactTracingHouseholdLevel(network),
@@ -266,14 +266,14 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
     def prob_testing_positive_pcr_func(self, fn: Callable[[int], float]):
         self.contact_tracing.prob_testing_positive_pcr_func = fn
 
-    def _get_infection(self, network: Network, params: dict):
+    def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
                          NewHouseholdLevel(network),
                          NewInfectionHouseholdLevel(network),
                          ContactRateReductionHouseholdLevelContactTracing(),
                          params)
 
-    def _get_contact_tracing(self, network: Network, params: dict):
+    def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
                               ContactTraceHouseholdIndividualLevel(network),
                               IncrementContactTracingIndividualLevel(self.network),
@@ -292,14 +292,14 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
         # Call superclass constructor (which overwrites defaults with new params if present)
         super().__init__(params)
 
-    def _get_infection(self, network: Network, params: dict):
+    def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
                          NewHouseholdIndividualTracingDailyTesting(self.network),
                          NewInfectionIndividualTracingDailyTesting(self.network),
                          ContactRateReductionIndividualTracingDaily(),
                          params)
 
-    def _get_contact_tracing(self, network: Network, params: dict):
+    def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
                               ContactTraceHouseholdIndividualTracingDailyTest(self.network),
                               IncrementContactTracingIndividualDailyTesting(self.network),
