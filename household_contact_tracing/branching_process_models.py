@@ -1,9 +1,7 @@
-from typing import List, Callable
-import numpy.random as npr
+from typing import Callable
 import os
 
-from household_contact_tracing.network import Network, Household, Node, \
-    graphs_isomorphic, InfectionStatus, TestType
+from household_contact_tracing.network import Network, graphs_isomorphic
 from household_contact_tracing.simulation_model import SimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
@@ -14,9 +12,9 @@ from household_contact_tracing.infection import Infection, \
 from household_contact_tracing.contact_tracing import ContactTracing, \
     ContactTraceHouseholdLevel, ContactTraceHouseholdIndividualLevel, ContactTraceHouseholdIndividualTracingDailyTest, \
     IncrementContactTracingHouseholdLevel, IncrementContactTracingIndividualLevel, \
-    IncrementContactTracingIndividualDailyTesting, \
-    PCRTestingIndividualLevelTracing, PCRTestingIndividualDailyTesting
+    IncrementContactTracingIndividualDailyTesting
 import household_contact_tracing.isolation as isolation
+import household_contact_tracing.pcr_testing as pcr_testing
 
 
 class HouseholdLevelContactTracing(SimulationModel):
@@ -104,7 +102,6 @@ class HouseholdLevelContactTracing(SimulationModel):
         # increment time
         self.time += 1
 
-
     def run_simulation(self, num_steps: int, infection_threshold: int = 1000) -> None:
         """ Runs the simulation:
                 Sets model state,
@@ -112,7 +109,8 @@ class HouseholdLevelContactTracing(SimulationModel):
 
         Arguments:
             num steps -- The number of step increments to perform
-            infection_threshold -- The maximum number of infectious nodes allowed, befure stopping stimulation
+            infection_threshold -- The maximum number of infectious nodes allowed,
+              before stopping simulation
 
         Returns:
             None
@@ -177,7 +175,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
                               ContactTraceHouseholdIndividualLevel(network),
                               IncrementContactTracingIndividualLevel(self.network),
                               isolation.UpdateIsolationIndividualLevelTracing(network),
-                              PCRTestingIndividualLevelTracing(self.network),
+                              pcr_testing.PCRTestingIndividualLevelTracing(self.network),
                               params)
 
 
@@ -200,13 +198,12 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
                               ContactTraceHouseholdIndividualTracingDailyTest(self.network),
                               IncrementContactTracingIndividualDailyTesting(self.network),
                               isolation.UpdateIsolationIndividualTracingDailyTesting(self.network),
-                              PCRTestingIndividualDailyTesting(self.network),
+                              pcr_testing.PCRTestingIndividualDailyTesting(self.network),
                               params)
 
     def simulate_one_step(self):
         """ Simulates one day of the infection and contact tracing.
         """
-
         self.contact_tracing.receive_pcr_test_results(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         self.contact_tracing.isolate_self_reporting_cases(self.time)

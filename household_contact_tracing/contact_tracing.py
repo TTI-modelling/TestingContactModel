@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import numpy.random as npr
 from collections.abc import Callable
@@ -9,6 +9,7 @@ from household_contact_tracing.network import Network, Household, EdgeType, Node
 
 if TYPE_CHECKING:
     import household_contact_tracing.isolation as isolation
+    import household_contact_tracing.pcr_testing as pcr_testing
 
 
 class ContactTracing:
@@ -17,7 +18,7 @@ class ContactTracing:
     def __init__(self, network: Network, contact_trace_household: ContactTraceHouseholdBehaviour,
                  increment: IncrementContactTracingBehaviour,
                  update_isolation: isolation.UpdateIsolationBehaviour,
-                 pcr_testing: PCRTestingBehaviour, params: dict):
+                 pcr_testing: Optional[pcr_testing.PCRTestingBehaviour], params: dict):
         self._network = network
 
         # Declare behaviours
@@ -91,11 +92,11 @@ class ContactTracing:
             self._increment_behaviour.contact_tracing = self
 
     @property
-    def pcr_testing_behaviour(self) -> PCRTestingBehaviour:
+    def pcr_testing_behaviour(self) -> pcr_testing.PCRTestingBehaviour:
         return self._pcr_testing_behaviour
 
     @pcr_testing_behaviour.setter
-    def pcr_testing_behaviour(self, pcr_testing_behaviour: PCRTestingBehaviour):
+    def pcr_testing_behaviour(self, pcr_testing_behaviour: pcr_testing.PCRTestingBehaviour):
         self._pcr_testing_behaviour = pcr_testing_behaviour
         if self._pcr_testing_behaviour:
             self._pcr_testing_behaviour.contact_tracing = self
@@ -1060,84 +1061,3 @@ class IncrementContactTracingIndividualDailyTesting(IncrementContactTracingIndiv
                             house_from=node.household(),
                             days_since_contact_occurred=time - time_t,
                             time=time)
-
-class PCRTestingBehaviour:
-    def __init__(self, network: Network):
-        self._network = network
-        self._contact_tracing = None
-
-    @property
-    def contact_tracing(self) -> ContactTracing:
-        return self._contact_tracing
-
-    @contact_tracing.setter
-    def contact_tracing(self, contact_tracing: ContactTracing):
-        self._contact_tracing = contact_tracing
-
-    def receive_pcr_test_results(self, time: int):
-        pass
-
-    def pcr_test_node(self, node: Node, time: int):
-        pass
-
-
-class PCRTestingIndividualLevelTracing(PCRTestingBehaviour):
-
-    def receive_pcr_test_results(self, time: int):
-        """For nodes who would receive a PCR test result today, update
-        """
-        # self reporting infections
-        [
-            self.pcr_test_node(node, time)
-            for node in self._network.all_nodes()
-            if node.time_of_reporting + node.testing_delay == time
-            and not node.contact_traced
-            and not node.received_result
-        ]
-
-        # contact traced nodes
-        [
-            self.pcr_test_node(node, time)
-            for node in self._network.all_nodes()
-            if node.symptom_onset_time + node.testing_delay == time
-            and node.contact_traced
-            and not node.received_result
-        ]
-
-    def pcr_test_node(self, node: Node, time: int):
-        """Given a the time relative to a nodes symptom onset, will that node test positive
-
-        Args:
-            node (NodeContactModel): The node to be tested today
-            time (int): Current time in days
-        """
-        node.received_result = True
-        infectious_age_when_tested = time - node.testing_delay - node.time_infected
-        prob_positive_result = self.contact_tracing.prob_testing_positive_pcr_func(infectious_age_when_tested)
-        node.avenue_of_testing = TestType.pcr
-
-        if npr.binomial(1, prob_positive_result) == 1:
-            node.received_positive_test_result = True
-            node.positive_test_time = time
-        else:
-            node.received_positive_test_result = False
-
-
-class PCRTestingIndividualDailyTesting(PCRTestingIndividualLevelTracing):
-
-    def receive_pcr_test_results(self, time: int):
-        """
-        For nodes who would receive a PCR test result today, update
-        """
-
-        if self.contact_tracing.lfa_tested_nodes_book_pcr_on_symptom_onset:
-           super(PCRTestingIndividualDailyTesting, self).receive_pcr_test_results(time)
-        else:
-            [
-                self.pcr_test_node(node, time)
-                for node in self._network.all_nodes()
-                if node.time_of_reporting + node.testing_delay == time
-                   and not node.received_result
-                   and not node.contact_traced
-                   and not node.being_lateral_flow_tested
-            ]
