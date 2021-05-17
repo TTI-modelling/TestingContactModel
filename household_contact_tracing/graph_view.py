@@ -81,7 +81,7 @@ class GraphView(SimulationViewInterface):
 
         edge_colour_map = [self.edge_colours[network.graph.edges[edge]["edge_type"]].color
                            for edge in network.graph.edges()]
-        node_labels = {node.node_id: node.household_id for node in network.all_nodes()}
+        node_labels = {node.id: node.household.house_id for node in network.all_nodes()}
 
         plt.figure(figsize=(10, 10))
 

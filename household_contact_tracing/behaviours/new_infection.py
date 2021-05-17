@@ -99,7 +99,7 @@ class NewInfectionHouseholdLevel(NewInfection):
             node_is_isolated = False
 
         self._network.add_node(node_id=node_count, time=time, generation=generation,
-                               household=household_id, isolated=node_is_isolated,
+                               household_id=household_id, isolated=node_is_isolated,
                                will_uptake_isolation=isolation_uptake,
                                propensity_imperfect_isolation=self._infection.get_propensity_imperfect_isolation(),
                                asymptomatic=asymptomatic, contact_traced=household.contact_traced,
@@ -231,7 +231,7 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
             node_id=node_count,
             time=time,
             generation=generation,
-            household=household_id,
+            household_id=household_id,
             isolated=node_is_isolated,
             will_uptake_isolation=isolation_uptake,
             propensity_imperfect_isolation=self._infection.get_propensity_imperfect_isolation(),

@@ -46,9 +46,9 @@ class UpdateIsolationHouseholdLevel(UpdateIsolation):
 
         for node in self._network.all_nodes():
             if node.time_of_reporting + node.testing_delay == time:
-                if not node.household().isolated:
-                    if not node.household().contact_traced:
-                        node.household().isolate_household(time)
+                if not node.household.isolated:
+                    if not node.household.contact_traced:
+                        node.household.isolate_household(time)
 
 
 class UpdateIsolationIndividualLevelTracing(UpdateIsolation):
@@ -58,9 +58,9 @@ class UpdateIsolationIndividualLevelTracing(UpdateIsolation):
         for node in self._network.all_nodes():
             if node.time_of_reporting + node.testing_delay == time:
                 if node.received_positive_test_result:
-                    if not node.household().isolated:
-                        if not node.household().contact_traced:
-                            node.household().isolate_household(time)
+                    if not node.household.isolated:
+                        if not node.household.contact_traced:
+                            node.household.isolate_household(time)
 
 
 class UpdateIsolationIndividualTracingDailyTesting(UpdateIsolation):
@@ -71,5 +71,5 @@ class UpdateIsolationIndividualTracingDailyTesting(UpdateIsolation):
             if node.positive_test_time == time:
                 if node.avenue_of_testing == TestType.pcr:
                     if node.received_positive_test_result:
-                        if not node.household().applied_policy_for_household_contacts_of_a_positive_case:
-                            self.contact_tracing.apply_policy_for_household_contacts_of_a_positive_case(node.household(), time)
+                        if not node.household.applied_policy_for_household_contacts_of_a_positive_case:
+                            self.contact_tracing.apply_policy_for_household_contacts_of_a_positive_case(node.household, time)

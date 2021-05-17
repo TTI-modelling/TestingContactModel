@@ -46,22 +46,22 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
                 if node.contact_traced:
                     if not node.isolated:
                         if not node.completed_isolation:
-                            node.household().isolate_household(time)
+                            node.household.isolate_household(time)
 
         # Propagate the contact tracing for all households that self-reported and have had their
         # test results come back
         for node in self._network.all_nodes():
             if node.time_of_reporting + node.testing_delay == time:
-                if not node.household().propagated_contact_tracing:
-                    self.propagate_contact_tracing(node.household(), time)
+                if not node.household.propagated_contact_tracing:
+                    self.propagate_contact_tracing(node.household, time)
 
         # Propagate the contact tracing for all households that are isolated due to exposure,
         # have developed symptoms and had a test come back
         for node in self._network.all_nodes():
             if node.symptom_onset_time <= time:
-                if not node.household().propagated_contact_tracing:
-                    if node.household().isolated_time + node.testing_delay <= time:
-                        self.propagate_contact_tracing(node.household(), time)
+                if not node.household.propagated_contact_tracing:
+                    if node.household.isolated_time + node.testing_delay <= time:
+                        self.propagate_contact_tracing(node.household, time)
 
         # Update the contact tracing index of households
         # That is, re-evaluate how far away they are from a known infected case
@@ -186,7 +186,7 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
                 if node.received_positive_test_result:
                     if not node.isolated:
                         if not node.completed_isolation:
-                            node.household().isolate_household(time)
+                            node.household.isolate_household(time)
 
         for node in self._network.all_nodes():
             if node.received_result:
@@ -218,8 +218,8 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
 
                 # Then attempt to contact trace the household of the node that infected you
                 self.attempt_contact_trace_of_household(
-                    house_to=infected_by_node.household(),
-                    house_from=node.household(),
+                    house_to=infected_by_node.household,
+                    house_from=node.household,
                     time=time,
                     days_since_contact_occurred=time - node.time_infected
                     )
@@ -240,8 +240,8 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
                     not child_node.isolated:
 
                 self.attempt_contact_trace_of_household(
-                    house_to=child_node.household(),
-                    house_from=node.household(),
+                    house_to=child_node.household,
+                    house_from=node.household,
                     days_since_contact_occurred=time - time_t,
                     time=time
                     )
@@ -347,8 +347,8 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
 
                     # Then attempt to contact trace the household of the node that infected you
                     self.attempt_contact_trace_of_household(
-                        house_to=infected_by_node.household(),
-                        house_from=node.household(),
+                        house_to=infected_by_node.household,
+                        house_from=node.household,
                         days_since_contact_occurred=time - node.time_infected,
                         time=time)
 
@@ -361,8 +361,8 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
 
                         # Then attempt to contact trace the household of the node that infected you
                         self.attempt_contact_trace_of_household(
-                            house_to=infected_by_node.household(),
-                            house_from=node.household(),
+                            house_to=infected_by_node.household,
+                            house_from=node.household,
                             days_since_contact_occurred=time - node.time_infected,
                             time=time )
 
@@ -383,8 +383,8 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
                         not child_node.isolated:
 
                     self.attempt_contact_trace_of_household(
-                        house_to=child_node.household(),
-                        house_from=node.household(),
+                        house_to=child_node.household,
+                        house_from=node.household,
                         days_since_contact_occurred=time - time_t,
                         time=time)
 
@@ -397,7 +397,7 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
                             self.contact_tracing.number_of_days_prior_to_LFA_result_to_trace:
 
                         self.attempt_contact_trace_of_household(
-                            house_to=child_node.household(),
-                            house_from=node.household(),
+                            house_to=child_node.household,
+                            house_from=node.household,
                             days_since_contact_occurred=time - time_t,
                             time=time)

@@ -195,7 +195,7 @@ class Infection:
         """
 
         for node in self.network.active_infections:
-            household = node.household()
+            household = node.household
 
             # Extracting useful parameters from the node
             days_since_infected = time - node.time_infected
@@ -368,7 +368,7 @@ class Infection:
         # you do not spread the infection to a household that already has an infection
         house_id = self.network.house_count + 1
         node_count = self.network.node_count + 1
-        infecting_household = infecting_node.household()
+        infecting_household = infecting_node.household
 
         # We record which node caused this infection
         infecting_node.spread_to.append(node_count)
@@ -380,8 +380,8 @@ class Infection:
         self.new_household(time=time,
                            new_household_number=house_id,
                            generation=infecting_household.generation + 1,
-                           infected_by=infecting_node.household_id,
-                           infected_by_node=infecting_node.node_id)
+                           infected_by=infecting_node.household.house_id,
+                           infected_by_node=infecting_node.id)
 
         # add a new infection in the house just created
         self.new_infection(time=time,
@@ -392,8 +392,8 @@ class Infection:
                            infecting_node=infecting_node)
 
         # Add the edge to the graph and give it the default label
-        self._network.graph.add_edge(infecting_node.node_id, node_count)
-        self._network.graph.edges[infecting_node.node_id, node_count].update(
+        self._network.graph.add_edge(infecting_node.id, node_count)
+        self._network.graph.edges[infecting_node.id, node_count].update(
             {"edge_type": EdgeType.default})
 
     def new_within_household_infection(self, time, infecting_node: Node,
@@ -407,7 +407,7 @@ class Infection:
         # We record which node caused this infection
         infecting_node.spread_to.append(node_count)
 
-        infecting_node_household = infecting_node.household()
+        infecting_node_household = infecting_node.household
 
         # Adds the new infection to the network
         self.new_infection(time=time,
@@ -419,20 +419,20 @@ class Infection:
 
         # Add the edge to the graph and give it the default label if the house is not
         # traced/isolated
-        self.network.graph.add_edge(infecting_node.node_id, node_count)
+        self.network.graph.add_edge(infecting_node.id, node_count)
 
-        if self.network.node(node_count).household().isolated:
-            self.network.graph.edges[infecting_node.node_id, node_count].update(
+        if self.network.node(node_count).household.isolated:
+            self.network.graph.edges[infecting_node.id, node_count].update(
                 {"edge_type": EdgeType.within_house})
         else:
-            self.network.graph.edges[infecting_node.node_id, node_count].update(
+            self.network.graph.edges[infecting_node.id, node_count].update(
                 {"edge_type": EdgeType.default})
 
         # Decrease the number of susceptibles in that house by 1
         infecting_node_household.susceptibles -= 1
 
         # We record which edges are within this household for visualisation later on
-        infecting_node_household.within_house_edges.append((infecting_node.node_id, node_count))
+        infecting_node_household.within_house_edges.append((infecting_node.id, node_count))
 
     def will_take_up_lfa_testing(self) -> bool:
         return npr.binomial(1, self.node_prob_will_take_up_lfa_testing) == 1

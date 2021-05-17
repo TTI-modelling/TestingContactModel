@@ -80,8 +80,8 @@ class Network:
         """Get the id's of the two nodes that connect households."""
         for node1 in house1.nodes():
             for node2 in house2.nodes():
-                if self.graph.has_edge(node1.node_id, node2.node_id):
-                    return node1.node_id, node2.node_id
+                if self.graph.has_edge(node1.id, node2.id):
+                    return node1.id, node2.id
 
     def is_edge_app_traced(self, edge: Tuple[int, int]) -> bool:
         """Returns whether two nodes have the contract tracing app."""
@@ -89,15 +89,16 @@ class Network:
         node_2_app = self.node(edge[1]).has_contact_tracing_app
         return node_1_app and node_2_app
 
-    def add_node(self, node_id, time, generation, household, isolated, will_uptake_isolation,
+    def add_node(self, node_id, time, generation, household_id, isolated, will_uptake_isolation,
                  propensity_imperfect_isolation, asymptomatic, symptom_onset_time,
                  pseudo_symptom_onset_time, serial_interval, recovery_time, will_report_infection,
                  time_of_reporting, has_contact_tracing_app, contact_traced, testing_delay=0,
                  additional_attributes: Optional[dict] = None,
                  infecting_node: Optional[Node] = None, completed_isolation=False) -> Node:
         self.graph.add_node(node_id)
-        node = Node(nodes=self, houses=self.houses, node_id=node_id, time_infected=time,
-                    generation=generation, household=household, isolated=isolated,
+        new_node_household = self.houses.household(household_id)
+        node = Node(nodes=self, id=node_id, time_infected=time,
+                    generation=generation, household=new_node_household, isolated=isolated,
                     will_uptake_isolation=will_uptake_isolation,
                     propensity_imperfect_isolation=propensity_imperfect_isolation,
                     asymptomatic=asymptomatic, symptom_onset_time=symptom_onset_time,
@@ -131,9 +132,9 @@ class Network:
         """Given two Households, label any edges between the households with `new_edge_type`."""
         for node_1 in house_to.nodes():
             for node_2 in house_from.nodes():
-                if self.graph.has_edge(node_1.node_id, node_2.node_id):
-                    self.graph.edges[node_1.node_id,
-                                     node_2.node_id].update({"edge_type": new_edge_type})
+                if self.graph.has_edge(node_1.id, node_2.id):
+                    self.graph.edges[node_1.id,
+                                     node_2.id].update({"edge_type": new_edge_type})
 
     def label_edges_inside_household(self, household: Household, new_edge_type: EdgeType):
         """Label all edges within a household with `new_edge_type`."""
@@ -145,11 +146,10 @@ class Node:
     def __init__(
         self,
         nodes: Network,
-        houses: HouseholdCollection,
-        node_id: int,
+        id: int,
         time_infected: int,
         generation: int,
-        household: int,
+        household: Household,
         isolated: bool,
         will_uptake_isolation: bool,
         propensity_imperfect_isolation: bool,
@@ -171,11 +171,10 @@ class Node:
         additional_attributes: dict = None
     ):
         self.nodes = nodes
-        self.houses = houses
-        self.node_id = node_id
+        self.id = id
         self.time_infected = time_infected
         self.generation = generation
-        self.household_id = household
+        self.household = household
         self.isolated = isolated
         self.will_uptake_isolation = will_uptake_isolation
         self.propensity_imperfect_isolation = propensity_imperfect_isolation
@@ -196,7 +195,7 @@ class Node:
         self.time_propagated_tracing = None
         self.propagated_contact_tracing = False
         self.spread_to = []
-        self.infected_by_node_id = infecting_node.node_id if infecting_node else None
+        self.infected_by_node_id = infecting_node.id if infecting_node else None
         self.completed_isolation = completed_isolation
         self.completed_isolation_time = None
         self.completed_isolation_reason = None
@@ -226,9 +225,6 @@ class Node:
             if param_name in additional_attributes:
                 self.__dict__[param_name] = additional_attributes[param_name]
 
-    def household(self) -> Household:
-        return self.houses.household(self.household_id)
-
     def time_relative_to_symptom_onset(self, time: int) -> int:
         # asymptomatics do not have a symptom onset time
         # pseudo_symptom_onset time is a fake onset we give them
@@ -243,7 +239,7 @@ class Node:
     def locally_infected(self) -> bool:
         if not self.infected_by_node():
             return False
-        return self.infected_by_node().household_id == self.household_id
+        return self.infected_by_node().household == self.household
 
     # TODO: is this the method for deciding if you should isolate (as opposed to quarantine?)
     # MF - I didn't write this method, so I'm unsure
@@ -344,6 +340,12 @@ class Household:
         if additional_attributes:
             for key, value in additional_attributes.items():
                 setattr(self, key, value)
+
+    def __eq__(self, other: Household) -> bool:
+        if self.house_id == other.house_id:
+            return True
+        else:
+            return False
 
     def nodes(self) -> Iterator[Node]:
         return (self._network.node(n) for n in self.node_ids)
