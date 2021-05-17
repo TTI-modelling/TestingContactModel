@@ -36,16 +36,6 @@ class HouseholdLevelContactTracing(SimulationModel):
         # Parse parameters against schema to check they are valid
         validate_parameters(params, os.path.join(self.ROOT_DIR, "schemas/household_sim_contact_tracing.json"))
 
-        # Set default parameters
-        # isolation or quarantine parameters
-        self.quarantine_duration = 14
-        self.self_isolation_duration = 7
-
-        # Overwrites default params with new params if present
-        for param_name in self.__dict__:
-            if param_name in params:
-                self.__dict__[param_name] = params[param_name]
-
         # Set network
         self._network = Network()
 
