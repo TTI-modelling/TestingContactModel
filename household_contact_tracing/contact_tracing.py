@@ -8,8 +8,8 @@ from collections.abc import Callable
 from household_contact_tracing.network import Network, Household, EdgeType, Node, TestType, InfectionStatus
 
 if TYPE_CHECKING:
-    import household_contact_tracing.isolation as isolation
-    import household_contact_tracing.pcr_testing as pcr_testing
+    import household_contact_tracing.behaviours.isolation as isolation
+    import household_contact_tracing.behaviours.pcr_testing as pcr
 
 
 class ContactTracing:
@@ -18,7 +18,7 @@ class ContactTracing:
     def __init__(self, network: Network, contact_trace_household: ContactTraceHouseholdBehaviour,
                  increment: IncrementContactTracingBehaviour,
                  update_isolation: isolation.UpdateIsolationBehaviour,
-                 pcr_testing: Optional[pcr_testing.PCRTestingBehaviour], params: dict):
+                 pcr_testing: Optional[pcr.PCRTestingBehaviour], params: dict):
         self._network = network
 
         # Declare behaviours
@@ -92,11 +92,11 @@ class ContactTracing:
             self._increment_behaviour.contact_tracing = self
 
     @property
-    def pcr_testing_behaviour(self) -> pcr_testing.PCRTestingBehaviour:
+    def pcr_testing_behaviour(self) -> pcr.PCRTestingBehaviour:
         return self._pcr_testing_behaviour
 
     @pcr_testing_behaviour.setter
-    def pcr_testing_behaviour(self, pcr_testing_behaviour: pcr_testing.PCRTestingBehaviour):
+    def pcr_testing_behaviour(self, pcr_testing_behaviour: pcr.PCRTestingBehaviour):
         self._pcr_testing_behaviour = pcr_testing_behaviour
         if self._pcr_testing_behaviour:
             self._pcr_testing_behaviour.contact_tracing = self

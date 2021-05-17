@@ -13,8 +13,8 @@ from household_contact_tracing.contact_tracing import ContactTracing, \
     ContactTraceHouseholdLevel, ContactTraceHouseholdIndividualLevel, ContactTraceHouseholdIndividualTracingDailyTest, \
     IncrementContactTracingHouseholdLevel, IncrementContactTracingIndividualLevel, \
     IncrementContactTracingIndividualDailyTesting
-import household_contact_tracing.isolation as isolation
-import household_contact_tracing.pcr_testing as pcr_testing
+import household_contact_tracing.behaviours.isolation as isolation
+import household_contact_tracing.behaviours.pcr_testing as pcr_testing
 
 
 class HouseholdLevelContactTracing(SimulationModel):
