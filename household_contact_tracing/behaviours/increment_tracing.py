@@ -85,13 +85,11 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
         household.propagated_contact_tracing = True
         household.time_propagated_tracing = time
 
-        # Contact tracing attempted for the household that infected the household currently propagating the infection
-
-        infected_by = household.infected_by()
-
+        # Contact tracing attempted for the household that infected the household currently
+        # propagating the infection
         # If infected by = None, then it is the origin node, a special case
-        if infected_by and not infected_by.isolated:
-            self.attempt_contact_trace_of_household(infected_by, household, time)
+        if household.infected_by and not household.infected_by.isolated:
+            self.attempt_contact_trace_of_household(household.infected_by, household, time)
 
         # Contact tracing for the households infected by the household currently traced
         child_households_not_traced = [h for h in household.spread_to() if not h.isolated]
@@ -126,7 +124,7 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
             # If the new proposed time is quicker, change the route
             if proposed_time_until_contact_trace < house_to.time_until_contact_traced:
                 house_to.time_until_contact_traced = proposed_time_until_contact_trace
-                house_to.being_contact_traced_from = house_from.house_id
+                house_to.being_contact_traced_from = house_from
 
             # Edge labelling
             if app_traced:
@@ -278,7 +276,7 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
             # If the new proposed time is quicker, change the route
             if proposed_time_until_contact_trace < house_to.time_until_contact_traced:
                 house_to.time_until_contact_traced = proposed_time_until_contact_trace
-                house_to.being_contact_traced_from = house_from.house_id
+                house_to.being_contact_traced_from = house_from
 
             # Edge labelling
             if app_traced:

@@ -5,7 +5,7 @@ from typing import Optional
 import sys
 
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
-from household_contact_tracing.network import Node, EdgeType, Network
+from household_contact_tracing.network import Node, EdgeType, Network, Household
 import household_contact_tracing.behaviours.new_infection as new_infection
 
 
@@ -138,19 +138,12 @@ class Infection:
         if self._contact_rate_reduction_behaviour:
             self._contact_rate_reduction_behaviour.infection = self
 
-    def new_household(self,
-                      time,
-                      new_household_number,
-                      generation,
-                      infected_by,
-                      infected_by_node,
+    def new_household(self, time, new_household_number, generation,
+                      infected_by: Optional[Household], infected_by_node,
                       additional_attributes=None):
         if self.new_household_behaviour:
-            self.new_household_behaviour.new_household(time,
-                                                       new_household_number,
-                                                       generation,
-                                                       infected_by,
-                                                       infected_by_node,
+            self.new_household_behaviour.new_household(time, new_household_number, generation,
+                                                       infected_by, infected_by_node,
                                                        additional_attributes)
 
     def new_infection(self,
@@ -380,7 +373,7 @@ class Infection:
         self.new_household(time=time,
                            new_household_number=house_id,
                            generation=infecting_household.generation + 1,
-                           infected_by=infecting_node.household.house_id,
+                           infected_by=infecting_node.household,
                            infected_by_node=infecting_node.id)
 
         # add a new infection in the house just created
@@ -492,7 +485,7 @@ class NewHouseholdBehaviour:
                       time: int,
                       new_household_number: int,
                       generation: int,
-                      infected_by: int,
+                      infected_by: Optional[Household],
                       infected_by_node: int,
                       additional_attributes: Optional[dict] = None):
         pass
@@ -500,12 +493,8 @@ class NewHouseholdBehaviour:
 
 class NewHouseholdLevel(NewHouseholdBehaviour):
 
-    def new_household(self,
-                      time: int,
-                      new_household_number: int,
-                      generation: int,
-                      infected_by: int,
-                      infected_by_node: int,
+    def new_household(self, time: int, new_household_number: int, generation: int,
+                      infected_by: Optional[Household], infected_by_node: int,
                       additional_attributes: Optional[dict] = None):
         """Adds a new household to the household dictionary
 
@@ -531,12 +520,8 @@ class NewHouseholdLevel(NewHouseholdBehaviour):
 
 class NewHouseholdIndividualTracingDailyTesting(NewHouseholdLevel):
 
-    def new_household(self,
-                      time: int,
-                      new_household_number: int,
-                      generation: int,
-                      infected_by: int,
-                      infected_by_node: int,
+    def new_household(self, time: int, new_household_number: int, generation: int,
+                      infected_by: Optional[Household], infected_by_node: int,
                       additional_attributes: Optional[dict] = None):
 
         super().new_household(

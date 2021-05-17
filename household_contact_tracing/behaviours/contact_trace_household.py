@@ -36,9 +36,9 @@ class ContactTraceHousehold(ABC):
         if not traced_node.isolated and traced_node.will_uptake_isolation:
             traced_node.isolated = True
 
-    def find_traced_node(self, household):
+    def find_traced_node(self, household: Household):
         """Work out which was the traced node."""
-        tracing_household = self._network.houses.household(household.being_contact_traced_from)
+        tracing_household = household.being_contact_traced_from
         traced_node_id = self._network.get_edge_between_household(household, tracing_household)[0]
         return self._network.node(traced_node_id)
 
