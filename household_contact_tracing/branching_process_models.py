@@ -10,19 +10,19 @@ from household_contact_tracing.infection import Infection, \
     NewInfectionHouseholdLevel, NewInfectionIndividualTracingDailyTesting, \
     ContactRateReductionHouseholdLevelContactTracing, ContactRateReductionIndividualTracingDaily
 from household_contact_tracing.contact_tracing import ContactTracing, \
-    ContactTraceHouseholdLevel, ContactTraceHouseholdIndividualLevel, ContactTraceHouseholdIndividualTracingDailyTest, \
     IncrementContactTracingHouseholdLevel, IncrementContactTracingIndividualLevel, \
     IncrementContactTracingIndividualDailyTesting
 import household_contact_tracing.behaviours.isolation as isolation
 import household_contact_tracing.behaviours.pcr_testing as pcr_testing
+import household_contact_tracing.behaviours.contact_trace_household as tracing
 
 
 class HouseholdLevelContactTracing(SimulationModel):
 
     def __init__(self, params: dict):
 
-        """Initializes a household branching process epidemic. Various contact tracing strategies can be utilized
-        in an attempt to control the epidemic.
+        """Initializes a household branching process epidemic. Various contact tracing strategies
+        can be utilized in an attempt to control the epidemic.
 
         Args:
             params (dict): A dictionary of parameters that are used in the model.
@@ -32,7 +32,8 @@ class HouseholdLevelContactTracing(SimulationModel):
         SimulationModel.__init__(self)
 
         # Parse parameters against schema to check they are valid
-        validate_parameters(params, os.path.join(self.ROOT_DIR, "schemas/household_sim_contact_tracing.json"))
+        validate_parameters(params, os.path.join(self.ROOT_DIR,
+                                                 "schemas/household_sim_contact_tracing.json"))
 
         # Set network
         self._network = Network()
@@ -76,7 +77,7 @@ class HouseholdLevelContactTracing(SimulationModel):
 
     def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
-                              ContactTraceHouseholdLevel(network),
+                              tracing.ContactTraceHouseholdLevel(network),
                               IncrementContactTracingHouseholdLevel(network),
                               isolation.UpdateIsolationHouseholdLevel(network),
                               None,
@@ -172,7 +173,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
 
     def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
-                              ContactTraceHouseholdIndividualLevel(network),
+                              tracing.ContactTraceHouseholdIndividualLevel(network),
                               IncrementContactTracingIndividualLevel(self.network),
                               isolation.UpdateIsolationIndividualLevelTracing(network),
                               pcr_testing.PCRTestingIndividualLevelTracing(self.network),
@@ -195,7 +196,7 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
 
     def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
-                              ContactTraceHouseholdIndividualTracingDailyTest(self.network),
+                              tracing.ContactTraceHouseholdIndividualTracingDailyTest(self.network),
                               IncrementContactTracingIndividualDailyTesting(self.network),
                               isolation.UpdateIsolationIndividualTracingDailyTesting(self.network),
                               pcr_testing.PCRTestingIndividualDailyTesting(self.network),
