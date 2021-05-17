@@ -15,8 +15,8 @@ from household_contact_tracing.contact_tracing import ContactTracing, \
     ContactTraceHouseholdLevel, ContactTraceHouseholdIndividualLevel, ContactTraceHouseholdIndividualTracingDailyTest, \
     IncrementContactTracingHouseholdLevel, IncrementContactTracingIndividualLevel, \
     IncrementContactTracingIndividualDailyTesting, \
-    UpdateIsolationHouseholdLevel, UpdateIsolationIndividualLevelTracing, UpdateIsolationIndividualTracingDailyTesting, \
     PCRTestingIndividualLevelTracing, PCRTestingIndividualDailyTesting
+import household_contact_tracing.isolation as isolation
 
 
 class HouseholdLevelContactTracing(SimulationModel):
@@ -80,7 +80,7 @@ class HouseholdLevelContactTracing(SimulationModel):
         return ContactTracing(network,
                               ContactTraceHouseholdLevel(network),
                               IncrementContactTracingHouseholdLevel(network),
-                              UpdateIsolationHouseholdLevel(network),
+                              isolation.UpdateIsolationHouseholdLevel(network),
                               None,
                               params)
 
@@ -176,7 +176,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
         return ContactTracing(network,
                               ContactTraceHouseholdIndividualLevel(network),
                               IncrementContactTracingIndividualLevel(self.network),
-                              UpdateIsolationIndividualLevelTracing(network),
+                              isolation.UpdateIsolationIndividualLevelTracing(network),
                               PCRTestingIndividualLevelTracing(self.network),
                               params)
 
@@ -199,7 +199,7 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
         return ContactTracing(network,
                               ContactTraceHouseholdIndividualTracingDailyTest(self.network),
                               IncrementContactTracingIndividualDailyTesting(self.network),
-                              UpdateIsolationIndividualTracingDailyTesting(self.network),
+                              isolation.UpdateIsolationIndividualTracingDailyTesting(self.network),
                               PCRTestingIndividualDailyTesting(self.network),
                               params)
 

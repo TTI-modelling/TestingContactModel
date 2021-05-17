@@ -1,15 +1,22 @@
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy.random as npr
 from collections.abc import Callable
 
 from household_contact_tracing.network import Network, Household, EdgeType, Node, TestType, InfectionStatus
+
+if TYPE_CHECKING:
+    import household_contact_tracing.isolation as isolation
 
 
 class ContactTracing:
     """ 'Context' class for contact tracing processes/strategies (Strategy pattern) """
 
     def __init__(self, network: Network, contact_trace_household: ContactTraceHouseholdBehaviour,
-                 increment: IncrementContactTracingBehaviour, update_isolation: UpdateIsolationBehaviour,
+                 increment: IncrementContactTracingBehaviour,
+                 update_isolation: isolation.UpdateIsolationBehaviour,
                  pcr_testing: PCRTestingBehaviour, params: dict):
         self._network = network
 
@@ -54,11 +61,11 @@ class ContactTracing:
         return self._network
 
     @property
-    def update_isolation_behaviour(self) -> UpdateIsolationBehaviour:
+    def update_isolation_behaviour(self) -> isolation.UpdateIsolationBehaviour:
         return self._update_isolation_behaviour
 
     @update_isolation_behaviour.setter
-    def update_isolation_behaviour(self, update_isolation_behaviour: UpdateIsolationBehaviour):
+    def update_isolation_behaviour(self, update_isolation_behaviour: isolation.UpdateIsolationBehaviour):
         self._update_isolation_behaviour = update_isolation_behaviour
         if self._update_isolation_behaviour:
             self._update_isolation_behaviour.contact_tracing = self
@@ -496,90 +503,7 @@ class ContactTracing:
         #                 node.completed_lateral_flow_testing_time = self.time
 
 
-#Todo - Peter: for Network?  All UpdateIsolation Behaviours below and sub-classes???
-class UpdateIsolationBehaviour:
-    def __init__(self, network: Network):
-        self._network = network
-        self.contact_tracing = None
-
-    @property
-    def contact_tracing(self) -> ContactTracing:
-        return self._contact_tracing
-
-    @contact_tracing.setter
-    def contact_tracing(self, contact_tracing: ContactTracing):
-        self._contact_tracing = contact_tracing
-
-    def update_isolation(self, time):
-        pass
-
-    def update_all_households_contact_traced(self, time):
-        # Update the contact traced status for all households that have had the contact tracing process get there
-        [
-            self.contact_tracing.contact_trace_household(household, time)
-            for household in self._network.houses.all_households()
-            if household.time_until_contact_traced <= time
-               and not household.contact_traced
-        ]
-
-
-class UpdateIsolationHouseholdLevel(UpdateIsolationBehaviour):
-
-    def update_isolation(self, time):
-        # Update the contact traced status for all households that have had the contact tracing process get there
-        self.update_all_households_contact_traced(time)
-
-        # Isolate all non isolated households where the infection has been reported (excludes those who will not
-        # take up isolation if prob <1)
-        [
-            self.contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
-            for node in self._network.all_nodes()
-            if node.time_of_reporting + node.testing_delay == time
-            and not node.household().isolated
-            and not node.household().contact_traced
-        ]
-
-
-class UpdateIsolationIndividualLevelTracing(UpdateIsolationBehaviour):
-    def update_isolation(self, time):
-        # Update the contact traced status for all households that have had the contact
-        # tracing process get there
-        self.update_all_households_contact_traced(time)
-
-        # Isolate all non isolated households where the infection has been reported
-        # (excludes those who will not take up isolation if prob <1)
-        [
-            self._contact_tracing.contact_trace_household_behaviour.isolate_household(node.household(), time)
-            for node in self._network.all_nodes()
-            if node.time_of_reporting + node.testing_delay == time
-               and node.received_positive_test_result
-               and not node.household().isolated
-               and not node.household().contact_traced
-        ]
-
-
-class UpdateIsolationIndividualTracingDailyTesting(UpdateIsolationBehaviour):
-    def update_isolation(self, time):
-        # Update the contact traced status for all households that have had the contact tracing process get there
-        self.update_all_households_contact_traced(time)
-
-        # Isolate all non isolated households where the infection has been reported (excludes those who will not
-        # take up isolation if prob <1)
-        new_pcr_test_results = [
-            node for node in self._network.all_nodes()
-            if node.positive_test_time == time
-            and node.avenue_of_testing == TestType.pcr
-            and node.received_positive_test_result
-        ]
-
-        [
-            self.contact_tracing.apply_policy_for_household_contacts_of_a_positive_case(node.household(), time)
-            for node in new_pcr_test_results
-            if not node.household().applied_policy_for_household_contacts_of_a_positive_case
-        ]
-
-
-#Todo - Peter: for Network?  All ContactTraceHousehold Behaviours below and sub-classes???
+# Todo - Peter: for Network?  All ContactTraceHousehold Behaviours below and sub-classes???
 class ContactTraceHouseholdBehaviour:
 
     def __init__(self, network: Network):
