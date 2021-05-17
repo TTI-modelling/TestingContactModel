@@ -140,11 +140,13 @@ class Infection:
 
     def new_household(self, time, new_household_number, generation,
                       infected_by: Optional[Household], infected_by_node,
-                      additional_attributes=None):
+                      additional_attributes=None) -> Household:
         if self.new_household_behaviour:
-            self.new_household_behaviour.new_household(time, new_household_number, generation,
-                                                       infected_by, infected_by_node,
-                                                       additional_attributes)
+            new_household = self.new_household_behaviour.new_household(time, new_household_number,
+                                                                       generation, infected_by,
+                                                                       infected_by_node,
+                                                                       additional_attributes)
+            return new_household
 
     def new_infection(self,
                       time: int,
@@ -363,18 +365,14 @@ class Infection:
         node_count = self.network.node_count + 1
         infecting_household = infecting_node.household
 
-        # We record which node caused this infection
-        infecting_node.spread_to.append(node_count)
+        # Create a new household, since the infection was outside the household
+        new_household = self.new_household(time=time, new_household_number=house_id,
+                                           generation=infecting_household.generation + 1,
+                                           infected_by=infecting_node.household,
+                                           infected_by_node=infecting_node.id)
 
         # We record which house spread to which other house
-        infecting_household.spread_to_ids.append(house_id)
-
-        # Create a new household, since the infection was outside the household
-        self.new_household(time=time,
-                           new_household_number=house_id,
-                           generation=infecting_household.generation + 1,
-                           infected_by=infecting_node.household,
-                           infected_by_node=infecting_node.id)
+        infecting_household.spread_to.append(new_household)
 
         # add a new infection in the house just created
         self.new_infection(time=time,
@@ -396,9 +394,6 @@ class Infection:
         The new node will be a member of the same household as the infecting node.
         """
         node_count = self._network.node_count + 1
-
-        # We record which node caused this infection
-        infecting_node.spread_to.append(node_count)
 
         infecting_node_household = infecting_node.household
 
@@ -481,13 +476,9 @@ class NewHouseholdBehaviour:
     def infection(self, infection: Infection):
         self._infection = infection
 
-    def new_household(self,
-                      time: int,
-                      new_household_number: int,
-                      generation: int,
-                      infected_by: Optional[Household],
-                      infected_by_node: int,
-                      additional_attributes: Optional[dict] = None):
+    def new_household(self, time: int, new_household_number: int, generation: int,
+                      infected_by: Optional[Household], infected_by_node: int,
+                      additional_attributes: Optional[dict] = None) -> Household:
         pass
 
 
@@ -495,7 +486,7 @@ class NewHouseholdLevel(NewHouseholdBehaviour):
 
     def new_household(self, time: int, new_household_number: int, generation: int,
                       infected_by: Optional[Household], infected_by_node: int,
-                      additional_attributes: Optional[dict] = None):
+                      additional_attributes: Optional[dict] = None) -> Household:
         """Adds a new household to the household dictionary
 
         Arguments:
@@ -506,7 +497,7 @@ class NewHouseholdLevel(NewHouseholdBehaviour):
         """
         house_size = self._infection.size_of_household()
 
-        self._network.houses.add_household(
+        new_household = self._network.houses.add_household(
             house_id=new_household_number,
             house_size=house_size,
             time_infected=time,
@@ -516,15 +507,16 @@ class NewHouseholdLevel(NewHouseholdBehaviour):
             propensity_trace_app=self.infection.hh_propensity_use_trace_app(),
             additional_attributes=additional_attributes
         )
+        return new_household
 
 
 class NewHouseholdIndividualTracingDailyTesting(NewHouseholdLevel):
 
     def new_household(self, time: int, new_household_number: int, generation: int,
                       infected_by: Optional[Household], infected_by_node: int,
-                      additional_attributes: Optional[dict] = None):
+                      additional_attributes: Optional[dict] = None) -> Household:
 
-        super().new_household(
+        new_household = super().new_household(
             time,
             new_household_number=new_household_number,
             generation=generation,
@@ -536,6 +528,7 @@ class NewHouseholdIndividualTracingDailyTesting(NewHouseholdLevel):
                 'applied_policy_for_household_contacts_of_a_positive_case': False
             }
         )
+        return new_household
 
 
 class ContactRateReductionBehaviour:

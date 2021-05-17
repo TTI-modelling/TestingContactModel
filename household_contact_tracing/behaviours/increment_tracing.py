@@ -92,7 +92,7 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
             self.attempt_contact_trace_of_household(household.infected_by, household, time)
 
         # Contact tracing for the households infected by the household currently traced
-        child_households_not_traced = [h for h in household.spread_to() if not h.isolated]
+        child_households_not_traced = [h for h in household.spread_to if not h.isolated]
         for child in child_households_not_traced:
             self.attempt_contact_trace_of_household(child, household, time)
 
@@ -110,7 +110,7 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
         # is the trace successful
         if np.random.binomial(1, success_prob) == 1:
             # Update the list of traced households from this one
-            house_from.contact_traced_household_ids.append(house_to.house_id)
+            house_from.contact_traced_households.append(house_to)
 
             # Assign the household a contact tracing index, 1 more than its parent tracer
             house_to.contact_tracing_index = house_from.contact_tracing_index + 1
@@ -152,7 +152,7 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
                     if critical_time + node.testing_delay <= time:
                         household.contact_tracing_index = 0
 
-                        for index_1_hh in household.contact_traced_households():
+                        for index_1_hh in household.contact_traced_households:
                             if index_1_hh.contact_tracing_index == 2:
                                 index_1_hh.contact_tracing_index = 1
 
@@ -263,7 +263,7 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
         # is the trace successful
         if (np.random.binomial(1, success_prob) == 1):
             # Update the list of traced households from this one
-            house_from.contact_traced_household_ids.append(house_to.house_id)
+            house_from.contact_traced_households.append(house_to)
 
             # Assign the household a contact tracing index, 1 more than its parent tracer
             house_to.contact_tracing_index = house_from.contact_tracing_index + 1
