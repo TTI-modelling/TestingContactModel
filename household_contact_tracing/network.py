@@ -130,15 +130,15 @@ class Network:
         return [self.node(n) for n in self.graph if not self.node(n).asymptomatic]
 
     def label_edges_between_houses(self, house_to: Household, house_from: Household,
-                                   new_edge_type: str):
+                                   new_edge_type: EdgeType):
         """Given two Households, label any edges between the households with `new_edge_type`."""
         for node_1 in house_to.nodes():
             for node_2 in house_from.nodes():
                 if self.graph.has_edge(node_1.node_id, node_2.node_id):
-                    self.graph.edges[node_1.node_id, node_2.node_id].update({"edge_type":
-                                                                                 new_edge_type})
+                    self.graph.edges[node_1.node_id,
+                                     node_2.node_id].update({"edge_type": new_edge_type})
 
-    def label_edges_inside_household(self, household: Household, new_edge_type: str):
+    def label_edges_inside_household(self, household: Household, new_edge_type: EdgeType):
         """Label all edges within a household with `new_edge_type`."""
         for edge in household.within_house_edges:
             self.graph.edges[edge[0], edge[1]].update({"edge_type": new_edge_type})
@@ -328,38 +328,38 @@ class Node:
                     return InfectionStatus.self_recognised_infection
         return InfectionStatus.unknown_infection
 
-    def node_type(self) -> str:
+    def node_type(self) -> NodeType:
         """Returns a node type, given the current status of the node.
         """
         if self.being_lateral_flow_tested:
             if self.isolated:
-                return NodeType.being_lateral_flow_tested_isolated.name
+                return NodeType.being_lateral_flow_tested_isolated
             else:
-                return NodeType.being_lateral_flow_tested_not_isolated.name
+                return NodeType.being_lateral_flow_tested_not_isolated
         elif self.isolated:
-            return NodeType.isolated.name
+            return NodeType.isolated
         elif self.had_contacts_traced:
-            return NodeType.had_contacts_traced.name
+            return NodeType.had_contacts_traced
         elif not self.asymptomatic:
             if self.will_report_infection:
-                return NodeType.symptomatic_will_report_infection.name
+                return NodeType.symptomatic_will_report_infection
             else:
-                return NodeType.symptomatic_will_not_report_infection.name
+                return NodeType.symptomatic_will_not_report_infection
         elif self.received_positive_test_result:
             if self.avenue_of_testing == TestType.pcr:
-                return NodeType.received_pos_test_pcr.name
+                return NodeType.received_pos_test_pcr
             else:
-                return NodeType.received_pos_test_lfa.name
+                return NodeType.received_pos_test_lfa
         elif self.received_result and self.avenue_of_testing == TestType.pcr:
-            return NodeType.received_neg_test_pcr.name
+            return NodeType.received_neg_test_pcr
         elif self.taken_confirmatory_PCR_test:
             if self.time >= self.confirmatory_PCR_test_result_time:
                 if self.confirmatory_PCR_result_was_positive:
-                    return NodeType.confirmatory_pos_pcr_test.name
+                    return NodeType.confirmatory_pos_pcr_test
                 else:
-                    return NodeType.confirmatory_neg_pcr_test.name
+                    return NodeType.confirmatory_neg_pcr_test
         else:
-            return NodeType.default.name
+            return NodeType.default
 
 
 class Household:
@@ -489,7 +489,7 @@ class HouseholdCollection:
         self.house_dict[house_id] = new_household
         return new_household
 
-    def household(self, house_id) -> Household:
+    def household(self, house_id: int) -> Household:
         return self.house_dict[house_id]
 
     @property

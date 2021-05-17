@@ -642,13 +642,13 @@ class IncrementContactTracingHouseholdLevel(IncrementContactTracingBehaviour):
             # Edge labelling
             if app_traced:
                 self._network.label_edges_between_houses(house_to, house_from,
-                                                         EdgeType.app_traced.name)
+                                                         EdgeType.app_traced)
             else:
                 self._network.label_edges_between_houses(house_to, house_from,
-                                                         EdgeType.between_house.name)
+                                                         EdgeType.between_house)
         else:
             self._network.label_edges_between_houses(house_to, house_from,
-                                                     EdgeType.failed_contact_tracing.name)
+                                                     EdgeType.failed_contact_tracing)
 
     # Todo - Peter: for Network?
     def update_contact_tracing_index(self, time):
@@ -795,13 +795,13 @@ class IncrementContactTracingIndividualLevel(IncrementContactTracingHouseholdLev
             # Edge labelling
             if app_traced:
                 self._network.label_edges_between_houses(house_to, house_from,
-                                                         EdgeType.app_traced.name)
+                                                         EdgeType.app_traced)
             else:
                 self._network.label_edges_between_houses(house_to, house_from,
-                                                         EdgeType.between_house.name)
+                                                         EdgeType.between_house)
         else:
             self._network.label_edges_between_houses(house_to, house_from,
-                                                     EdgeType.failed_contact_tracing.name)
+                                                     EdgeType.failed_contact_tracing)
 
 
 class IncrementContactTracingIndividualDailyTesting(IncrementContactTracingIndividualLevel):

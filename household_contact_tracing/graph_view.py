@@ -7,7 +7,7 @@ from matplotlib.lines import Line2D
 import networkx as nx
 
 from household_contact_tracing.simulation_view_interface import SimulationViewInterface
-from household_contact_tracing.network import Network
+from household_contact_tracing.network import Network, EdgeType, NodeType
 from household_contact_tracing.simulation_model_interface import SimulationModelInterface
 
 
@@ -26,25 +26,25 @@ class NodeColour:
 class GraphView(SimulationViewInterface):
     """Graph View"""
 
-    edge_colours = {'default': EdgeColour("black", "Transmission, yet to be traced"),
-                    'within_house': EdgeColour("blue", "Within household contact tracing"),
-                    'between_house': EdgeColour("magenta", "Between household contact tracing"),
-                    'failed_contact_tracing': EdgeColour("red", "Failed contact trace"),
-                    'app_traced': EdgeColour("green", "App traced edge")
+    edge_colours = {EdgeType.default: EdgeColour("black", "Transmission, yet to be traced"),
+                    EdgeType.within_house: EdgeColour("blue", "Within household contact tracing"),
+                    EdgeType.between_house: EdgeColour("magenta", "Between household contact tracing"),
+                    EdgeType.failed_contact_tracing: EdgeColour("red", "Failed contact trace"),
+                    EdgeType.app_traced: EdgeColour("green", "App traced edge")
                     }
 
-    node_colours = {'default': NodeColour("lightgrey", "Default"),
-                    'isolated': NodeColour('yellow', "Isolating"),
-                    'had_contacts_traced': NodeColour("orange", "Had contacts traced"),
-                    'symptomatic_will_report_infection': NodeColour('lime', "Symptomatic, will report"),
-                    'symptomatic_will_not_report_infection': NodeColour('green', "Symptomatic, will not report"),
-                    'received_pos_test_pcr': NodeColour('grey', "Received positive PCR"),
-                    'received_neg_test_pcr': NodeColour('deeppink', "Received negative PCR"),
-                    'confirmatory_pos_pcr_test': NodeColour('turquoise', "Positive confirmatory PCR"),
-                    'confirmatory_neg_pcr_test': NodeColour('tomato', "Negative confirmatory PCR"),
-                    'received_pos_test_lfa': NodeColour('pink', "Positive LFA"),
-                    'being_lateral_flow_tested_isolated': NodeColour('blue', "Being LFT and isolating"),
-                    'being_lateral_flow_tested_not_isolated': NodeColour('orange', "Being LFT and not isolating")
+    node_colours = {NodeType.default: NodeColour("lightgrey", "Default"),
+                    NodeType.isolated: NodeColour('yellow', "Isolating"),
+                    NodeType.had_contacts_traced: NodeColour("orange", "Had contacts traced"),
+                    NodeType.symptomatic_will_report_infection: NodeColour('lime', "Symptomatic, will report"),
+                    NodeType.symptomatic_will_not_report_infection: NodeColour('green', "Symptomatic, will not report"),
+                    NodeType.received_pos_test_pcr: NodeColour('grey', "Received positive PCR"),
+                    NodeType.received_neg_test_pcr: NodeColour('deeppink', "Received negative PCR"),
+                    NodeType.confirmatory_pos_pcr_test: NodeColour('turquoise', "Positive confirmatory PCR"),
+                    NodeType.confirmatory_neg_pcr_test: NodeColour('tomato', "Negative confirmatory PCR"),
+                    NodeType.received_pos_test_lfa: NodeColour('pink', "Positive LFA"),
+                    NodeType.being_lateral_flow_tested_isolated: NodeColour('blue', "Being LFT and isolating"),
+                    NodeType.being_lateral_flow_tested_not_isolated: NodeColour('orange', "Being LFT and not isolating")
                     }
 
     def __init__(self, controller, model: SimulationModelInterface):

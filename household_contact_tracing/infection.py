@@ -394,7 +394,7 @@ class Infection:
         # Add the edge to the graph and give it the default label
         self._network.graph.add_edge(infecting_node.node_id, node_count)
         self._network.graph.edges[infecting_node.node_id, node_count].update(
-            {"edge_type": EdgeType.default.name})
+            {"edge_type": EdgeType.default})
 
     def new_within_household_infection(self, time, infecting_node: Node,
                                        serial_interval: Optional[int]):
@@ -423,10 +423,10 @@ class Infection:
 
         if self.network.node(node_count).household().isolated:
             self.network.graph.edges[infecting_node.node_id, node_count].update(
-                {"edge_type": EdgeType.within_house.name})
+                {"edge_type": EdgeType.within_house})
         else:
             self.network.graph.edges[infecting_node.node_id, node_count].update(
-                {"edge_type": EdgeType.default.name})
+                {"edge_type": EdgeType.default})
 
         # Decrease the number of susceptibles in that house by 1
         infecting_node_household.susceptibles -= 1

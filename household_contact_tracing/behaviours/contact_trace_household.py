@@ -25,7 +25,7 @@ class ContactTraceHouseholdBehaviour(ABC):
             node.contact_traced = True
 
         # Colour the edges within household
-        self._network.label_edges_inside_household(household, EdgeType.within_house.name)
+        self._network.label_edges_inside_household(household, EdgeType.within_house)
 
     def quarantine_traced_node(self, household):
         traced_node = self.find_traced_node(household)
