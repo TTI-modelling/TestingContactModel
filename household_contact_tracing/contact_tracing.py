@@ -190,7 +190,7 @@ class ContactTracing:
         household.being_lateral_flow_tested = True
         household.being_lateral_flow_tested_start_time = time
 
-        for node in household.nodes():
+        for node in household.nodes:
             if node.node_will_take_up_lfa_testing and not node.received_positive_test_result and \
                     not node.being_lateral_flow_tested:
                 node.being_lateral_flow_tested = True
@@ -210,7 +210,7 @@ class ContactTracing:
         household.isolated_time = True
         household.contact_traced = True
 
-        for node in household.nodes():
+        for node in household.nodes:
             if node.node_will_take_up_lfa_testing and not node.received_positive_test_result and \
                     not node.being_lateral_flow_tested:
                 node.being_lateral_flow_tested = True
@@ -255,7 +255,7 @@ class ContactTracing:
         """
         for node in self.network.all_nodes():
             if node.confirmatory_PCR_test_result_time == time:
-                self.apply_policy_for_household_contacts_of_a_positive_case(node.household(), time)
+                self.apply_policy_for_household_contacts_of_a_positive_case(node.household, time)
 
     def get_positive_lateral_flow_nodes(self, time: int):
         """Performs a days worth of lateral flow testing.
@@ -289,9 +289,9 @@ class ContactTracing:
             node.positive_test_time = time
             node.being_lateral_flow_tested = False
 
-            if not node.household().applied_policy_for_household_contacts_of_a_positive_case and \
+            if not node.household.applied_policy_for_household_contacts_of_a_positive_case and \
                     not self.LFA_testing_requires_confirmatory_PCR:
-                self.apply_policy_for_household_contacts_of_a_positive_case(node.household(), time)
+                self.apply_policy_for_household_contacts_of_a_positive_case(node.household, time)
 
     def take_confirmatory_pcr_test(self, node: Node, time: int):
         """Given a the time relative to a nodes symptom onset, will that node test positive
@@ -369,11 +369,11 @@ class ContactTracing:
             # (if they do not self-report they will not isolate; if contact traced, they will be quarantining for the
             # quarantine duration)
             # if node.household_id == node.infected_by_node().household_id:
-            if node.infected_by_node():
+            if node.infecting_node:
                 if (node.infection_status(time) == InfectionStatus.unknown_infection) & node.isolated:
                     if node.locally_infected():
 
-                        if time >= (node.household().earliest_recognised_symptom_onset(model_time=time)
+                        if time >= (node.household.earliest_recognised_symptom_onset(model_time=time)
                                     + self.quarantine_duration):
                             node.isolated = False
                             node.completed_isolation = True
