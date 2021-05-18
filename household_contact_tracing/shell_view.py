@@ -1,7 +1,7 @@
-from household_contact_tracing.simulation_view_interface import SimulationViewInterface
+from household_contact_tracing.simulation_view import SimulationView
 
 
-class ShellView(SimulationViewInterface):
+class ShellView(SimulationView):
     """
         Shell View (for now I just print out everything that I'm registered to observe)
     """
@@ -17,6 +17,7 @@ class ShellView(SimulationViewInterface):
         model.register_observer_param_change(self)
         model.register_observer_state_change(self)
         model.register_observer_step_increment(self)
+        model.register_observer_simulation_stopped(self)
 
     def model_param_change(self, subject):
         """ Respond to parameter change(s) """
@@ -33,3 +34,6 @@ class ShellView(SimulationViewInterface):
     def model_step_increment(self, subject):
         """ Respond to increment in simulation """
         print('shell view observed that Model has been incremented by one step')
+
+    def model_simulation_stopped(self, subject):
+        print('shell view observed that simulation has stopped running')
