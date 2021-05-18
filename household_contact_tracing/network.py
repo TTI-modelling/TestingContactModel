@@ -126,6 +126,20 @@ class Network:
     def symptomatic_nodes(self) -> Iterator[Node]:
         return [self.node(n) for n in self.graph if not self.node(n).asymptomatic]
 
+    def label_edges_between_houses(self, house_to: Household, house_from: Household,
+                                   new_edge_type: EdgeType):
+        """Given two Households, label any edges between the households with `new_edge_type`."""
+        for node_1 in house_to.nodes():
+            for node_2 in house_from.nodes():
+                if self.graph.has_edge(node_1.node_id, node_2.node_id):
+                    self.graph.edges[node_1.node_id,
+                                     node_2.node_id].update({"edge_type": new_edge_type})
+
+    def label_edges_inside_household(self, household: Household, new_edge_type: EdgeType):
+        """Label all edges within a household with `new_edge_type`."""
+        for edge in household.within_house_edges:
+            self.graph.edges[edge[0], edge[1]].update({"edge_type": new_edge_type})
+
 
 class Node:
     def __init__(
@@ -258,38 +272,38 @@ class Node:
                     return InfectionStatus.self_recognised_infection
         return InfectionStatus.unknown_infection
 
-    def node_type(self) -> str:
+    def node_type(self) -> NodeType:
         """Returns a node type, given the current status of the node.
         """
         if self.being_lateral_flow_tested:
             if self.isolated:
-                return NodeType.being_lateral_flow_tested_isolated.name
+                return NodeType.being_lateral_flow_tested_isolated
             else:
-                return NodeType.being_lateral_flow_tested_not_isolated.name
+                return NodeType.being_lateral_flow_tested_not_isolated
         elif self.isolated:
-            return NodeType.isolated.name
+            return NodeType.isolated
         elif self.had_contacts_traced:
-            return NodeType.had_contacts_traced.name
+            return NodeType.had_contacts_traced
         elif not self.asymptomatic:
             if self.will_report_infection:
-                return NodeType.symptomatic_will_report_infection.name
+                return NodeType.symptomatic_will_report_infection
             else:
-                return NodeType.symptomatic_will_not_report_infection.name
+                return NodeType.symptomatic_will_not_report_infection
         elif self.received_positive_test_result:
             if self.avenue_of_testing == TestType.pcr:
-                return NodeType.received_pos_test_pcr.name
+                return NodeType.received_pos_test_pcr
             else:
-                return NodeType.received_pos_test_lfa.name
+                return NodeType.received_pos_test_lfa
         elif self.received_result and self.avenue_of_testing == TestType.pcr:
-            return NodeType.received_neg_test_pcr.name
+            return NodeType.received_neg_test_pcr
         elif self.taken_confirmatory_PCR_test:
             if self.time >= self.confirmatory_PCR_test_result_time:
                 if self.confirmatory_PCR_result_was_positive:
-                    return NodeType.confirmatory_pos_pcr_test.name
+                    return NodeType.confirmatory_pos_pcr_test
                 else:
-                    return NodeType.confirmatory_neg_pcr_test.name
+                    return NodeType.confirmatory_neg_pcr_test
         else:
-            return NodeType.default.name
+            return NodeType.default
 
 
 class Household:
@@ -299,7 +313,7 @@ class Household:
                  infected_by_node: int, propensity_trace_app: bool,
                  additional_attributes: Optional[dict] = None):
         self.houses = houses
-        self.nodecollection = nodecollection
+        self._network = nodecollection
         self.house_id = house_id
         self.size = house_size                  # Size of the household
         self.time_infected = time_infected      # The time at which the infection entered the household
@@ -332,7 +346,7 @@ class Household:
                 setattr(self, key, value)
 
     def nodes(self) -> Iterator[Node]:
-        return (self.nodecollection.node(n) for n in self.node_ids)
+        return (self._network.node(n) for n in self.node_ids)
 
     def add_node_id(self, node_id: int):
         self.node_ids.append(node_id)
@@ -402,6 +416,44 @@ class Household:
         else:
             return float('inf')
 
+    def isolate_household(self, time: int):
+        """If a Household is contact traced, all Nodes may be required to isolate."""
+        if self.isolated:
+            return
+
+        # update isolated and contact traced status for Household
+        self.contact_traced = True
+        self.isolated = True
+        self.isolated_time = time
+
+        # Update isolated and contact traced status for Nodes in Household
+        for node in self.nodes():
+            node.contact_traced = True
+            if node.will_uptake_isolation:
+                node.isolated = True
+
+        self._update_edges_on_isolation()
+
+    def _update_edges_on_isolation(self):
+        """If a house is isolated after being contact traced, update edge colours between
+        Households and within the Household."""
+
+        if self.being_contact_traced_from is not None:
+            source_household = self._network.houses.household(self.being_contact_traced_from)
+
+            # Initially the edge is assigned the contact tracing label, may be updated if the
+            # contact tracing does not succeed
+            edge = self._network.get_edge_between_household(self, source_household)
+            if self._network.is_edge_app_traced(edge):
+                self._network.label_edges_between_houses(self, source_household,
+                                                         EdgeType.app_traced)
+            else:
+                self._network.label_edges_between_houses(self, source_household,
+                                                         EdgeType.between_house)
+
+        # Update edges within household
+        self._network.label_edges_inside_household(self, EdgeType.within_house)
+
 
 class HouseholdCollection:
 
@@ -419,7 +471,7 @@ class HouseholdCollection:
         self.house_dict[house_id] = new_household
         return new_household
 
-    def household(self, house_id) -> Household:
+    def household(self, house_id: int) -> Household:
         return self.house_dict[house_id]
 
     @property
