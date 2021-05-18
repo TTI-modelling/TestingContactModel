@@ -1,23 +1,25 @@
-from household_contact_tracing.simulation_controller_interface import SimulationControllerInterface
-from household_contact_tracing.simulation_model_interface import SimulationModelInterface
+from household_contact_tracing.simulation_model import SimulationModel
 from household_contact_tracing.shell_view import ShellView
 from household_contact_tracing.graph_view import GraphView
 
 
-class SimulationController(SimulationControllerInterface):
-    """ Branching Process Simulation Controller (MVC pattern) """
+class SimulationController:
+    """ Branching Process Simulation Controller (MVC pattern)
+        Consider sub-classing and making this class abstract, if a need for different controllers arises.
+    """
 
-    def __init__(self, model: SimulationModelInterface):
+
+    def __init__(self, model: SimulationModel):
         self._model = model
         self.shellView = ShellView(self, model)
         self.graphView = GraphView(self, model)
 
     @property
-    def model(self) -> SimulationModelInterface:
+    def model(self) -> SimulationModel:
         return self._model
 
     @model.setter
-    def model(self, model: SimulationModelInterface):
+    def model(self, model: SimulationModel):
         self._model = model
 
     def set_show_all_graphs(self, show_all):

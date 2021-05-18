@@ -102,13 +102,14 @@ class HouseholdLevelContactTracing(SimulationModel):
         # increment time
         self.time += 1
 
-    def run_simulation(self, num_steps: int, infection_threshold: int = 1000) -> None:
+    def run_simulation(self, max_time: int, infection_threshold: int = 1000) -> None:
         """ Runs the simulation:
                 Sets model state,
                 Announces start/stopped and step increments to observers
 
         Arguments:
-            num steps -- The number of step increments to perform
+            max steps -- The maximum number of step increments to perform (stops if self.time >= max_time)
+                         Note: self.time is cumulative throughout multiple calls to run_simulation.
             infection_threshold -- The maximum number of infectious nodes allowed,
               before stopping simulation
 
@@ -133,8 +134,8 @@ class HouseholdLevelContactTracing(SimulationModel):
             # Call parent completed step
             SimulationModel.completed_step_increment(self)
 
-            # Simulation ends if num_steps is reached
-            if self.time >= num_steps:
+            # Simulation ends if max_time is reached
+            if self.time >= max_time:
                 self.state.timed_out()
             elif self.network.count_non_recovered_nodes() == 0:
                 self.state.go_extinct()

@@ -1,14 +1,14 @@
+from abc import ABC, abstractmethod
 import os
 
-from household_contact_tracing.simulation_model_interface import SimulationModelInterface
-from household_contact_tracing.simulation_view_interface import SimulationViewInterface
+from household_contact_tracing.simulation_view import SimulationView
 from household_contact_tracing.simulation_states import SimulationStateInterface, ReadyState, RunningState, \
     ExtinctState, TimedOutState, MaxNodesInfectiousState
 
 
-class SimulationModel(SimulationModelInterface):
+class SimulationModel(ABC):
     """
-        Branching Process Simulation Controller
+        Simulation Model
     """
 
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -58,8 +58,9 @@ class SimulationModel(SimulationModelInterface):
     def max_nodes_infectious_state(self):
         return self._max_nodes_infectious_state
 
-
-    ### Fulfill inherited interface methods: ###
+    @abstractmethod
+    def run_simulation(self, max_time: int, infection_threshold: int) -> None:
+        """ Run the simulation until it stops (e.g times out, or too many infectious nodes) """
 
     def simulation_initialised(self):
         """ Initialise the simulation to starting values."""
@@ -98,7 +99,7 @@ class SimulationModel(SimulationModelInterface):
         if observer not in self._observers_param_change:
             self._observers_param_change.append(observer)
 
-    def register_observer_graph_change(self, observer: SimulationViewInterface):
+    def register_observer_graph_change(self, observer: SimulationView):
         """ Register as observer for changes in model graph (nodes/households network)
 
         Arguments:
@@ -107,7 +108,7 @@ class SimulationModel(SimulationModelInterface):
         if observer not in self._observers_graph_change:
             self._observers_graph_change.append(observer)
 
-    def register_observer_state_change(self, observer: SimulationViewInterface):
+    def register_observer_state_change(self, observer: SimulationView):
         """ Register as observer for changes in model state (e.g. running, extinct, timed-out)
         Arguments:
             observer -- the object to be added to the state change observers list
@@ -115,7 +116,7 @@ class SimulationModel(SimulationModelInterface):
         if observer not in self._observers_state_change:
             self._observers_state_change.append(observer)
 
-    def register_observer_simulation_stopped(self, observer: SimulationViewInterface):
+    def register_observer_simulation_stopped(self, observer: SimulationView):
         """ Register as observer for when simulation stops
         Arguments:
             observer -- the object to be added to the simulation stopped observers list
@@ -123,7 +124,7 @@ class SimulationModel(SimulationModelInterface):
         if observer not in self._observers_simulation_stopped:
             self._observers_simulation_stopped.append(observer)
 
-    def register_observer_step_increment(self, observer: SimulationViewInterface):
+    def register_observer_step_increment(self, observer: SimulationView):
         """ Register as observer for increment in simulation
         Arguments:
             observer -- the object to be added to the increment observers list
@@ -132,35 +133,35 @@ class SimulationModel(SimulationModelInterface):
             self._observers_step_increment.append(observer)
 
     # Remove observers
-    def remove_observer_param_change(self, observer: SimulationViewInterface):
+    def remove_observer_param_change(self, observer: SimulationView):
         """ Remove as observer for parameter changes """
         try:
             self._observers_param_change.remove(observer)
         except ValueError:
             pass
 
-    def remove_observer_model_change(self, observer: SimulationViewInterface):
+    def remove_observer_model_change(self, observer: SimulationView):
         """ Remove as observer for changes in model (nodes/households network) """
         try:
             self._observers_model_change.remove(observer)
         except ValueError:
             pass
 
-    def remove_observer_state_change(self, observer: SimulationViewInterface):
+    def remove_observer_state_change(self, observer: SimulationView):
         """ Remove as observer for changes in model state (e.g. running, extinct, timed-out) """
         try:
             self._observers_state_change.remove(observer)
         except ValueError:
             pass
 
-    def remove_observer_simulation_stopped(self, observer: SimulationViewInterface):
+    def remove_observer_simulation_stopped(self, observer: SimulationView):
         """ Remove as observer for when simulation stops """
         try:
             self._observers_simulation_stopped.remove(observer)
         except ValueError:
             pass
 
-    def remove_observer_step_increment(self, observer: SimulationViewInterface):
+    def remove_observer_step_increment(self, observer: SimulationView):
         """ Remove as observer for increment in simulation """
         try:
             self._observers_step_increment.remove(observer)
