@@ -1,4 +1,4 @@
-from household_contact_tracing.simulation_view import SimulationView
+from household_contact_tracing.views.simulation_view import SimulationView
 
 
 class ShellView(SimulationView):
@@ -10,14 +10,28 @@ class ShellView(SimulationView):
         # Viewers can own copies of controller and model (MVC pattern)
         # ... but controller not required yet (no input collected from view)
         #self.controller = controller
-        self.model = model
+        self._model = model
 
         # Register as observer
-        model.register_observer_graph_change(self)
-        model.register_observer_param_change(self)
-        model.register_observer_state_change(self)
-        model.register_observer_step_increment(self)
-        model.register_observer_simulation_stopped(self)
+        self._model.register_observer_graph_change(self)
+        self._model.register_observer_param_change(self)
+        self._model.register_observer_state_change(self)
+        self._model.register_observer_step_increment(self)
+        self._model.register_observer_simulation_stopped(self)
+
+    def set_display(self, show: bool):
+        if show:
+            self._model.register_observer_graph_change(self)
+            self._model.register_observer_param_change(self)
+            self._model.register_observer_state_change(self)
+            self._model.register_observer_step_increment(self)
+            self._model.register_observer_simulation_stopped(self)
+        else:
+            self._model.remove_observer_graph_change(self)
+            self._model.remove_observer_param_change(self)
+            self._model.remove_observer_state_change(self)
+            self._model.remove_observer_step_increment(self)
+            self._model.remove_observer_simulation_stopped(self)
 
     def model_param_change(self, subject):
         """ Respond to parameter change(s) """

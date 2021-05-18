@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import os
 
-from household_contact_tracing.simulation_view import SimulationView
+from household_contact_tracing.views.simulation_view import SimulationView
 from household_contact_tracing.simulation_states import SimulationStateInterface, ReadyState, RunningState, \
     ExtinctState, TimedOutState, MaxNodesInfectiousState
 
@@ -140,10 +140,10 @@ class SimulationModel(ABC):
         except ValueError:
             pass
 
-    def remove_observer_model_change(self, observer: SimulationView):
-        """ Remove as observer for changes in model (nodes/households network) """
+    def remove_observer_graph_change(self, observer: SimulationView):
+        """ Remove as observer for graph changes """
         try:
-            self._observers_model_change.remove(observer)
+            self._observers_graph_change.remove(observer)
         except ValueError:
             pass
 

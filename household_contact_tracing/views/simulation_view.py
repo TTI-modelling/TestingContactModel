@@ -1,9 +1,15 @@
 from abc import ABC, abstractmethod
 
 class SimulationView(ABC):
-    '''
+
+    @abstractmethod
+    def set_display(self, show: bool):
+        """ should the display be shown or not """
+        pass
+
+    """
         Simulation View interface (MVC pattern)
-    '''
+    """
 
     @abstractmethod
     def model_param_change(self, subject):
