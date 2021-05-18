@@ -1,7 +1,8 @@
 from typing import Callable
 import os
+from copy import deepcopy
 
-from household_contact_tracing.network import Network, graphs_isomorphic
+from household_contact_tracing.network import Network
 from household_contact_tracing.simulation_model import SimulationModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
@@ -121,14 +122,13 @@ class HouseholdLevelContactTracing(SimulationModel):
         SimulationModel.simulation_started(self)
 
         while type(self.state) is RunningState:
-            prev_graph = self.network.graph.copy()
+            prev_network = deepcopy(self.network)
 
             # This chunk of code executes one step (a days worth of infections and contact tracings)
             self.simulate_one_step()
 
             # If graph changed, tell parent
-            new_graph = self.network.graph
-            if not graphs_isomorphic(prev_graph, new_graph):
+            if not prev_network.is_isomorphic(self.network):
                 SimulationModel.graph_changed(self)
 
             # Call parent completed step

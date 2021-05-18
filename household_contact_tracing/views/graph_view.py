@@ -6,7 +6,8 @@ from matplotlib.patches import Circle
 from matplotlib.lines import Line2D
 import networkx as nx
 
-from household_contact_tracing.simulation_view import SimulationView
+
+from household_contact_tracing.views.simulation_view import SimulationView
 from household_contact_tracing.network import Network, EdgeType, NodeType
 from household_contact_tracing.simulation_model import SimulationModel
 
@@ -56,6 +57,14 @@ class GraphView(SimulationView):
         # Register as observer
         self.model.register_observer_state_change(self)
         self.model.register_observer_simulation_stopped(self)
+
+    def set_display(self, show: bool):
+        if show:
+            self.model.register_observer_state_change(self)
+            self.model.register_observer_simulation_stopped(self)
+        else:
+            self.model.remove_observer_state_change(self)
+            self.model.remove_observer_simulation_stopped(self)
 
     def model_param_change(self, subject):
         """ Respond to parameter change(s) """

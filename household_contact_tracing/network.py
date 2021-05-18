@@ -3,6 +3,7 @@ from typing import Optional, Iterator, List, Tuple, Dict
 from enum import Enum
 
 import networkx as nx
+from networkx.classes import reportviews
 
 
 class EdgeType(Enum):
@@ -40,11 +41,6 @@ class TestType(Enum):
     lfa = 1
 
 
-def graphs_isomorphic(graph1: nx.Graph, graph2: nx.Graph) -> bool:
-    """Determine whether graphs have identical network structures."""
-    return nx.is_isomorphic(graph1, graph2)
-
-
 class Network:
     def __init__(self):
         self.houses = HouseholdCollection(self)
@@ -69,9 +65,25 @@ class Network:
         """
         return [node for node in self.all_nodes() if not node.recovered]
 
+    def is_isomorphic(self, network: Network) -> bool:
+        """ Determine whether graphs have identical network structures."""
+        return nx.is_isomorphic(self.graph, network.graph)
+
+    def is_identical(self, graph):
+        """ Currently only determines whether graphs have identical network structures,
+            but we may want to compare more details.
+        """
+        return self.is_isomorphic(graph)
+
+
     def count_non_recovered_nodes(self) -> int:
         """Returns the number of nodes not in the recovered state."""
         return len([node for node in self.all_nodes() if not node.recovered])
+
+    def count_nodes(self, type: NodeType, negative:bool=False) -> int:
+        """Returns the number of nodes of a certain type (or not if negatie == True)."""
+        return len([node for node in self.all_nodes()
+                    if not negative and node.node_type() == type or negative and node.node_type() != type])
 
     def get_edge_between_household(self, house1: Household, house2: Household) -> Tuple[int, int]:
         """Get the id's of the two nodes that connect households."""
@@ -117,6 +129,9 @@ class Network:
 
     def all_nodes(self) -> Iterator[Node]:
         return (self.node(n) for n in self.graph)
+
+    def all_edges(self) -> Iterator[EdgeType]:
+        return (edge for edge in self.graph.edges)
 
     def asymptomatic_nodes(self) -> Iterator[Node]:
         return [self.node(n) for n in self.graph if self.node(n).asymptomatic]
