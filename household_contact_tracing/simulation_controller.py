@@ -35,10 +35,6 @@ class SimulationController:
     def set_timeline_view(self, show: bool):
         self.timelineView.set_display(show)
 
-    def run_simulation(self, num_steps: int = 20, infection_threshold: int = 5000):
+    def run_simulation(self, max_time: int = 20, infection_threshold: int = 5000):
         """ Run the simulation."""
-        self._model.run_simulation(num_steps, infection_threshold)
-
-    def set_params(self, params):
-        """ Set parameters for the simulation."""
-        self._model.set_params(params)
+        self._model.run_simulation(max_time, infection_threshold)

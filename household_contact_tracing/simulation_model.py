@@ -169,12 +169,6 @@ class SimulationModel(ABC):
             pass
 
     # Notify Observers
-    def notify_observers_param_change(self, modifier=None):
-        """ Notify observer about parameter changes """
-        for observer in self._observers_param_change:
-            if observer != modifier:
-                observer.model_param_change(self)
-
     def notify_observers_graph_change(self, modifier=None):
         """ Notify observer about changes in graph (nodes/households network) """
         for observer in self._observers_graph_change:

@@ -33,10 +33,6 @@ class ShellView(SimulationView):
             self._model.remove_observer_step_increment(self)
             self._model.remove_observer_simulation_stopped(self)
 
-    def model_param_change(self, subject):
-        """ Respond to parameter change(s) """
-        print('shell view observed param change')
-
     def graph_change(self, subject):
         """ Respond to changes in graph (nodes/households network) """
         #print('shell view observed graph change')
