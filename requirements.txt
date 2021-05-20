@@ -8,3 +8,4 @@ fire~=0.4.0
 jsonschema
 loguru
 pyyaml
+pandas
