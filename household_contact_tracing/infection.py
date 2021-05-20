@@ -42,6 +42,7 @@ class Infection:
         self.symptom_reporting_delay = 1
         self.incubation_period_delay = 5
         self.global_contact_reduction_risky_behaviour = 0
+        self.household_pairwise_survival_prob = 0.2
 
         # adherence parameters
         self.node_will_uptake_isolation_prob = 1
@@ -84,11 +85,10 @@ class Infection:
         total = sum(size_mean_contacts_biased_distribution)
         self.size_mean_contacts_biased_distribution = [prob / total for prob in size_mean_contacts_biased_distribution]
 
-        self.symptomatic_local_infection_probs = self.compute_hh_infection_probs(
-            params["household_pairwise_survival_prob"])
-        asymptomatic_household_pairwise_survival_prob = 1 - self.asymptomatic_relative_infectivity \
-                                                        + self.asymptomatic_relative_infectivity * \
-                                                        params["household_pairwise_survival_prob"]
+        self.symptomatic_local_infection_probs = self.compute_hh_infection_probs(self.household_pairwise_survival_prob)
+        asymptomatic_household_pairwise_survival_prob = (1 - self.asymptomatic_relative_infectivity
+                                                         + self.asymptomatic_relative_infectivity
+                                                         * self.household_pairwise_survival_prob)
         self.asymptomatic_local_infection_probs = self.compute_hh_infection_probs(
             asymptomatic_household_pairwise_survival_prob)
 

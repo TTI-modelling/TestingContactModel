@@ -122,9 +122,7 @@
     "infection_reporting_prob",
     "household_pairwise_survival_prob",
     "incubation_period_delay",
-    "symptom_reporting_delay",
-    "test_delay",
-    "contact_tracing_success_prob"
+    "symptom_reporting_delay"
   ]
 }
 
