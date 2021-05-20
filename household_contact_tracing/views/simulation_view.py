@@ -13,11 +13,6 @@ class SimulationView(ABC):
     """
 
     @abstractmethod
-    def model_param_change(self, subject):
-        """ Respond to parameter change(s) """
-        pass
-
-    @abstractmethod
     def graph_change(self, subject):
         """ Respond to changes in graph (nodes/households network) """
         pass
