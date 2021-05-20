@@ -120,13 +120,13 @@ class ContactTracing:
     def prob_testing_positive_pcr_func(self, fn: Callable[[int], float]):
         self._prob_testing_positive_pcr_func = fn
 
-    def prob_testing_positive_pcr(infectious_age):
+    def prob_testing_positive_pcr(self, infectious_age):
         if infectious_age in [4, 5, 6]:
             return 0
         else:
             return 0
 
-    def prob_testing_positive_lfa(infectious_age):
+    def prob_testing_positive_lfa(self, infectious_age):
         if infectious_age in [4, 5, 6]:
             return 1
         else:
