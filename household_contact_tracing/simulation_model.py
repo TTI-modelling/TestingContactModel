@@ -31,7 +31,7 @@ class SimulationModel(ABC):
         self._state = self._ready_state
 
     @property
-    def state(self):
+    def state(self) -> SimulationStateInterface:
         return self._state
 
     @state.setter
@@ -39,23 +39,23 @@ class SimulationModel(ABC):
         self._state = state
 
     @property
-    def ready_state(self):
+    def ready_state(self) -> SimulationStateInterface:
         return self._ready_state
 
     @property
-    def running_state(self):
+    def running_state(self) -> SimulationStateInterface:
         return self._running_state
 
     @property
-    def extinct_state(self):
+    def extinct_state(self) -> SimulationStateInterface:
         return self._extinct_state
 
     @property
-    def timed_out_state(self):
+    def timed_out_state(self) -> SimulationStateInterface:
         return self._timed_out_state
 
     @property
-    def max_nodes_infectious_state(self):
+    def max_nodes_infectious_state(self) -> SimulationStateInterface:
         return self._max_nodes_infectious_state
 
     @abstractmethod

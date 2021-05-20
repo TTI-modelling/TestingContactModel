@@ -73,7 +73,7 @@ class TimelineGraphView(SimulationView):
         self.increment_timeline(subject.network)
 
     def model_simulation_stopped(self, subject: SimulationModel):
-        self.draw_timeline(subject.network)
+        self.draw_timeline()
 
 
     def draw_timeline(self):
