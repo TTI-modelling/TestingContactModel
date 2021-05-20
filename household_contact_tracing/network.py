@@ -28,6 +28,7 @@ class NodeType(Enum):
     being_lateral_flow_tested_not_isolated = 9
     symptomatic_will_report_infection = 10
     symptomatic_will_not_report_infection = 11
+    asymptomatic = 12
 
 
 class InfectionStatus(Enum):
@@ -289,6 +290,8 @@ class Node:
                     return NodeType.confirmatory_pos_pcr_test
                 else:
                     return NodeType.confirmatory_neg_pcr_test
+        elif self.asymptomatic:
+            return NodeType.asymptomatic
         else:
             return NodeType.default
 

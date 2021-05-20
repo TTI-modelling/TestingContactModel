@@ -45,7 +45,8 @@ class GraphView(SimulationView):
                     NodeType.confirmatory_neg_pcr_test: NodeColour('tomato', "Negative confirmatory PCR"),
                     NodeType.received_pos_test_lfa: NodeColour('pink', "Positive LFA"),
                     NodeType.being_lateral_flow_tested_isolated: NodeColour('blue', "Being LFT and isolating"),
-                    NodeType.being_lateral_flow_tested_not_isolated: NodeColour('orange', "Being LFT and not isolating")
+                    NodeType.being_lateral_flow_tested_not_isolated: NodeColour('orange', "Being LFT and not isolating"),
+                    NodeType.asymptomatic: NodeColour('olive', 'Asymptomatic')
                     }
 
     def __init__(self, controller, model: SimulationModel):
@@ -79,13 +80,11 @@ class GraphView(SimulationView):
         pass
 
     def model_simulation_stopped(self, subject: SimulationModel):
-        print('graph view observed that simulation has stopped running')
         if self not in subject._observers_graph_change:
             self.draw_network(subject.network)
 
     def graph_change(self, subject: SimulationModel):
         """ Respond to changes in graph (nodes/households network) """
-        print('graph view observed that graph changed')
         self.draw_network(subject.network)
 
     def set_show_all_graphs(self, show_all):

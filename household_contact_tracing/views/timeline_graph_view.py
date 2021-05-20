@@ -16,7 +16,8 @@ node_type_colours = {'default': "lightgrey",
                     'confirmatory_neg_pcr_test': 'tomato',
                     'received_pos_test_lfa': 'pink',
                     'being_lateral_flow_tested_isolated': 'blue',
-                    'being_lateral_flow_tested_not_isolated': 'orange'
+                    'being_lateral_flow_tested_not_isolated': 'orange',
+                    'asymptomatic': 'olive'
                     }
 
 
@@ -39,7 +40,8 @@ class TimelineGraphView(SimulationView):
                                                     'received_pos_test_lfa', 'being_lateral_flow_tested_isolated',
                                                     'being_lateral_flow_tested_not_isolated',
                                                     'symptomatic_will_report_infection',
-                                                    'symptomatic_will_not_report_infection'
+                                                    'symptomatic_will_not_report_infection',
+                                                    'asymptomatic',
                                                      ])
 
         # Register as observer
@@ -68,11 +70,9 @@ class TimelineGraphView(SimulationView):
 
     def model_step_increment(self, subject: SimulationModel):
         """ Respond to single step increment in simulation """
-        print('timeline graph view observed that graph changed')
         self.increment_timeline(subject.network)
 
     def model_simulation_stopped(self, subject: SimulationModel):
-        print('timeline graph view observed that simulation has stopped running')
         self.draw_timeline(subject.network)
 
 
@@ -100,5 +100,6 @@ class TimelineGraphView(SimulationView):
                 network.count_nodes(NodeType.being_lateral_flow_tested_not_isolated),
             'symptomatic_will_report_infection': network.count_nodes(NodeType.symptomatic_will_report_infection),
             'symptomatic_will_not_report_infection':
-                network.count_nodes(NodeType.symptomatic_will_not_report_infection)
+                network.count_nodes(NodeType.symptomatic_will_not_report_infection),
+            'asymptomatic': network.count_nodes(NodeType.asymptomatic)
         }, ignore_index=True)
