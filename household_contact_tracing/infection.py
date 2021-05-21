@@ -149,11 +149,11 @@ class Infection:
                                                                        additional_attributes)
             return new_household
 
-    def new_infection(self, time: int, household_id: int, serial_interval=None,
+    def new_infection(self, time: int, household_id: int,
                       infecting_node: Optional[Node] = None, additional_attributes=None):
         if self.new_infection_behaviour:
-            self.new_infection_behaviour.new_infection(time, household_id, serial_interval,
-                                                       infecting_node, additional_attributes)
+            self.new_infection_behaviour.new_infection(time, household_id, infecting_node,
+                                                       additional_attributes)
 
     def get_contact_rate_reduction(self, node: Node) -> int:
         if self.contact_rate_reduction_behaviour:
@@ -221,11 +221,7 @@ class Infection:
 
                 # If the within household infection is successful:
                 for _ in range(within_household_new_infections):
-                    self.new_within_household_infection(
-                        time=time,
-                        infecting_node=node,
-                        serial_interval=days_since_infected
-                    )
+                    self.new_within_household_infection(time=time, infecting_node=node)
 
             # Update how many contacts the node made
             node.outside_house_contacts_made += outside_household_contacts
@@ -240,11 +236,7 @@ class Infection:
             )
 
             for _ in range(outside_household_new_infections):
-                self.new_outside_household_infection(
-                    time=time,
-                    infecting_node=node,
-                    serial_interval=days_since_infected)
-
+                self.new_outside_household_infection(time=time, infecting_node=node)
                 node_time_tuple = (self.network.node_count, time)
 
                 node.spread_to_global_node_time_tuples.append(node_time_tuple)
@@ -335,8 +327,7 @@ class Infection:
             else:
                 return self.symptomatic_global_infection_probs[infectious_age]
 
-    def new_outside_household_infection(self, time: int, infecting_node: Node,
-                                        serial_interval: Optional[int]):
+    def new_outside_household_infection(self, time: int, infecting_node: Node):
         # We assume all new outside household infections are in a new household
         # i.e: You do not infect 2 people in a new household
         # you do not spread the infection to a household that already has an infection
@@ -351,16 +342,14 @@ class Infection:
         infecting_household.spread_to.append(new_household)
 
         # add a new infection in the house just created
-        self.new_infection(time=time, household_id=house_id, serial_interval=serial_interval,
-                           infecting_node=infecting_node)
+        self.new_infection(time=time, household_id=house_id, infecting_node=infecting_node)
 
         # Add the edge to the graph and give it the default label
         self._network.graph.add_edge(infecting_node.id, node_count)
         self._network.graph.edges[infecting_node.id, node_count].update(
             {"edge_type": EdgeType.default})
 
-    def new_within_household_infection(self, time, infecting_node: Node,
-                                       serial_interval: Optional[int]):
+    def new_within_household_infection(self, time, infecting_node: Node):
         """Add a new node to the network.
 
         The new node will be a member of the same household as the infecting node.
@@ -371,7 +360,7 @@ class Infection:
 
         # Adds the new infection to the network
         self.new_infection(time=time, household_id=infecting_node_household.house_id,
-                           serial_interval=serial_interval, infecting_node=infecting_node)
+                           infecting_node=infecting_node)
 
         # Add the edge to the graph and give it the default label if the house is not
         # traced/isolated

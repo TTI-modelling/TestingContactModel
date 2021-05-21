@@ -220,11 +220,7 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
 
     model.contact_tracing.contact_tracing_success_prob = 1
 
-    model.infection.new_outside_household_infection(
-        time=0,
-        infecting_node=model.network.node(1),
-        serial_interval=0
-    )
+    model.infection.new_outside_household_infection(time=0, infecting_node=model.network.node(1))
     
     model.contact_tracing.increment_behaviour.attempt_contact_trace_of_household(
         house_to=model.network.houses.household(2),
@@ -257,11 +253,7 @@ def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: Indivi
 
     # add another infection to the household, so we can check that they are not quarantining
     # but they are lfa testing
-    model.infection.new_within_household_infection(
-        time=model.time,
-        infecting_node=model.network.node(1),
-        serial_interval=0
-    )
+    model.infection.new_within_household_infection(time=model.time, infecting_node=model.network.node(1))
 
     assert model.network.node(1).isolated
     assert model.network.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
@@ -319,11 +311,8 @@ def test_start_lateral_flow_testing_household_and_quarantine(
 
     model.contact_tracing.isolate_positive_lateral_flow_tests(model.time)
 
-    model.infection.new_within_household_infection(
-        time=model.time,
-        infecting_node=model.network.node(1),
-        serial_interval=0
-    )
+    model.infection.new_within_household_infection(time=model.time,
+                                                   infecting_node=model.network.node(1))
 
     assert model.network.node(1).isolated
     assert model.network.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
@@ -382,11 +371,8 @@ def test_household_contacts_quarantine_only(
 
     model.contact_tracing.isolate_positive_lateral_flow_tests(model.time)
 
-    model.infection.new_within_household_infection(
-        time=model.time,
-        infecting_node=model.network.node(1),
-        serial_interval=0
-    )
+    model.infection.new_within_household_infection(time=model.time,
+                                                   infecting_node=model.network.node(1))
 
     assert model.network.node(1).isolated
     assert model.network.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case

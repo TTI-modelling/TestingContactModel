@@ -101,7 +101,7 @@ class Network:
 
     def add_node(self, time_infected, household_id, isolated, will_uptake_isolation,
                  propensity_imperfect_isolation, asymptomatic, symptom_onset_time,
-                 pseudo_symptom_onset_time, serial_interval, recovery_time, will_report_infection,
+                 pseudo_symptom_onset_time, recovery_time, will_report_infection,
                  time_of_reporting, has_contact_tracing_app, contact_traced, testing_delay=0,
                  additional_attributes: Optional[dict] = None,
                  infecting_node: Optional[Node] = None, completed_isolation=False) -> Node:
@@ -114,7 +114,7 @@ class Network:
                     propensity_imperfect_isolation=propensity_imperfect_isolation,
                     asymptomatic=asymptomatic, symptom_onset_time=symptom_onset_time,
                     pseudo_symptom_onset_time=pseudo_symptom_onset_time,
-                    serial_interval=serial_interval, recovery_time=recovery_time,
+                    recovery_time=recovery_time,
                     will_report_infection=will_report_infection,
                     time_of_reporting=time_of_reporting,
                     has_contact_tracing_app=has_contact_tracing_app,
@@ -168,7 +168,6 @@ class Node:
         asymptomatic: bool,
         symptom_onset_time: float,
         pseudo_symptom_onset_time: int,
-        serial_interval: int,
         recovery_time: int,
         will_report_infection: bool,
         time_of_reporting: int,
@@ -191,7 +190,6 @@ class Node:
         self.asymptomatic = asymptomatic
         self.symptom_onset_time = symptom_onset_time
         self.pseudo_symptom_onset_time = pseudo_symptom_onset_time
-        self.serial_interval = serial_interval
         self.recovery_time = recovery_time
         self.will_report_infection = will_report_infection
         self.time_of_reporting = time_of_reporting

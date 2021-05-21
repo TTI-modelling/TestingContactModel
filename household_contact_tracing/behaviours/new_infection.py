@@ -24,16 +24,17 @@ class NewInfection(ABC):
         self._infection = infection
 
     @abstractmethod
-    def new_infection(self, time: int, household_id: int, serial_interval=None,
+    def new_infection(self, time: int, household_id: int,
                       infecting_node: Optional[Node] = None,
                       additional_attributes: Optional[dict] = None):
-        """Add a new infected Node to the model."""
+        """Add a new infected Node to the model.
+        :param time: The current simulation time.
+        :param household_id: The id of the household to create the new infection in."""
 
 
 class NewInfectionHouseholdLevel(NewInfection):
 
-    def new_infection(self, time: int, household_id: int, serial_interval=None,
-                      infecting_node: Optional[Node] = None,
+    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None,
                       additional_attributes: Optional[dict] = None):
         """Add a new infected Node to the model."""
         asymptomatic = self._infection.is_asymptomatic_infection()
@@ -89,7 +90,7 @@ class NewInfectionHouseholdLevel(NewInfection):
                                           asymptomatic=asymptomatic, contact_traced=household.contact_traced,
                                           symptom_onset_time=symptom_onset_time,
                                           pseudo_symptom_onset_time=pseudo_symptom_onset_time,
-                                          serial_interval=serial_interval, recovery_time=recovery_time,
+                                          recovery_time=recovery_time,
                                           will_report_infection=will_report_infection,
                                           time_of_reporting=time_of_reporting,
                                           has_contact_tracing_app=has_trace_app,
@@ -104,8 +105,7 @@ class NewInfectionHouseholdLevel(NewInfection):
 
 class NewInfectionIndividualTracingDailyTesting(NewInfection):
 
-    def new_infection(self, time: int, household_id: int, serial_interval=None,
-                      infecting_node: Optional[Node] = None,
+    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None,
                       additional_attributes: Optional[dict] = None):
         """Add a new infection to the model and network. Attributes are randomly generated.
 
@@ -114,7 +114,6 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
         Args:
             time: The current simulation time.
             household_id (int): The household id that the node is being added to
-            serial_interval ([type]): The serial interval
             infecting_node: The id of the infecting node
             additional_attributes: Additional attributes to be passed
         """
@@ -218,7 +217,6 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
                                           contact_traced=household.contact_traced,
                                           symptom_onset_time=symptom_onset_time,
                                           pseudo_symptom_onset_time=pseudo_symptom_onset_time,
-                                          serial_interval=serial_interval,
                                           recovery_time=recovery_time,
                                           will_report_infection=will_report_infection,
                                           time_of_reporting=time_of_reporting,
