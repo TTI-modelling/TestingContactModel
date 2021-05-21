@@ -423,13 +423,15 @@ class HouseholdCollection:
         self.house_dict: Dict[int, Household] = {}
         self.nodes = nodes
 
-    def add_household(self, house_id: int, house_size: int, time_infected: int,
+    def add_household(self, house_size: int, time_infected: int,
                       infected_by: Optional[Household], propensity_trace_app: bool,
                       additional_attributes: Optional[dict] = None) -> Household:
 
-        new_household = Household(self.nodes, house_id, house_size, time_infected,
+        new_house_id = self.count + 1
+
+        new_household = Household(self.nodes, new_house_id, house_size, time_infected,
                                   infected_by, propensity_trace_app, additional_attributes)
-        self.house_dict[house_id] = new_household
+        self.house_dict[new_house_id] = new_household
         return new_household
 
     def household(self, house_id: int) -> Household:
