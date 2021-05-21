@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+from abc import ABC, abstractmethod
+
 import numpy as np
 import numpy.random as npr
 from typing import Optional
@@ -12,7 +15,8 @@ import household_contact_tracing.behaviours.new_infection as new_infection
 class Infection:
     """ 'Context' class for infection processes/strategies (Strategy pattern) """
 
-    def __init__(self, network: Network, new_household: NewHouseholdBehaviour, new_infection: new_infection.NewInfection,
+    def __init__(self, network: Network, new_household: NewHouseholdBehaviour,
+                 new_infection: new_infection.NewInfection,
                  contact_rate_reduction: ContactRateReductionBehaviour, params: dict):
         self._network = network
 
@@ -42,6 +46,7 @@ class Infection:
         self.symptom_reporting_delay = 1
         self.incubation_period_delay = 5
         self.global_contact_reduction_risky_behaviour = 0
+        self.household_pairwise_survival_prob = 0.2
 
         # adherence parameters
         self.node_will_uptake_isolation_prob = 1
@@ -84,11 +89,10 @@ class Infection:
         total = sum(size_mean_contacts_biased_distribution)
         self.size_mean_contacts_biased_distribution = [prob / total for prob in size_mean_contacts_biased_distribution]
 
-        self.symptomatic_local_infection_probs = self.compute_hh_infection_probs(
-            params["household_pairwise_survival_prob"])
-        asymptomatic_household_pairwise_survival_prob = 1 - self.asymptomatic_relative_infectivity \
-                                                        + self.asymptomatic_relative_infectivity * \
-                                                        params["household_pairwise_survival_prob"]
+        self.symptomatic_local_infection_probs = self.compute_hh_infection_probs(self.household_pairwise_survival_prob)
+        asymptomatic_household_pairwise_survival_prob = (1 - self.asymptomatic_relative_infectivity
+                                                         + self.asymptomatic_relative_infectivity
+                                                         * self.household_pairwise_survival_prob)
         self.asymptomatic_local_infection_probs = self.compute_hh_infection_probs(
             asymptomatic_household_pairwise_survival_prob)
 
@@ -138,52 +142,29 @@ class Infection:
         if self._contact_rate_reduction_behaviour:
             self._contact_rate_reduction_behaviour.infection = self
 
-    def new_household(self, time, new_household_number, infected_by: Optional[Household],
+    def new_household(self, time: int, infected_by: Optional[Household],
                       additional_attributes=None) -> Household:
         if self.new_household_behaviour:
-            new_household = self.new_household_behaviour.new_household(time, new_household_number,
-                                                                       infected_by,
+            new_household = self.new_household_behaviour.new_household(time, infected_by,
                                                                        additional_attributes)
             return new_household
 
-    def new_infection(self,
-                      time: int,
-                      node_count: int,
-                      household_id: int,
-                      test_delay: int = 0,
-                      serial_interval=None,
-                      infecting_node: Optional[Node] = None,
-                      additional_attributes=None):
+    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
         if self.new_infection_behaviour:
-            self.new_infection_behaviour.new_infection(time,
-                                                       node_count,
-                                                       household_id,
-                                                       serial_interval,
-                                                       infecting_node,
-                                                       additional_attributes)
+            self.new_infection_behaviour.new_infection(time, household_id, infecting_node)
 
     def get_contact_rate_reduction(self, node: Node) -> int:
         if self.contact_rate_reduction_behaviour:
             return self.contact_rate_reduction_behaviour.get_contact_rate_reduction(node)
 
     def initialise(self):
-
-        # Create first household
-        # Initial values
-        house_id = 0
-
         # Create the starting infectives
-        for time in range(self.starting_infections):
-            house_id += 1
-            node_id = self.network.node_count + 1
-            self.new_household(time, house_id, None)
-            self.new_infection(time, node_id, house_id)
+        for households in range(self.starting_infections):
+            new_household = self.new_household(time=0, infected_by=None)
+            self.new_infection(time=0, household_id=new_household.house_id)
 
     def increment(self, time):
-        """
-        Creates a new days worth of infections
-        """
-
+        """Create a new days worth of infections."""
         for node in self.network.active_infections:
             household = node.household
 
@@ -238,11 +219,7 @@ class Infection:
 
                 # If the within household infection is successful:
                 for _ in range(within_household_new_infections):
-                    self.new_within_household_infection(
-                        time=time,
-                        infecting_node=node,
-                        serial_interval=days_since_infected
-                    )
+                    self.new_within_household_infection(time=time, infecting_node=node)
 
             # Update how many contacts the node made
             node.outside_house_contacts_made += outside_household_contacts
@@ -257,16 +234,13 @@ class Infection:
             )
 
             for _ in range(outside_household_new_infections):
-                self.new_outside_household_infection(
-                    time=time,
-                    infecting_node=node,
-                    serial_interval=days_since_infected)
-
+                self.new_outside_household_infection(time=time, infecting_node=node)
                 node_time_tuple = (self.network.node_count, time)
 
                 node.spread_to_global_node_time_tuples.append(node_time_tuple)
 
     def is_asymptomatic_infection(self) -> bool:
+        """Determine whether a node"""
         return npr.binomial(1, self.asymptomatic_prob) == 1
 
     def incubation_period(self, asymptomatic: bool) -> int:
@@ -351,8 +325,7 @@ class Infection:
             else:
                 return self.symptomatic_global_infection_probs[infectious_age]
 
-    def new_outside_household_infection(self, time: int, infecting_node: Node,
-                                        serial_interval: Optional[int]):
+    def new_outside_household_infection(self, time: int, infecting_node: Node):
         # We assume all new outside household infections are in a new household
         # i.e: You do not infect 2 people in a new household
         # you do not spread the infection to a household that already has an infection
@@ -361,26 +334,20 @@ class Infection:
         infecting_household = infecting_node.household
 
         # Create a new household, since the infection was outside the household
-        new_household = self.new_household(time=time, new_household_number=house_id,
-                                           infected_by=infecting_node.household)
+        new_household = self.new_household(time=time, infected_by=infecting_node.household)
 
         # We record which house spread to which other house
         infecting_household.spread_to.append(new_household)
 
         # add a new infection in the house just created
-        self.new_infection(time=time,
-                           node_count=node_count,
-                           household_id=house_id,
-                           serial_interval=serial_interval,
-                           infecting_node=infecting_node)
+        self.new_infection(time=time, household_id=house_id, infecting_node=infecting_node)
 
         # Add the edge to the graph and give it the default label
         self._network.graph.add_edge(infecting_node.id, node_count)
         self._network.graph.edges[infecting_node.id, node_count].update(
             {"edge_type": EdgeType.default})
 
-    def new_within_household_infection(self, time, infecting_node: Node,
-                                       serial_interval: Optional[int]):
+    def new_within_household_infection(self, time, infecting_node: Node):
         """Add a new node to the network.
 
         The new node will be a member of the same household as the infecting node.
@@ -390,10 +357,7 @@ class Infection:
         infecting_node_household = infecting_node.household
 
         # Adds the new infection to the network
-        self.new_infection(time=time,
-                           node_count=node_count,
-                           household_id=infecting_node_household.house_id,
-                           serial_interval=serial_interval,
+        self.new_infection(time=time, household_id=infecting_node_household.house_id,
                            infecting_node=infecting_node)
 
         # Add the edge to the graph and give it the default label if the house is not
@@ -454,7 +418,7 @@ class Infection:
                 node.recovered = True
 
 
-class NewHouseholdBehaviour:
+class NewHouseholdBehaviour(ABC):
     def __init__(self, network: Network):
         self._network = network
         self._infection = None
@@ -467,45 +431,38 @@ class NewHouseholdBehaviour:
     def infection(self, infection: Infection):
         self._infection = infection
 
-    def new_household(self, time: int, new_household_number: int, infected_by: Optional[Household],
+    @abstractmethod
+    def new_household(self, time: int, infected_by: Optional[Household],
                       additional_attributes: Optional[dict] = None) -> Household:
-        pass
+        """Add a new Household to the model."""
 
 
 class NewHouseholdLevel(NewHouseholdBehaviour):
 
-    def new_household(self, time: int, new_household_number: int, infected_by: Optional[Household],
+    def new_household(self, time: int, infected_by: Optional[Household],
                       additional_attributes: Optional[dict] = None) -> Household:
         """Adds a new household to the household dictionary"""
         house_size = self._infection.size_of_household()
 
-        new_household = self._network.houses.add_household(
-            house_id=new_household_number,
-            house_size=house_size,
-            time_infected=time,
-            infected_by=infected_by,
-            propensity_trace_app=self.infection.hh_propensity_use_trace_app(),
-            additional_attributes=additional_attributes
-        )
-        return new_household
+        return self._network.add_household(house_size=house_size,
+                                           time_infected=time,
+                                           infected_by=infected_by,
+                                           propensity_trace_app=self.infection.hh_propensity_use_trace_app(),
+                                           additional_attributes=additional_attributes
+                                           )
 
 
 class NewHouseholdIndividualTracingDailyTesting(NewHouseholdLevel):
 
-    def new_household(self, time: int, new_household_number: int, infected_by: Optional[Household],
+    def new_household(self, time: int, infected_by: Optional[Household],
                       additional_attributes: Optional[dict] = None) -> Household:
 
-        new_household = super().new_household(
-            time,
-            new_household_number=new_household_number,
-            infected_by=infected_by,
-            additional_attributes={
-                'being_lateral_flow_tested': False,
-                'being_lateral_flow_tested_start_time': None,
-                'applied_policy_for_household_contacts_of_a_positive_case': False
-            }
-        )
-        return new_household
+        return super().new_household(time, infected_by=infected_by,
+                                     additional_attributes={'being_lateral_flow_tested': False,
+                                                            'being_lateral_flow_tested_start_time': None,
+                                                            'applied_policy_for_household_contacts_of_a_positive_case': False
+                                                            }
+                                     )
 
 
 class ContactRateReductionBehaviour:

@@ -1,9 +1,10 @@
 from __future__ import annotations
+
+from collections import Counter
 from typing import Optional, Iterator, List, Tuple, Dict
 from enum import Enum
 
 import networkx as nx
-from networkx.classes import reportviews
 
 
 class EdgeType(Enum):
@@ -44,16 +45,34 @@ class TestType(Enum):
 
 class Network:
     def __init__(self):
-        self.houses = HouseholdCollection(self)
+        self._house_dict: Dict[int, Household] = {}
         self.graph = nx.Graph()
+
+    def add_household(self, house_size: int, time_infected: int,
+                      infected_by: Optional[Household], propensity_trace_app: bool,
+                      additional_attributes: Optional[dict] = None) -> Household:
+
+        new_house_id = self.house_count + 1
+
+        new_household = Household(self, new_house_id, house_size, time_infected,
+                                  infected_by, propensity_trace_app, additional_attributes)
+        self._house_dict[new_house_id] = new_household
+        return new_household
+
+    def household(self, house_id: int) -> Household:
+        return self._house_dict[house_id]
 
     @property
     def house_count(self):
-        return self.houses.count
+        return len(self._house_dict)
 
     @property
     def node_count(self):
         return nx.number_of_nodes(self.graph)
+
+    @property
+    def all_households(self) -> Iterator[Household]:
+        return (self.household(hid) for hid in self._house_dict)
 
     @property
     def active_infections(self):
@@ -76,15 +95,13 @@ class Network:
         """
         return self.is_isomorphic(graph)
 
-
     def count_non_recovered_nodes(self) -> int:
         """Returns the number of nodes not in the recovered state."""
         return len([node for node in self.all_nodes() if not node.recovered])
 
-    def count_nodes(self, type: NodeType, negative:bool=False) -> int:
-        """Returns the number of nodes of a certain type (or not if negatie == True)."""
-        return len([node for node in self.all_nodes()
-                    if not negative and node.node_type() == type or negative and node.node_type() != type])
+    def count_nodes(self, node_type: NodeType) -> int:
+        """Returns the number of nodes of type `node_type`."""
+        return sum([node.node_type() == node_type for node in self.all_nodes()])
 
     def get_edge_between_household(self, house1: Household, house2: Household) -> Tuple[int, int]:
         """Get the id's of the two nodes that connect households."""
@@ -99,21 +116,22 @@ class Network:
         node_2_app = self.node(edge[1]).has_contact_tracing_app
         return node_1_app and node_2_app
 
-    def add_node(self, node_id, time, household_id, isolated, will_uptake_isolation,
+    def add_node(self, time_infected, household_id, isolated, will_uptake_isolation,
                  propensity_imperfect_isolation, asymptomatic, symptom_onset_time,
-                 pseudo_symptom_onset_time, serial_interval, recovery_time, will_report_infection,
+                 pseudo_symptom_onset_time, recovery_time, will_report_infection,
                  time_of_reporting, has_contact_tracing_app, contact_traced, testing_delay=0,
                  additional_attributes: Optional[dict] = None,
                  infecting_node: Optional[Node] = None, completed_isolation=False) -> Node:
-        self.graph.add_node(node_id)
-        new_node_household = self.houses.household(household_id)
-        node = Node(nodes=self, id=node_id, time_infected=time,
+        new_node_id = self.node_count + 1
+        self.graph.add_node(new_node_id)
+        new_node_household = self.household(household_id)
+        node = Node(id=new_node_id, time_infected=time_infected,
                     household=new_node_household, isolated=isolated,
                     will_uptake_isolation=will_uptake_isolation,
                     propensity_imperfect_isolation=propensity_imperfect_isolation,
                     asymptomatic=asymptomatic, symptom_onset_time=symptom_onset_time,
                     pseudo_symptom_onset_time=pseudo_symptom_onset_time,
-                    serial_interval=serial_interval, recovery_time=recovery_time,
+                    recovery_time=recovery_time,
                     will_report_infection=will_report_infection,
                     time_of_reporting=time_of_reporting,
                     has_contact_tracing_app=has_contact_tracing_app,
@@ -122,23 +140,20 @@ class Network:
                     additional_attributes=additional_attributes,
                     infecting_node=infecting_node,
                     completed_isolation=completed_isolation)
-        self.graph.nodes[node_id]['node_obj'] = node
+        self.graph.nodes[new_node_id]['node_obj'] = node
         return node
 
-    def node(self, node_id) -> Node:
+    def node(self, node_id: int) -> Node:
+        """Return the Node from the Network with `node_id`."""
         return self.graph.nodes[node_id]['node_obj']
 
     def all_nodes(self) -> Iterator[Node]:
+        """Return a list of all nodes in the Network"""
         return (self.node(n) for n in self.graph)
 
-    def all_edges(self) -> Iterator[EdgeType]:
-        return (edge for edge in self.graph.edges)
-
-    def asymptomatic_nodes(self) -> Iterator[Node]:
-        return [self.node(n) for n in self.graph if self.node(n).asymptomatic]
-
-    def symptomatic_nodes(self) -> Iterator[Node]:
-        return [self.node(n) for n in self.graph if not self.node(n).asymptomatic]
+    def edge_types(self) -> List[EdgeType]:
+        """Return a list of edge types in the network."""
+        return [self.graph.edges[edge]["edge_type"] for edge in self.graph.edges]
 
     def label_edges_between_houses(self, house_to: Household, house_from: Household,
                                    new_edge_type: EdgeType):
@@ -156,33 +171,14 @@ class Network:
 
 
 class Node:
-    def __init__(
-        self,
-        nodes: Network,
-        id: int,
-        time_infected: int,
-        household: Household,
-        isolated: bool,
-        will_uptake_isolation: bool,
-        propensity_imperfect_isolation: bool,
-        asymptomatic: bool,
-        symptom_onset_time: float,
-        pseudo_symptom_onset_time: int,
-        serial_interval: int,
-        recovery_time: int,
-        will_report_infection: bool,
-        time_of_reporting: int,
-        has_contact_tracing_app: bool,
-        contact_traced: bool,
-        testing_delay: int = 0,
-        completed_isolation=False,
-        had_contacts_traced=False,
-        outside_house_contacts_made=0,
-        recovered=False,
-        infecting_node: Optional[Node] = None,
-        additional_attributes: dict = None
-    ):
-        self.nodes = nodes
+    def __init__(self, id: int, time_infected: int, household: Household, isolated: bool,
+                 will_uptake_isolation: bool, propensity_imperfect_isolation: bool,
+                 asymptomatic: bool, symptom_onset_time: float, pseudo_symptom_onset_time: int,
+                 recovery_time: int, will_report_infection: bool, time_of_reporting: int,
+                 has_contact_tracing_app: bool, contact_traced: bool, testing_delay: int = 0,
+                 completed_isolation=False, had_contacts_traced=False,
+                 outside_house_contacts_made=0, recovered=False,
+                 infecting_node: Optional[Node] = None, additional_attributes: dict = None):
         self.id = id
         self.time_infected = time_infected
         self.household = household
@@ -192,7 +188,6 @@ class Node:
         self.asymptomatic = asymptomatic
         self.symptom_onset_time = symptom_onset_time
         self.pseudo_symptom_onset_time = pseudo_symptom_onset_time
-        self.serial_interval = serial_interval
         self.recovery_time = recovery_time
         self.will_report_infection = will_report_infection
         self.time_of_reporting = time_of_reporting
@@ -231,9 +226,10 @@ class Node:
         self.time: Optional[int] = None
 
         # Update instance variables with anything in params
-        for param_name in self.__dict__:
-            if param_name in additional_attributes:
-                self.__dict__[param_name] = additional_attributes[param_name]
+        if additional_attributes:
+            for param_name in self.__dict__:
+                if param_name in additional_attributes:
+                    self.__dict__[param_name] = additional_attributes[param_name]
 
     def time_relative_to_symptom_onset(self, time: int) -> int:
         # asymptomatics do not have a symptom onset time
@@ -416,29 +412,3 @@ class Household:
 
         # Update edges within household
         self._network.label_edges_inside_household(self, EdgeType.within_house)
-
-
-class HouseholdCollection:
-
-    def __init__(self, nodes: Network):
-        self.house_dict: Dict[int, Household] = {}
-        self.nodes = nodes
-
-    def add_household(self, house_id: int, house_size: int, time_infected: int,
-                      infected_by: Optional[Household], propensity_trace_app: bool,
-                      additional_attributes: Optional[dict] = None) -> Household:
-
-        new_household = Household(self.nodes, house_id, house_size, time_infected,
-                                  infected_by, propensity_trace_app, additional_attributes)
-        self.house_dict[house_id] = new_household
-        return new_household
-
-    def household(self, house_id: int) -> Household:
-        return self.house_dict[house_id]
-
-    @property
-    def count(self) -> int:
-        return len(self.house_dict)
-
-    def all_households(self) -> Iterator[Household]:
-        return (self.household(hid) for hid in self.house_dict)

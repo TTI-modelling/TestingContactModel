@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from abc import ABC, abstractmethod
 from typing import Optional, TYPE_CHECKING
 
 import numpy as np
@@ -8,7 +10,7 @@ if TYPE_CHECKING:
     from household_contact_tracing.infection import Infection
 
 
-class NewInfection:
+class NewInfection(ABC):
     def __init__(self, network: Network):
         self._network = network
         self._infection = None
@@ -21,35 +23,17 @@ class NewInfection:
     def infection(self, infection: Infection):
         self._infection = infection
 
-    def new_infection(self,
-                      time: int,
-                      node_count: int,
-                      household_id: int,
-                      serial_interval=None,
-                      infecting_node: Optional[Node] = None,
-                      additional_attributes: Optional[dict] = None):
-        pass
+    @abstractmethod
+    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
+        """Add a new infected Node to the model.
+        :param time: The current simulation time.
+        :param household_id: The id of the household to create the new infection in."""
 
 
 class NewInfectionHouseholdLevel(NewInfection):
 
-    def new_infection(self,
-                      time: int,
-                      node_count: int,
-                      household_id: int,
-                      serial_interval=None,
-                      infecting_node: Optional[Node] = None,
-                      additional_attributes: Optional[dict] = None):
-        """
-        Adds a new infection to the graph along with the following attributes:
-        t - when they were infected
-        offspring - how many offspring they produce
-
-        Inputs::
-        G - the network object
-        time - the time when the new infection happens
-        node_count - how many nodes are currently in the network
-        """
+    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
+        """Add a new infected Node to the model."""
         asymptomatic = self._infection.is_asymptomatic_infection()
 
         # Symptom onset time
@@ -73,7 +57,7 @@ class NewInfectionHouseholdLevel(NewInfection):
         # causing a new infections is 0, due to the generation time distribution
         recovery_time = time + 14
 
-        household = self._network.houses.household(household_id)
+        household = self._network.household(household_id)
 
         # If the household has the propensity to use the contact tracing app, decide
         # if the node uses the app.
@@ -82,13 +66,6 @@ class NewInfectionHouseholdLevel(NewInfection):
         else:
             has_trace_app = False
 
-        # in case you want to add non-default additional attributes
-        default_additional_attributes = {}
-
-        if additional_attributes:
-            default_additional_attributes = {**default_additional_attributes,
-                                             **additional_attributes}
-
         isolation_uptake = self._infection.will_uptake_isolation()
 
         if household.isolated and isolation_uptake:
@@ -96,20 +73,19 @@ class NewInfectionHouseholdLevel(NewInfection):
         else:
             node_is_isolated = False
 
-        new_node = self._network.add_node(node_id=node_count, time=time,
+        new_node = self._network.add_node(time_infected=time,
                                           household_id=household_id, isolated=node_is_isolated,
-                               will_uptake_isolation=isolation_uptake,
-                               propensity_imperfect_isolation=self._infection.get_propensity_imperfect_isolation(),
-                               asymptomatic=asymptomatic, contact_traced=household.contact_traced,
-                               symptom_onset_time=symptom_onset_time,
-                               pseudo_symptom_onset_time=pseudo_symptom_onset_time,
-                               serial_interval=serial_interval, recovery_time=recovery_time,
-                               will_report_infection=will_report_infection,
-                               time_of_reporting=time_of_reporting,
-                               has_contact_tracing_app=has_trace_app,
-                               testing_delay=self.infection.testing_delay(),
-                               additional_attributes=default_additional_attributes,
-                               infecting_node=infecting_node)
+                                          will_uptake_isolation=isolation_uptake,
+                                          propensity_imperfect_isolation=self._infection.get_propensity_imperfect_isolation(),
+                                          asymptomatic=asymptomatic, contact_traced=household.contact_traced,
+                                          symptom_onset_time=symptom_onset_time,
+                                          pseudo_symptom_onset_time=pseudo_symptom_onset_time,
+                                          recovery_time=recovery_time,
+                                          will_report_infection=will_report_infection,
+                                          time_of_reporting=time_of_reporting,
+                                          has_contact_tracing_app=has_trace_app,
+                                          testing_delay=self.infection.testing_delay(),
+                                          infecting_node=infecting_node)
 
         # Each house now stores the ID's of which nodes are stored inside the house,
         # so that quarantining can be done at the household level
@@ -118,23 +94,18 @@ class NewInfectionHouseholdLevel(NewInfection):
 
 class NewInfectionIndividualTracingDailyTesting(NewInfection):
 
-    def new_infection(self, time: int, node_count: int, household_id: int,
-                      serial_interval=None,
-                      infecting_node: Optional[Node] = None,
-                      additional_attributes: Optional[dict] = None):
+    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
         """Add a new infection to the model and network. Attributes are randomly generated.
 
         This method passes additional attribute, relevant to the lateral flow testing.
 
         Args:
-            node_count (int): The number of nodes already in the model
+            time: The current simulation time.
             household_id (int): The household id that the node is being added to
-            serial_interval ([type]): The serial interval
-            infecting_node (Optional[NodeContactModel]): The id of the infecting node
-            additional_attributes (Optional[dict]): Additional attributes to be passed
+            infecting_node: The id of the infecting node
         """
 
-        household = self._network.houses.household(household_id)
+        household = self._network.household(household_id)
 
         node_will_take_up_lfa_testing = self._infection.will_take_up_lfa_testing()
 
@@ -152,7 +123,7 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
             node_being_lateral_flow_tested = False
             time_started_lfa_testing = float('Inf')
 
-        default_additional_attributes = {
+        additional_attributes = {
             'being_lateral_flow_tested': node_being_lateral_flow_tested,
             'time_started_lfa_testing': time_started_lfa_testing,
             'received_positive_test_result': False,
@@ -168,15 +139,6 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
                 self._infection.will_engage_in_risky_behaviour_while_being_lfa_tested(),
             'propensity_to_miss_lfa_tests': self._infection.propensity_to_miss_lfa_tests()
         }
-
-        if additional_attributes:
-            # if new additional attributes are passed, these override the current additional
-            # attributes if they are the same value if they are different values, then they
-            # are added to the dictionary
-            additional_attributes_with_defaults = {**default_additional_attributes,
-                                                   **additional_attributes}
-        else:
-            additional_attributes_with_defaults = default_additional_attributes
 
         asymptomatic = self._infection.is_asymptomatic_infection()
 
@@ -201,7 +163,7 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
         # causing a new infections is 0, due to the generation time distribution
         recovery_time = time + 14
 
-        household = self._network.houses.household(household_id)
+        household = self._network.household(household_id)
 
         # If the household has the propensity to use the contact tracing app, decide
         # if the node uses the app.
@@ -210,13 +172,6 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
         else:
             has_trace_app = False
 
-        # in case you want to add non-default additional attributes
-        default_additional_attributes = {}
-
-        if additional_attributes_with_defaults:
-            default_additional_attributes = {**default_additional_attributes,
-                                             **additional_attributes_with_defaults}
-
         isolation_uptake = self._infection.will_uptake_isolation()
 
         if household.isolated and isolation_uptake:
@@ -224,25 +179,22 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
         else:
             node_is_isolated = False
 
-        new_node = self._network.add_node(
-            node_id=node_count,
-            time=time,
-            household_id=household_id,
-            isolated=node_is_isolated,
-            will_uptake_isolation=isolation_uptake,
-            propensity_imperfect_isolation=self._infection.get_propensity_imperfect_isolation(),
-            asymptomatic=asymptomatic,
-            contact_traced=household.contact_traced,
-            symptom_onset_time=symptom_onset_time,
-            pseudo_symptom_onset_time=pseudo_symptom_onset_time,
-            serial_interval=serial_interval,
-            recovery_time=recovery_time,
-            will_report_infection=will_report_infection,
-            time_of_reporting=time_of_reporting,
-            has_contact_tracing_app=has_trace_app,
-            testing_delay=self.infection.testing_delay(),
-            additional_attributes=default_additional_attributes,
-            infecting_node=infecting_node,
+        new_node = self._network.add_node(time_infected=time,
+                                          household_id=household_id,
+                                          isolated=node_is_isolated,
+                                          will_uptake_isolation=isolation_uptake,
+                                          propensity_imperfect_isolation=self._infection.get_propensity_imperfect_isolation(),
+                                          asymptomatic=asymptomatic,
+                                          contact_traced=household.contact_traced,
+                                          symptom_onset_time=symptom_onset_time,
+                                          pseudo_symptom_onset_time=pseudo_symptom_onset_time,
+                                          recovery_time=recovery_time,
+                                          will_report_infection=will_report_infection,
+                                          time_of_reporting=time_of_reporting,
+                                          has_contact_tracing_app=has_trace_app,
+                                          testing_delay=self.infection.testing_delay(),
+                                          additional_attributes=additional_attributes,
+                                          infecting_node=infecting_node,
         )
 
         # Each house now stores the ID's of which nodes are stored inside the house,
