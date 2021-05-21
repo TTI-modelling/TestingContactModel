@@ -99,15 +99,16 @@ class Network:
         node_2_app = self.node(edge[1]).has_contact_tracing_app
         return node_1_app and node_2_app
 
-    def add_node(self, node_id, time, household_id, isolated, will_uptake_isolation,
+    def add_node(self, time_infected, household_id, isolated, will_uptake_isolation,
                  propensity_imperfect_isolation, asymptomatic, symptom_onset_time,
                  pseudo_symptom_onset_time, serial_interval, recovery_time, will_report_infection,
                  time_of_reporting, has_contact_tracing_app, contact_traced, testing_delay=0,
                  additional_attributes: Optional[dict] = None,
                  infecting_node: Optional[Node] = None, completed_isolation=False) -> Node:
-        self.graph.add_node(node_id)
+        new_node_id = self.node_count + 1
+        self.graph.add_node(new_node_id)
         new_node_household = self.houses.household(household_id)
-        node = Node(nodes=self, id=node_id, time_infected=time,
+        node = Node(id=new_node_id, time_infected=time_infected,
                     household=new_node_household, isolated=isolated,
                     will_uptake_isolation=will_uptake_isolation,
                     propensity_imperfect_isolation=propensity_imperfect_isolation,
@@ -122,7 +123,7 @@ class Network:
                     additional_attributes=additional_attributes,
                     infecting_node=infecting_node,
                     completed_isolation=completed_isolation)
-        self.graph.nodes[node_id]['node_obj'] = node
+        self.graph.nodes[new_node_id]['node_obj'] = node
         return node
 
     def node(self, node_id: int) -> Node:
@@ -158,7 +159,6 @@ class Network:
 class Node:
     def __init__(
         self,
-        nodes: Network,
         id: int,
         time_infected: int,
         household: Household,
@@ -182,7 +182,6 @@ class Node:
         infecting_node: Optional[Node] = None,
         additional_attributes: dict = None
     ):
-        self.nodes = nodes
         self.id = id
         self.time_infected = time_infected
         self.household = household

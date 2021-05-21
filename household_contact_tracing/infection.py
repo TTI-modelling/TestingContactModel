@@ -146,20 +146,11 @@ class Infection:
                                                                        additional_attributes)
             return new_household
 
-    def new_infection(self,
-                      time: int,
-                      node_count: int,
-                      household_id: int,
-                      test_delay: int = 0,
-                      serial_interval=None,
-                      infecting_node: Optional[Node] = None,
-                      additional_attributes=None):
+    def new_infection(self, time: int, household_id: int, serial_interval=None,
+                      infecting_node: Optional[Node] = None, additional_attributes=None):
         if self.new_infection_behaviour:
-            self.new_infection_behaviour.new_infection(time,
-                                                       node_count,
-                                                       household_id,
-                                                       serial_interval,
-                                                       infecting_node,
+            self.new_infection_behaviour.new_infection(time, household_id,
+                                                       serial_interval, infecting_node,
                                                        additional_attributes)
 
     def get_contact_rate_reduction(self, node: Node) -> int:
@@ -175,9 +166,8 @@ class Infection:
         # Create the starting infectives
         for time in range(self.starting_infections):
             house_id += 1
-            node_id = self.network.node_count + 1
             self.new_household(time, house_id, None)
-            self.new_infection(time, node_id, house_id)
+            self.new_infection(time, house_id)
 
     def increment(self, time):
         """
@@ -267,6 +257,7 @@ class Infection:
                 node.spread_to_global_node_time_tuples.append(node_time_tuple)
 
     def is_asymptomatic_infection(self) -> bool:
+        """Determine whether a node"""
         return npr.binomial(1, self.asymptomatic_prob) == 1
 
     def incubation_period(self, asymptomatic: bool) -> int:
@@ -368,10 +359,7 @@ class Infection:
         infecting_household.spread_to.append(new_household)
 
         # add a new infection in the house just created
-        self.new_infection(time=time,
-                           node_count=node_count,
-                           household_id=house_id,
-                           serial_interval=serial_interval,
+        self.new_infection(time=time, household_id=house_id, serial_interval=serial_interval,
                            infecting_node=infecting_node)
 
         # Add the edge to the graph and give it the default label
@@ -390,11 +378,8 @@ class Infection:
         infecting_node_household = infecting_node.household
 
         # Adds the new infection to the network
-        self.new_infection(time=time,
-                           node_count=node_count,
-                           household_id=infecting_node_household.house_id,
-                           serial_interval=serial_interval,
-                           infecting_node=infecting_node)
+        self.new_infection(time=time, household_id=infecting_node_household.house_id,
+                           serial_interval=serial_interval, infecting_node=infecting_node)
 
         # Add the edge to the graph and give it the default label if the house is not
         # traced/isolated
