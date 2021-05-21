@@ -34,7 +34,7 @@ class UpdateIsolation(ABC):
     def update_all_households_contact_traced(self, time):
         """Update the contact traced status for all households that have had the
          contact tracing process get there."""
-        for household in self._network.houses.all_households():
+        for household in self._network.all_households:
             if household.time_until_contact_traced <= time:
                 if not household.contact_traced:
                     self.contact_tracing.contact_trace_household(household, time)

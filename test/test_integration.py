@@ -9,6 +9,7 @@
 import numpy.random
 from collections import Counter
 
+from household_contact_tracing.network import EdgeType, NodeType
 from household_contact_tracing.simulation_controller import SimulationController
 import household_contact_tracing.branching_process_models as bpm
 
@@ -38,12 +39,12 @@ class TestSimpleHousehold:
         controller.set_timeline_view(False)
         controller.run_simulation(10)
         network = controller.model.network
-        node_counts = Counter([node.node_type().name for node in network.all_nodes()])
+        node_counts = Counter([node.node_type() for node in network.all_nodes()])
         edge_counts = Counter([edge for edge in network.edge_types()])
         # There should be some symptomatic nodes and some asymptomatic but no others.
-        assert node_counts["symptomatic_will_not_report_infection"] == 9
-        assert node_counts["asymptomatic"] == 4
+        assert node_counts[NodeType.symptomatic_will_not_report_infection] == 9
+        assert node_counts[NodeType.asymptomatic] == 4
         assert len(node_counts) == 2
         # There is no tracing so all edges have the default type
-        assert edge_counts["default"] == 12
+        assert edge_counts[EdgeType.default] == 12
         assert len(edge_counts) == 1

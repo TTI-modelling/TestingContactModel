@@ -57,7 +57,7 @@ class NewInfectionHouseholdLevel(NewInfection):
         # causing a new infections is 0, due to the generation time distribution
         recovery_time = time + 14
 
-        household = self._network.houses.household(household_id)
+        household = self._network.household(household_id)
 
         # If the household has the propensity to use the contact tracing app, decide
         # if the node uses the app.
@@ -105,7 +105,7 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
             infecting_node: The id of the infecting node
         """
 
-        household = self._network.houses.household(household_id)
+        household = self._network.household(household_id)
 
         node_will_take_up_lfa_testing = self._infection.will_take_up_lfa_testing()
 
@@ -163,7 +163,7 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
         # causing a new infections is 0, due to the generation time distribution
         recovery_time = time + 14
 
-        household = self._network.houses.household(household_id)
+        household = self._network.household(household_id)
 
         # If the household has the propensity to use the contact tracing app, decide
         # if the node uses the app.

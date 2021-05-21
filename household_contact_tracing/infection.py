@@ -444,12 +444,12 @@ class NewHouseholdLevel(NewHouseholdBehaviour):
         """Adds a new household to the household dictionary"""
         house_size = self._infection.size_of_household()
 
-        return self._network.houses.add_household(house_size=house_size,
-                                                  time_infected=time,
-                                                  infected_by=infected_by,
-                                                  propensity_trace_app=self.infection.hh_propensity_use_trace_app(),
-                                                  additional_attributes=additional_attributes
-                                                  )
+        return self._network.add_household(house_size=house_size,
+                                           time_infected=time,
+                                           infected_by=infected_by,
+                                           propensity_trace_app=self.infection.hh_propensity_use_trace_app(),
+                                           additional_attributes=additional_attributes
+                                           )
 
 
 class NewHouseholdIndividualTracingDailyTesting(NewHouseholdLevel):

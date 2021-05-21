@@ -45,16 +45,34 @@ class TestType(Enum):
 
 class Network:
     def __init__(self):
-        self.houses = HouseholdCollection(self)
+        self._house_dict: Dict[int, Household] = {}
         self.graph = nx.Graph()
+
+    def add_household(self, house_size: int, time_infected: int,
+                      infected_by: Optional[Household], propensity_trace_app: bool,
+                      additional_attributes: Optional[dict] = None) -> Household:
+
+        new_house_id = self.house_count + 1
+
+        new_household = Household(self, new_house_id, house_size, time_infected,
+                                  infected_by, propensity_trace_app, additional_attributes)
+        self._house_dict[new_house_id] = new_household
+        return new_household
+
+    def household(self, house_id: int) -> Household:
+        return self._house_dict[house_id]
 
     @property
     def house_count(self):
-        return self.houses.count
+        return len(self._house_dict)
 
     @property
     def node_count(self):
         return nx.number_of_nodes(self.graph)
+
+    @property
+    def all_households(self) -> Iterator[Household]:
+        return (self.household(hid) for hid in self._house_dict)
 
     @property
     def active_infections(self):
@@ -106,7 +124,7 @@ class Network:
                  infecting_node: Optional[Node] = None, completed_isolation=False) -> Node:
         new_node_id = self.node_count + 1
         self.graph.add_node(new_node_id)
-        new_node_household = self.houses.household(household_id)
+        new_node_household = self.household(household_id)
         node = Node(id=new_node_id, time_infected=time_infected,
                     household=new_node_household, isolated=isolated,
                     will_uptake_isolation=will_uptake_isolation,
@@ -133,12 +151,9 @@ class Network:
         """Return a list of all nodes in the Network"""
         return (self.node(n) for n in self.graph)
 
-    def all_edges(self) -> Iterator[EdgeType]:
-        return (edge for edge in self.graph.edges)
-
-    def edge_types(self) -> List[str]:
+    def edge_types(self) -> List[EdgeType]:
         """Return a list of edge types in the network."""
-        return [self.graph.edges[edge]["edge_type"].name for edge in self.graph.edges]
+        return [self.graph.edges[edge]["edge_type"] for edge in self.graph.edges]
 
     def label_edges_between_houses(self, house_to: Household, house_from: Household,
                                    new_edge_type: EdgeType):
@@ -397,31 +412,3 @@ class Household:
 
         # Update edges within household
         self._network.label_edges_inside_household(self, EdgeType.within_house)
-
-
-class HouseholdCollection:
-
-    def __init__(self, nodes: Network):
-        self.house_dict: Dict[int, Household] = {}
-        self.nodes = nodes
-
-    def add_household(self, house_size: int, time_infected: int,
-                      infected_by: Optional[Household], propensity_trace_app: bool,
-                      additional_attributes: Optional[dict] = None) -> Household:
-
-        new_house_id = self.count + 1
-
-        new_household = Household(self.nodes, new_house_id, house_size, time_infected,
-                                  infected_by, propensity_trace_app, additional_attributes)
-        self.house_dict[new_house_id] = new_household
-        return new_household
-
-    def household(self, house_id: int) -> Household:
-        return self.house_dict[house_id]
-
-    @property
-    def count(self) -> int:
-        return len(self.house_dict)
-
-    def all_households(self) -> Iterator[Household]:
-        return (self.household(hid) for hid in self.house_dict)
