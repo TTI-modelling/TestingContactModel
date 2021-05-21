@@ -82,9 +82,8 @@ class Network:
         return len([node for node in self.all_nodes() if not node.recovered])
 
     def count_nodes(self, node_type: NodeType) -> int:
-        """Returns the number of nodes of a certain type."""
-        node_counts = Counter(self.all_nodes())
-        return node_counts[node_type]
+        """Returns the number of nodes of type `node_type`."""
+        return sum([node.node_type() == node_type for node in self.all_nodes()])
 
     def get_edge_between_household(self, house1: Household, house2: Household) -> Tuple[int, int]:
         """Get the id's of the two nodes that connect households."""
