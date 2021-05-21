@@ -149,11 +149,9 @@ class Infection:
                                                                        additional_attributes)
             return new_household
 
-    def new_infection(self, time: int, household_id: int,
-                      infecting_node: Optional[Node] = None, additional_attributes=None):
+    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
         if self.new_infection_behaviour:
-            self.new_infection_behaviour.new_infection(time, household_id, infecting_node,
-                                                       additional_attributes)
+            self.new_infection_behaviour.new_infection(time, household_id, infecting_node)
 
     def get_contact_rate_reduction(self, node: Node) -> int:
         if self.contact_rate_reduction_behaviour:

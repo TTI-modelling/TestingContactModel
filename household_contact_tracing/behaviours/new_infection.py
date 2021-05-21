@@ -24,9 +24,7 @@ class NewInfection(ABC):
         self._infection = infection
 
     @abstractmethod
-    def new_infection(self, time: int, household_id: int,
-                      infecting_node: Optional[Node] = None,
-                      additional_attributes: Optional[dict] = None):
+    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
         """Add a new infected Node to the model.
         :param time: The current simulation time.
         :param household_id: The id of the household to create the new infection in."""
@@ -34,8 +32,7 @@ class NewInfection(ABC):
 
 class NewInfectionHouseholdLevel(NewInfection):
 
-    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None,
-                      additional_attributes: Optional[dict] = None):
+    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
         """Add a new infected Node to the model."""
         asymptomatic = self._infection.is_asymptomatic_infection()
 
@@ -69,13 +66,6 @@ class NewInfectionHouseholdLevel(NewInfection):
         else:
             has_trace_app = False
 
-        # in case you want to add non-default additional attributes
-        default_additional_attributes = {}
-
-        if additional_attributes:
-            default_additional_attributes = {**default_additional_attributes,
-                                             **additional_attributes}
-
         isolation_uptake = self._infection.will_uptake_isolation()
 
         if household.isolated and isolation_uptake:
@@ -95,7 +85,6 @@ class NewInfectionHouseholdLevel(NewInfection):
                                           time_of_reporting=time_of_reporting,
                                           has_contact_tracing_app=has_trace_app,
                                           testing_delay=self.infection.testing_delay(),
-                                          additional_attributes=default_additional_attributes,
                                           infecting_node=infecting_node)
 
         # Each house now stores the ID's of which nodes are stored inside the house,
@@ -105,8 +94,7 @@ class NewInfectionHouseholdLevel(NewInfection):
 
 class NewInfectionIndividualTracingDailyTesting(NewInfection):
 
-    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None,
-                      additional_attributes: Optional[dict] = None):
+    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
         """Add a new infection to the model and network. Attributes are randomly generated.
 
         This method passes additional attribute, relevant to the lateral flow testing.
@@ -115,7 +103,6 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
             time: The current simulation time.
             household_id (int): The household id that the node is being added to
             infecting_node: The id of the infecting node
-            additional_attributes: Additional attributes to be passed
         """
 
         household = self._network.houses.household(household_id)
@@ -136,7 +123,7 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
             node_being_lateral_flow_tested = False
             time_started_lfa_testing = float('Inf')
 
-        default_additional_attributes = {
+        additional_attributes = {
             'being_lateral_flow_tested': node_being_lateral_flow_tested,
             'time_started_lfa_testing': time_started_lfa_testing,
             'received_positive_test_result': False,
@@ -152,15 +139,6 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
                 self._infection.will_engage_in_risky_behaviour_while_being_lfa_tested(),
             'propensity_to_miss_lfa_tests': self._infection.propensity_to_miss_lfa_tests()
         }
-
-        if additional_attributes:
-            # if new additional attributes are passed, these override the current additional
-            # attributes if they are the same value if they are different values, then they
-            # are added to the dictionary
-            additional_attributes_with_defaults = {**default_additional_attributes,
-                                                   **additional_attributes}
-        else:
-            additional_attributes_with_defaults = default_additional_attributes
 
         asymptomatic = self._infection.is_asymptomatic_infection()
 
@@ -194,13 +172,6 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
         else:
             has_trace_app = False
 
-        # in case you want to add non-default additional attributes
-        default_additional_attributes = {}
-
-        if additional_attributes_with_defaults:
-            default_additional_attributes = {**default_additional_attributes,
-                                             **additional_attributes_with_defaults}
-
         isolation_uptake = self._infection.will_uptake_isolation()
 
         if household.isolated and isolation_uptake:
@@ -222,7 +193,7 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
                                           time_of_reporting=time_of_reporting,
                                           has_contact_tracing_app=has_trace_app,
                                           testing_delay=self.infection.testing_delay(),
-                                          additional_attributes=default_additional_attributes,
+                                          additional_attributes=additional_attributes,
                                           infecting_node=infecting_node,
         )
 
