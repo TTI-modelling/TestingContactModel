@@ -125,20 +125,20 @@ class Network:
         self.graph.nodes[node_id]['node_obj'] = node
         return node
 
-    def node(self, node_id) -> Node:
+    def node(self, node_id: int) -> Node:
+        """Return the Node from the Network with `node_id`."""
         return self.graph.nodes[node_id]['node_obj']
 
     def all_nodes(self) -> Iterator[Node]:
+        """Return a list of all nodes in the Network"""
         return (self.node(n) for n in self.graph)
 
     def all_edges(self) -> Iterator[EdgeType]:
         return (edge for edge in self.graph.edges)
 
-    def asymptomatic_nodes(self) -> Iterator[Node]:
-        return [self.node(n) for n in self.graph if self.node(n).asymptomatic]
-
-    def symptomatic_nodes(self) -> Iterator[Node]:
-        return [self.node(n) for n in self.graph if not self.node(n).asymptomatic]
+    def edge_types(self) -> List[str]:
+        """Return a list of edge types in the network."""
+        return [self.graph.edges[edge]["edge_type"].name for edge in self.graph.edges]
 
     def label_edges_between_houses(self, house_to: Household, house_from: Household,
                                    new_edge_type: EdgeType):

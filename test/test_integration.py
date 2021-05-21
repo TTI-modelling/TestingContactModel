@@ -6,9 +6,6 @@
 # trace their contacts. When an individual is traced, their entire household goes into isolation.
 
 
-#The most basic functionality of the model is to simulate a individual-household branching process
-# model of SARS-CoV-2. This include asymptomatic individuals but there is, no symptom reporting or
-# self-isolation
 import numpy.random
 from collections import Counter
 
@@ -17,7 +14,10 @@ import household_contact_tracing.branching_process_models as bpm
 
 
 class TestSimpleHousehold:
-
+    """The most basic functionality of the model is to simulate a individual-household branching
+     process model of SARS-CoV-2. This include asymptomatic individuals but there is,
+     no symptom reporting or self-isolation.
+     """
     params = {'outside_household_infectivity_scaling': 0.7,
               'overdispersion': 0.32,
               'asymptomatic_prob': 0.2,
@@ -35,11 +35,12 @@ class TestSimpleHousehold:
         numpy.random.seed(42)
         controller = SimulationController(bpm.HouseholdLevelContactTracing(self.params))
         controller.set_show_graphs(False)
+        controller.set_timeline_view(False)
         controller.run_simulation(10)
         network = controller.model.network
         node_counts = Counter([node.node_type().name for node in network.all_nodes()])
-        edge_counts = Counter([network.graph.edges[edge]["edge_type"].name for edge in network.graph.edges])
-        # There should be some symptomatic nodes and some asyptomatic but no others.
+        edge_counts = Counter([edge for edge in network.edge_types()])
+        # There should be some symptomatic nodes and some asymptomatic but no others.
         assert node_counts["symptomatic_will_not_report_infection"] == 9
         assert node_counts["asymptomatic"] == 4
         assert len(node_counts) == 2
