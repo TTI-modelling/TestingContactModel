@@ -1,6 +1,7 @@
 from household_contact_tracing.simulation_model import SimulationModel
 from household_contact_tracing.views.shell_view import ShellView
 from household_contact_tracing.views.graph_view import GraphView
+from household_contact_tracing.views.graph_pyvis_view import GraphPyvisView
 from household_contact_tracing.views.timeline_graph_view import TimelineGraphView
 
 
@@ -13,6 +14,7 @@ class SimulationController:
         self._model = model
         self.shellView = ShellView(self, model)
         self.graphView = GraphView(self, model)
+        self.graphPyvisView = GraphPyvisView(self, model)
         self.timelineView = TimelineGraphView(self, model)
 
     @property
@@ -26,8 +28,11 @@ class SimulationController:
     def set_show_all_graphs(self, show_all: bool):
         self.graphView.set_show_all_graphs(show_all)
 
-    def set_show_graphs(self, show: bool):
+    def set_show_pyplot_graph(self, show: bool):
         self.graphView.set_display(show)
+
+    def set_show_pyvis_graph(self, show: bool):
+        self.graphPyvisView.set_display(show)
 
     def set_shell_output(self, show: bool):
         self.shellView.set_display(show)

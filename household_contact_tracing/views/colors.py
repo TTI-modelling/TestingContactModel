@@ -6,7 +6,7 @@ from household_contact_tracing.network import EdgeType, NodeType
 
 @dataclass
 class EdgeColour:
-    color: str
+    colour: str
     label: str
 
 
