@@ -220,15 +220,11 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
 
     model.contact_tracing.contact_tracing_success_prob = 1
 
-    model.infection.new_outside_household_infection(
-        time=0,
-        infecting_node=model.network.node(1),
-        serial_interval=0
-    )
+    model.infection.new_outside_household_infection(time=0, infecting_node=model.network.node(1))
     
     model.contact_tracing.increment_behaviour.attempt_contact_trace_of_household(
-        house_to=model.network.houses.household(2),
-        house_from=model.network.houses.household(1),
+        house_to=model.network.household(2),
+        house_from=model.network.household(1),
         days_since_contact_occurred=0,
         contact_trace_delay=0,
         time=0
@@ -257,14 +253,10 @@ def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: Indivi
 
     # add another infection to the household, so we can check that they are not quarantining
     # but they are lfa testing
-    model.infection.new_within_household_infection(
-        time=model.time,
-        infecting_node=model.network.node(1),
-        serial_interval=0
-    )
+    model.infection.new_within_household_infection(time=model.time, infecting_node=model.network.node(1))
 
     assert model.network.node(1).isolated
-    assert model.network.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
+    assert model.network.household(1).applied_policy_for_household_contacts_of_a_positive_case
     assert model.network.node(1).received_positive_test_result
     assert not model.network.node(2).isolated
     assert model.network.node(2).being_lateral_flow_tested
@@ -319,14 +311,11 @@ def test_start_lateral_flow_testing_household_and_quarantine(
 
     model.contact_tracing.isolate_positive_lateral_flow_tests(model.time)
 
-    model.infection.new_within_household_infection(
-        time=model.time,
-        infecting_node=model.network.node(1),
-        serial_interval=0
-    )
+    model.infection.new_within_household_infection(time=model.time,
+                                                   infecting_node=model.network.node(1))
 
     assert model.network.node(1).isolated
-    assert model.network.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
+    assert model.network.household(1).applied_policy_for_household_contacts_of_a_positive_case
     assert model.network.node(1).received_positive_test_result
     assert model.network.node(2).isolated
     assert model.network.node(2).being_lateral_flow_tested
@@ -382,14 +371,11 @@ def test_household_contacts_quarantine_only(
 
     model.contact_tracing.isolate_positive_lateral_flow_tests(model.time)
 
-    model.infection.new_within_household_infection(
-        time=model.time,
-        infecting_node=model.network.node(1),
-        serial_interval=0
-    )
+    model.infection.new_within_household_infection(time=model.time,
+                                                   infecting_node=model.network.node(1))
 
     assert model.network.node(1).isolated
-    assert model.network.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
+    assert model.network.household(1).applied_policy_for_household_contacts_of_a_positive_case
     assert model.network.node(1).received_positive_test_result
     assert model.network.node(2).isolated
     assert model.network.node(2).being_lateral_flow_tested
@@ -466,10 +452,10 @@ def test_lfa_tested_nodes_make_more_contacts_if_risky(
 
     # stop there being any within household infections
     # not sure if this is strictly necessary
-    model.network.houses.household(1).size = 1
-    model.network.houses.household(2).size = 1
-    model.network.houses.household(1).susceptibles = 0
-    model.network.houses.household(2).susceptibles = 0
+    model.network.household(1).size = 1
+    model.network.household(2).size = 1
+    model.network.household(1).susceptibles = 0
+    model.network.household(2).susceptibles = 0
 
     # set the nodes to being lfa tested
     model.network.node(1).being_lateral_flow_tested = True

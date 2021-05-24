@@ -1,10 +1,14 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
 import os
+from typing import TYPE_CHECKING
 
 from household_contact_tracing.views.simulation_view import SimulationView
-from household_contact_tracing.simulation_states import SimulationStateInterface, ReadyState, RunningState, \
-    ExtinctState, TimedOutState, MaxNodesInfectiousState
+from household_contact_tracing.simulation_states import SimulationStateInterface, ReadyState, \
+    RunningState, ExtinctState, TimedOutState, MaxNodesInfectiousState
 
+if TYPE_CHECKING:
+    from household_contact_tracing.network import Network
 
 class SimulationModel(ABC):
     """
@@ -61,6 +65,11 @@ class SimulationModel(ABC):
     @abstractmethod
     def run_simulation(self, max_time: int, infection_threshold: int) -> None:
         """ Run the simulation until it stops (e.g times out, or too many infectious nodes) """
+
+    @property
+    @abstractmethod
+    def network(self) -> Network:
+        """Return the network object that holds the Nodes."""
 
     def simulation_initialised(self):
         """ Initialise the simulation to starting values."""

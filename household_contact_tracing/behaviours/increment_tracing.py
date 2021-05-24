@@ -70,7 +70,7 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
 
         if self._contact_tracing.do_2_step:
             # Propagate the contact tracing from any households with a contact tracing index of 1
-            for household in self._network.houses.all_households():
+            for household in self._network.all_households:
                 if household.contact_tracing_index == 1:
                     if not household.propagated_contact_tracing:
                         if household.isolated:
@@ -137,7 +137,7 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
                                                      EdgeType.failed_contact_tracing)
 
     def update_contact_tracing_index(self, time):
-        for household in self._network.houses.all_households():
+        for household in self._network.all_households:
             # loop over households with non-zero indexes, those that have been contact traced but with
             if household.contact_tracing_index != 0:
                 for node in household.nodes:

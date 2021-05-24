@@ -79,12 +79,11 @@ def recreate_pytest_1():
     model.infection.new_outside_household_infection(
         time=0,
         infecting_node=model.network.node(1),
-        serial_interval=0
     )
 
     model.contact_tracing.increment_behaviour.attempt_contact_trace_of_household(
-        house_to=model.network.houses.household(2),
-        house_from=model.network.houses.household(1),
+        house_to=model.network.household(2),
+        house_from=model.network.household(1),
         days_since_contact_occurred=0,
         contact_trace_delay=0,
         time=0
@@ -137,11 +136,10 @@ def recreate_pytest_2():
     model.infection.new_within_household_infection(
         time=model.time,
         infecting_node=model.network.node(1),
-        serial_interval=0
     )
 
     assert model.network.node(1).isolated
-    assert model.network.houses.household(1).applied_policy_for_household_contacts_of_a_positive_case
+    assert model.network.household(1).applied_policy_for_household_contacts_of_a_positive_case
     assert model.network.node(1).received_positive_test_result
     assert model.network.node(2).isolated
     assert model.network.node(2).being_lateral_flow_tested

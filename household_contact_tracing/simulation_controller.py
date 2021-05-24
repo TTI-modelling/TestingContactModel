@@ -7,7 +7,8 @@ from household_contact_tracing.views.timeline_graph_view import TimelineGraphVie
 
 class SimulationController:
     """ Branching Process Simulation Controller (MVC pattern)
-        Consider sub-classing and making this class abstract, if a need for different controllers arises.
+        Consider sub-classing and making this class abstract, if a need for different controllers
+        arises.
     """
 
     def __init__(self, model: SimulationModel):
