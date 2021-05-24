@@ -35,7 +35,8 @@ class TestSimpleHousehold:
     def test_simple_household(self):
         numpy.random.seed(42)
         controller = SimulationController(bpm.HouseholdLevelContactTracing(self.params))
-        controller.set_show_graphs(False)
+        controller.set_show_pyplot_graph(False)
+        controller.set_show_pyvis_graph(False)
         controller.set_timeline_view(False)
         controller.run_simulation(10)
         network = controller.model.network
