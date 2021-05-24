@@ -261,7 +261,7 @@ class Node:
                     return InfectionStatus.self_recognised_infection
         return InfectionStatus.unknown_infection
 
-    def node_type(self) -> NodeType:
+    def node_type(self, time=None) -> NodeType:
         """Returns a node type, given the current status of the node."""
         if self.being_lateral_flow_tested:
             if self.isolated:
@@ -285,7 +285,9 @@ class Node:
         elif self.received_result and self.avenue_of_testing == TestType.pcr:
             return NodeType.received_neg_test_pcr
         elif self.taken_confirmatory_PCR_test:
-            if self.time >= self.confirmatory_PCR_test_result_time:
+            # Todo: This may need more correcting, added time=None parameter to get it running.
+            #       Was self.time but network/nodes should not need to know about time
+            if time and time >= self.confirmatory_PCR_test_result_time:
                 if self.confirmatory_PCR_result_was_positive:
                     return NodeType.confirmatory_pos_pcr_test
                 else:
