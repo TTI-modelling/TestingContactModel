@@ -3,7 +3,7 @@ import datetime
 from pyvis.network import Network as pvNetwork
 import networkx as nx
 import os
-import time
+import webbrowser
 
 from household_contact_tracing.views.simulation_view import SimulationView
 from household_contact_tracing.network import Network
@@ -22,10 +22,19 @@ class GraphPyvisView(SimulationView):
         self.model = model
 
         self.filename = ''
+        self._open_in_browser = False
 
         # Register as observer
         self.model.register_observer_state_change(self)
         self.model.register_observer_simulation_stopped(self)
+
+    @property
+    def open_in_browser(self):
+        return self._open_in_browser
+
+    @open_in_browser.setter
+    def open_in_browser(self, open_in_browser: bool):
+        self._open_in_browser = open_in_browser
 
     def set_display(self, show: bool):
         if show:
@@ -80,8 +89,13 @@ class GraphPyvisView(SimulationView):
         #   clashes with the legend (if _add_legend() is called).
         #nt.show_buttons(filter_=['physics'])
         #nt.show_buttons()
-        nt.show(self.filename)
+
+        nt.save_graph(self.filename)
+        # Add the legend to the saved html file
         self._add_legend()
+
+        if self.open_in_browser:
+            webbrowser.open(self.filename)
 
 
     def _adapt_nodes(self, graph: nx.Graph):

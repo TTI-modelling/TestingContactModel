@@ -26,21 +26,6 @@ class SimulationController:
     def model(self, model: SimulationModel):
         self._model = model
 
-    def set_show_increment_graphs(self, show_all: bool):
-        self.graphView.set_show_increment_graphs(show_all)
-
-    def set_show_pyplot_graph(self, show: bool):
-        self.graphView.set_display(show)
-
-    def set_show_pyvis_graph(self, show: bool):
-        self.graphPyvisView.set_display(show)
-
-    def set_shell_output(self, show: bool):
-        self.shellView.set_display(show)
-
-    def set_timeline_view(self, show: bool):
-        self.timelineView.set_display(show)
-
     def run_simulation(self, max_time: int = 20, infection_threshold: int = 5000):
         """ Run the simulation."""
         self._model.run_simulation(max_time, infection_threshold)
