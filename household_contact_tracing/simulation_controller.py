@@ -13,10 +13,10 @@ class SimulationController:
 
     def __init__(self, model: SimulationModel):
         self._model = model
-        self.shellView = ShellView(self, model)
-        self.graphView = GraphView(self, model)
-        self.graphPyvisView = GraphPyvisView(self, model)
-        self.timelineView = TimelineGraphView(self, model)
+        self.shell_view = ShellView(self, model)
+        self.graph_view = GraphView(self, model)
+        self.graph_pyvis_view = GraphPyvisView(self, model)
+        self.timeline_view = TimelineGraphView(self, model)
 
     @property
     def model(self) -> SimulationModel:
