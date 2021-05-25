@@ -4,6 +4,7 @@ from pyvis.network import Network as pvNetwork
 import networkx as nx
 import os
 import webbrowser
+from bs4 import BeautifulSoup as bs
 
 from household_contact_tracing.views.simulation_view import SimulationView
 from household_contact_tracing.network import Network
@@ -127,8 +128,6 @@ class GraphPyvisView(SimulationView):
         return result
 
     def _add_legend(self):
-        from bs4 import BeautifulSoup as bs
-
         # load the file
         with open(self.filename) as inf:
             txt = inf.read()
