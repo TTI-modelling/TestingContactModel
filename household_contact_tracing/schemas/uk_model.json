@@ -14,10 +14,6 @@
       "description": "",
       "type": "number"
     },
-    "probable_infections_need_test": {
-      "description": "",
-      "type": "boolean"
-    },
     "recall_probability_fall_off": {
       "description": "",
       "type": "number"
