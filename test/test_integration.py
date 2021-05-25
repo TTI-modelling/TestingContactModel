@@ -35,8 +35,9 @@ class TestSimpleHousehold:
     def test_simple_household(self):
         numpy.random.seed(42)
         controller = SimulationController(bpm.HouseholdLevelContactTracing(self.params))
-        controller.set_show_graphs(False)
-        controller.set_timeline_view(False)
+        controller.graph_view.set_display(False)
+        controller.graph_pyvis_view.set_display(False)
+        controller.timeline_view.set_display(False)
         controller.run_simulation(10)
         network = controller.model.network
         node_counts = Counter([node.node_type() for node in network.all_nodes()])

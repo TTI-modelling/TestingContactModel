@@ -67,4 +67,6 @@ class TimelineGraphView(SimulationView):
             plt.show()
 
     def increment_timeline(self, network):
-        self.df_node_type_counts = self.df_node_type_counts.append({node.name: network.count_nodes(node) for node in NodeType}, ignore_index=True)
+        self.df_node_type_counts = \
+            self.df_node_type_counts.append({node.name: network.count_nodes(node) for node in NodeType},
+                                            ignore_index=True)

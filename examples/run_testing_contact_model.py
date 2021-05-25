@@ -33,9 +33,11 @@ def main():
     model.prob_testing_positive_lfa_func = prob_testing_positive_function
     model.prob_testing_positive_pcr_func = prob_testing_positive_function
     controller = SimulationController(model)
-    #controller.set_show_all_graphs(True)
+    controller.graph_pyvis_view.set_display(True)
+    controller.graph_pyvis_view.open_in_browser = True
     controller.run_simulation(15)
-    controller.run_simulation(20)
+    controller.run_simulation(25)
+    controller.graph_pyvis_view.set_display(False)
     recreate_pytest_1()
     recreate_pytest_2()
 
@@ -90,8 +92,9 @@ def recreate_pytest_1():
     )
 
     controller = SimulationController(model=model)
-    controller.set_shell_output(False)
-    controller.set_timeline_view(False)
+    controller.shell_view.set_display(False)
+    controller.timeline_view.set_display(False)
+    controller.graph_pyvis_view.set_display(False)
     controller.run_simulation(2)
 
     print('Assert node 2 being lft\'d', model.network.node(2).being_lateral_flow_tested)

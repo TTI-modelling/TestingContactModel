@@ -51,7 +51,7 @@ class GraphView(SimulationView):
         """ Respond to changes in graph (nodes/households network) """
         self.draw_network(subject.network)
 
-    def set_show_all_graphs(self, show_all):
+    def set_show_increment_graphs(self, show_all):
         if show_all:
             self.model.register_observer_graph_change(self)
         else:
@@ -63,7 +63,8 @@ class GraphView(SimulationView):
         node_colour_map = [node_colours[node.node_type()].colour for node
                            in network.all_nodes()]
 
-        edge_colour_map = [edge_colours[edge].color for edge in network.edge_types()]
+        edge_colour_map = [edge_colours[edge].colour for edge in network.edge_types()]
+
         node_labels = {node.id: node.household.house_id for node in network.all_nodes()}
 
         plt.figure(figsize=(10, 10))
@@ -77,7 +78,7 @@ class GraphView(SimulationView):
         ax.set_position([box.x0, box.y0, box.width * 0.7, box.height])
 
         # Legend for edge colours
-        lines = [Line2D([0, 1], [0, 1], color=clr.color, lw=1) for clr
+        lines = [Line2D([0, 1], [0, 1], color=clr.colour, lw=1) for clr
                  in edge_colours.values()]
         labels = [value.label for value in edge_colours.values()]
         first_legend = plt.legend(lines, labels, loc="upper left", bbox_to_anchor=(1, 1),
