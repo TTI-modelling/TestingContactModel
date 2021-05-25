@@ -26,8 +26,8 @@ class SimulationController:
     def model(self, model: SimulationModel):
         self._model = model
 
-    def set_show_all_graphs(self, show_all: bool):
-        self.graphView.set_show_all_graphs(show_all)
+    def set_show_increment_graphs(self, show_all: bool):
+        self.graphView.set_show_increment_graphs(show_all)
 
     def set_show_pyplot_graph(self, show: bool):
         self.graphView.set_display(show)

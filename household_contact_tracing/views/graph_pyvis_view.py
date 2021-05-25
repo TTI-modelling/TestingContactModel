@@ -1,11 +1,14 @@
+import datetime
+
 from pyvis.network import Network as pvNetwork
 import networkx as nx
-
+import os
+import time
 
 from household_contact_tracing.views.simulation_view import SimulationView
 from household_contact_tracing.network import Network
 from household_contact_tracing.simulation_model import SimulationModel
-from household_contact_tracing.views.colors import node_colours, edge_colours
+from household_contact_tracing.views.colors import node_colours, edge_colours, EdgeType
 
 
 class GraphPyvisView(SimulationView):
@@ -17,6 +20,8 @@ class GraphPyvisView(SimulationView):
         # ... but controller not required yet (no input collected from view)
         # self.controller = controller
         self.model = model
+
+        self.filename = ''
 
         # Register as observer
         self.model.register_observer_state_change(self)
@@ -61,12 +66,23 @@ class GraphPyvisView(SimulationView):
 
         nt = pvNetwork('1000px', '1000px')
 
+        self.filename = os.path.join(self.model.ROOT_DIR,
+                                     'temp',
+                                     'pyvis_graph_{}.html'.format(datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
+
         reduced_graph = self._adapt_nodes(network.graph)
         # populates the nodes and edges data structures
         nt.from_nx(reduced_graph)
+
+        # The following 2 rows are potentially useful for configuring the pyvis graph: They are intended as temporary
+        # for parameter setting only.
+        # Warning: If you do (temporarily) uncomment out either of the following lines, the parameter control
+        #   clashes with the legend (if _add_legend() is called).
         #nt.show_buttons(filter_=['physics'])
-        nt.show_buttons()
-        nt.show('nx.html')
+        #nt.show_buttons()
+        nt.show(self.filename)
+        self._add_legend()
+
 
     def _adapt_nodes(self, graph: nx.Graph):
         result = graph.copy()
@@ -95,3 +111,52 @@ class GraphPyvisView(SimulationView):
             edge[2].pop('edge_type')
 
         return result
+
+    def _add_legend(self):
+        from bs4 import BeautifulSoup as bs
+
+        # load the file
+        with open(self.filename) as inf:
+            txt = inf.read()
+            soup = bs(txt, "html.parser")
+
+        # create new link
+        new_table = soup.new_tag("table")
+        # insert it into the document
+        soup.body.append(new_table)
+
+        # Edges legend
+        new_row = soup.new_tag('tr')
+        new_table.append(new_row)
+        new_cell = soup.new_tag('th')
+        new_row.append(new_cell)
+        new_cell.string = 'Edges'
+        for colour in edge_colours:
+            new_row = soup.new_tag('tr')
+            new_table.append(new_row)
+            new_cell = soup.new_tag('td')
+            new_row.append(new_cell)
+            new_cell.string = edge_colours[colour].label
+            new_cell = soup.new_tag('td')
+            new_row.append(new_cell)
+            new_cell['style'] = 'background-color:{}; width: 20px;'.format(edge_colours[colour].colour)
+
+        # Nodes legend
+        new_row = soup.new_tag('tr')
+        new_table.append(new_row)
+        new_cell = soup.new_tag('th')
+        new_row.append(new_cell)
+        new_cell.string = 'Nodes'
+        for colour in node_colours:
+            new_row = soup.new_tag('tr')
+            new_table.append(new_row)
+            new_cell = soup.new_tag('td')
+            new_row.append(new_cell)
+            new_cell.string = node_colours[colour].label
+            new_cell = soup.new_tag('td')
+            new_row.append(new_cell)
+            new_cell['style'] = 'background-color:{}; width: 20px;'.format(node_colours[colour].colour)
+
+        # save the file again
+        with open(self.filename, "w") as outf:
+            outf.write(str(soup))

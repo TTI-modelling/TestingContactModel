@@ -51,7 +51,7 @@ class GraphView(SimulationView):
         """ Respond to changes in graph (nodes/households network) """
         self.draw_network(subject.network)
 
-    def set_show_all_graphs(self, show_all):
+    def set_show_increment_graphs(self, show_all):
         if show_all:
             self.model.register_observer_graph_change(self)
         else:

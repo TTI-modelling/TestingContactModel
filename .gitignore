@@ -144,5 +144,6 @@ household_contact_tracing.code-workspace
 *desktop.ini
 Notebooks/Dev/CapacityTesting.ipynb
 /.idea/*
-/household_contact_tracing/nx.html
-/examples/nx.html
+
+# Temp files
+*/temp/*
