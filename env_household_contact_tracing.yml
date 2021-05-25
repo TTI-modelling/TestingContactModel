@@ -2,9 +2,14 @@ name: household-contact-tracing
 channels:
   - defaults
 dependencies:
-  - numpy
-  - setuptools
   - matplotlib
-  - networkx
+  - numpy
   - scipy
+  - networkx
+  - setuptools
   - pytest
+  - jupyter
+  - pyyaml
+  - pandas
+  - pyvis
+  - beautifulsoup4
