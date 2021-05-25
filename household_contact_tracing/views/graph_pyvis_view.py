@@ -8,7 +8,7 @@ import webbrowser
 from household_contact_tracing.views.simulation_view import SimulationView
 from household_contact_tracing.network import Network
 from household_contact_tracing.simulation_model import SimulationModel
-from household_contact_tracing.views.colors import node_colours, edge_colours, EdgeType
+from household_contact_tracing.views.colors import node_colours, edge_colours
 
 
 class GraphPyvisView(SimulationView):
