@@ -1,12 +1,13 @@
 # Household isolation integration tests. Some simple runs of the system with fixed seeds.
 import copy
+from typing import Tuple
 
 import numpy.random
 from collections import Counter
 
 import pytest
 
-from household_contact_tracing.network import EdgeType, NodeType
+from household_contact_tracing.network import EdgeType, NodeType, Network
 from household_contact_tracing.simulation_controller import SimulationController
 import household_contact_tracing.branching_process_models as bpm
 
@@ -35,6 +36,22 @@ class TestSimpleHousehold:
     isolation.
     """
 
+    @staticmethod
+    def run_simulation(params: dict) -> Network:
+        """Run the Household simulation for 10 steps with the given params and return the
+        network."""
+        controller = SimulationController(bpm.HouseholdLevelContactTracing(params))
+        controller.set_display(False)
+        controller.run_simulation(10)
+        return controller.model.network
+
+    @staticmethod
+    def count_network(network: Network) -> Tuple[Counter, Counter]:
+        """Count the types of nodes and types of edges in the network."""
+        node_counts = Counter([node.node_type() for node in network.all_nodes()])
+        edge_counts = Counter([edge for edge in network.edge_types()])
+        return node_counts, edge_counts
+
     def test_no_isolation_no_reporting(self, params):
         """The most basic functionality of the model is to simulate a individual-household
         branching process model of SARS-CoV-2. This includes asymptomatic individuals but
@@ -43,14 +60,8 @@ class TestSimpleHousehold:
         either.
         """
         numpy.random.seed(42)
-        controller = SimulationController(bpm.HouseholdLevelContactTracing(params))
-        controller.graph_view.set_display(False)
-        controller.graph_pyvis_view.set_display(False)
-        controller.timeline_view.set_display(False)
-        controller.run_simulation(10)
-        network = controller.model.network
-        node_counts = Counter([node.node_type() for node in network.all_nodes()])
-        edge_counts = Counter([edge for edge in network.edge_types()])
+        network = self.run_simulation(params)
+        node_counts, edge_counts = self.count_network(network)
         # There should be some symptomatic nodes and some asymptomatic but no others.
         assert node_counts[NodeType.symptomatic_will_not_report_infection] == 9
         assert node_counts[NodeType.asymptomatic] == 4
@@ -70,14 +81,8 @@ class TestSimpleHousehold:
         params['self_isolation_duration'] = 10
 
         numpy.random.seed(42)
-        controller = SimulationController(bpm.HouseholdLevelContactTracing(params))
-        controller.graph_view.set_display(False)
-        controller.graph_pyvis_view.set_display(False)
-        controller.timeline_view.set_display(False)
-        controller.run_simulation(10)
-        network = controller.model.network
-        node_counts = Counter([node.node_type() for node in network.all_nodes()])
-        edge_counts = Counter([edge for edge in network.edge_types()])
+        network = self.run_simulation(params)
+        node_counts, edge_counts = self.count_network(network)
         # Some should be asymptomatic, some should isolate, some should not report infection and
         # some should intend to report but not yet be isolating.
         assert node_counts[NodeType.isolated] == 3

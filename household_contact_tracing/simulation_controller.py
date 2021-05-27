@@ -29,3 +29,9 @@ class SimulationController:
     def run_simulation(self, max_time: int = 20, infection_threshold: int = 5000):
         """ Run the simulation."""
         self._model.run_simulation(max_time, infection_threshold)
+
+    def set_display(self, display: bool):
+        """Turn on or off all graphical output."""
+        self.graph_view.set_display(display)
+        self.graph_pyvis_view.set_display(display)
+        self.timeline_view.set_display(display)
