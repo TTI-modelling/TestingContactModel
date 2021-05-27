@@ -9,6 +9,8 @@ from household_contact_tracing.simulation_states import SimulationStateInterface
 
 if TYPE_CHECKING:
     from household_contact_tracing.network import Network
+    from household_contact_tracing.infection import Infection
+
 
 class SimulationModel(ABC):
     """
@@ -70,6 +72,11 @@ class SimulationModel(ABC):
     @abstractmethod
     def network(self) -> Network:
         """Return the network object that holds the Nodes."""
+
+    @property
+    @abstractmethod
+    def infection(self) -> Infection:
+        """Return the Infection object."""
 
     def simulation_initialised(self):
         """ Initialise the simulation to starting values."""

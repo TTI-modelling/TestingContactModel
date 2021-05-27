@@ -220,8 +220,6 @@ class Node:
         self.propensity_risky_behaviour_lfa_testing = None
         self.propensity_to_miss_lfa_tests = None
 
-        self.time: Optional[int] = None
-
         # Update instance variables with anything in params
         if additional_attributes:
             for param_name in self.__dict__:
