@@ -26,7 +26,6 @@ edge_colours = {EdgeType.default: EdgeColour("black", "Transmission, yet to be t
 
 node_colours = {NodeType.default: NodeColour("lightgrey", "Default"),
                 NodeType.isolated: NodeColour('yellow', "Isolating"),
-                NodeType.had_contacts_traced: NodeColour("orange", "Had contacts traced"),
                 NodeType.symptomatic_will_report_infection: NodeColour('lime',
                                                                        "Symptomatic, will report"),
                 NodeType.symptomatic_will_not_report_infection: NodeColour('green',
