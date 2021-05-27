@@ -83,7 +83,7 @@ class TestSimpleHousehold:
         numpy.random.seed(42)
         network = self.run_simulation(params)
         node_counts, edge_counts = self.count_network(network)
-        # Some should be asymptomatic, some should isolate, some should not report infection and
+        # Some should be asymptomatic, some should isolating, some should not report infection and
         # some should intend to report but not yet be isolating.
         assert node_counts[NodeType.isolated] == 3
         assert node_counts[NodeType.asymptomatic] == 2
@@ -97,3 +97,30 @@ class TestSimpleHousehold:
         assert edge_counts[EdgeType.failed_contact_tracing] == 7
         assert len(edge_counts) == 3
 
+    def test_basic_tracing(self, params):
+        """Contact tracing is now activated. This works at a household level on symptom onset.
+        When an infection is discovered in a household, contact tracing attempts are made to all
+        connected Households. When a household is reached, only the traced node isolates.
+        If a node in a traced household develops symptoms, the whole household is isolated and
+        contact tracing is again propagated. Being performed upon symptom onset means that
+        testing is not performed."""
+
+        params['infection_reporting_prob'] = 0.5
+        params['self_isolation_duration'] = 10
+        params['contact_tracing_success_prob'] = 1
+        params['quarantine_duration'] = 10
+
+        numpy.random.seed(39)
+        network = self.run_simulation(params)
+        node_counts, edge_counts = self.count_network(network)
+        # As before there are 4 possible node states
+        assert node_counts[NodeType.isolated] == 10
+        assert node_counts[NodeType.asymptomatic] == 6
+        assert node_counts[NodeType.symptomatic_will_not_report_infection] == 6
+        assert node_counts[NodeType.symptomatic_will_report_infection] == 5
+        assert len(node_counts) == 4
+        # The between house edge type is a result of successful contact tracing.
+        assert edge_counts[EdgeType.default] == 14
+        assert edge_counts[EdgeType.within_house] == 6
+        assert edge_counts[EdgeType.between_house] == 6
+        assert len(edge_counts) == 3
