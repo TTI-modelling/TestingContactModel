@@ -39,12 +39,12 @@ class TestSimpleHousehold:
     """
 
     @staticmethod
-    def run_simulation(params: dict) -> SimulationModel:
+    def run_simulation(params: dict, days=10) -> SimulationModel:
         """Run the Household simulation for 10 steps with the given params and return the
         network."""
         controller = SimulationController(bpm.HouseholdLevelContactTracing(params))
         controller.set_display(False)
-        controller.run_simulation(10)
+        controller.run_simulation(days)
 
         return controller.model
 
@@ -68,6 +68,15 @@ class TestSimpleHousehold:
             else:
                 isolating_correctly.append(True)
         return isolating_correctly
+
+    @staticmethod
+    def check_second_level_isolation(network: Network):
+        """Check whether all households with a contact tracing index of 2 are isolated."""
+        for household in network.all_households:
+            if household.contact_tracing_index == 2:
+                if household.isolated is False:
+                    return False
+        return True
 
     def test_no_isolation_no_reporting(self, params):
         """The most basic functionality of the model is to simulate a individual-household
@@ -242,3 +251,22 @@ class TestSimpleHousehold:
         assert 0.75 in node_contact_rate_reduction
         # People who are asymptomatic and just social distancing
         assert 0.3 in node_contact_rate_reduction
+
+    def test_two_step_tracing(self, params):
+        """In two step tracing people are contact traced if they met an infected person. The
+        contacts of the contact traced person are then traced as well."""
+
+        params['infection_reporting_prob'] = 0.5
+        params['contact_tracing_success_prob'] = 1
+        params['do_2_step'] = False
+
+        numpy.random.seed(42)
+        model = self.run_simulation(params, 15)
+        network = model.network
+        node_counts, edge_counts = self.count_network(network)
+        hh_idxs = [household.contact_tracing_index > 1 for household in network.all_households]
+        # Assert that there are some households with a contact tracing index > 1
+        assert any(hh_idxs)
+        # All of the second level households should be isolating
+        self.check_second_level_isolation(network)
+
