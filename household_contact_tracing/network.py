@@ -11,7 +11,7 @@ class EdgeType(Enum):
     """Describes the source of infection between nodes."""
     default = 0
     within_house = 1
-    between_house = 2
+    between_house = 2   # This is a contact traced edge
     failed_contact_tracing = 3
     app_traced = 4
 
@@ -19,7 +19,6 @@ class EdgeType(Enum):
 class NodeType(Enum):
     default = 0
     isolated = 1
-    had_contacts_traced = 2
     received_pos_test_pcr = 3
     received_neg_test_pcr = 4
     confirmatory_pos_pcr_test = 5
@@ -176,8 +175,7 @@ class Node:
                  asymptomatic: bool, symptom_onset_time: float, pseudo_symptom_onset_time: int,
                  recovery_time: int, will_report_infection: bool, time_of_reporting: int,
                  has_contact_tracing_app: bool, contact_traced: bool, testing_delay: int = 0,
-                 completed_isolation=False, had_contacts_traced=False,
-                 outside_house_contacts_made=0, recovered=False,
+                 completed_isolation=False, outside_house_contacts_made=0, recovered=False,
                  infecting_node: Optional[Node] = None, additional_attributes: dict = None):
         self.id = id
         self.time_infected = time_infected
@@ -194,7 +192,6 @@ class Node:
         self.has_contact_tracing_app = has_contact_tracing_app
         self.testing_delay = testing_delay
         self.contact_traced = contact_traced
-        self.had_contacts_traced = had_contacts_traced
         self.outside_house_contacts_made = outside_house_contacts_made
         self.spread_to_global_node_time_tuples = []
         self.recovered = recovered
@@ -222,8 +219,6 @@ class Node:
         self.confirmatory_PCR_test_result_time = None
         self.propensity_risky_behaviour_lfa_testing = None
         self.propensity_to_miss_lfa_tests = None
-
-        self.time: Optional[int] = None
 
         # Update instance variables with anything in params
         if additional_attributes:
@@ -266,8 +261,6 @@ class Node:
                 return NodeType.being_lateral_flow_tested_not_isolated
         elif self.isolated:
             return NodeType.isolated
-        elif self.had_contacts_traced:
-            return NodeType.had_contacts_traced
         elif not self.asymptomatic:
             if self.will_report_infection:
                 return NodeType.symptomatic_will_report_infection
@@ -318,7 +311,6 @@ class Household:
         self.spread_to: List[Household] = []          # Which households were infected by this household
         self.nodes: List[Node] = []           # The ID of currently infected nodes in the household
         self.within_house_edges: List[Tuple[int, int]] = []  # Which edges are contained within the household
-        self.had_contacts_traced = False         # Have the nodes inside the household had their contacts traced?
 
         self.being_lateral_flow_tested = False,
         self.being_lateral_flow_tested_start_time = None

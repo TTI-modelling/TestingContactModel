@@ -119,7 +119,8 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
             contact_trace_delay = contact_trace_delay + self._contact_tracing.contact_trace_delay
             proposed_time_until_contact_trace = time + contact_trace_delay
 
-            # Get the current time until contact trace, and compare against the proposed time until contact trace
+            # Get the current time until contact trace, and compare against the proposed
+            # time until contact trace
             # Note this starts as infinity
             # If the new proposed time is quicker, change the route
             if proposed_time_until_contact_trace < house_to.time_until_contact_traced:
