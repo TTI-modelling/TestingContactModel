@@ -113,16 +113,6 @@
         "type": "number"
       }
     }
-  },
-  "required": [
-    "outside_household_infectivity_scaling",
-    "overdispersion",
-    "asymptomatic_prob",
-    "asymptomatic_relative_infectivity",
-    "infection_reporting_prob",
-    "household_pairwise_survival_prob",
-    "incubation_period_delay",
-    "symptom_reporting_delay"
-  ]
+  }
 }
 
