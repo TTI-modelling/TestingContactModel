@@ -88,11 +88,11 @@ class Network:
         """ Determine whether graphs have identical network structures."""
         return nx.is_isomorphic(self.graph, network.graph)
 
-    def is_identical(self, graph):
+    def __eq__(self, other):
         """ Currently only determines whether graphs have identical network structures,
             but we may want to compare more details.
         """
-        return self.is_isomorphic(graph)
+        return self.is_isomorphic(other)
 
     def count_non_recovered_nodes(self) -> int:
         """Returns the number of nodes not in the recovered state."""

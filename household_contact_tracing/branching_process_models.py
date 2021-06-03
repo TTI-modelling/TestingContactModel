@@ -126,7 +126,7 @@ class HouseholdLevelContactTracing(SimulationModel):
             self.simulate_one_step()
 
             # If graph changed, tell parent
-            if not prev_network.is_isomorphic(self.network):
+            if not prev_network == self.network:
                 SimulationModel.graph_changed(self)
 
             # Call parent completed step
