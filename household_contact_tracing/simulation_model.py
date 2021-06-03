@@ -4,7 +4,7 @@ import os
 from typing import TYPE_CHECKING
 
 from household_contact_tracing.views.simulation_view import SimulationView
-from household_contact_tracing.simulation_states import SimulationStateInterface, ReadyState, \
+from household_contact_tracing.simulation_states import SimulationState, ReadyState, \
     RunningState, ExtinctState, TimedOutState, MaxNodesInfectiousState
 
 if TYPE_CHECKING:
@@ -37,31 +37,31 @@ class SimulationModel(ABC):
         self._state = self._ready_state
 
     @property
-    def state(self) -> SimulationStateInterface:
+    def state(self) -> SimulationState:
         return self._state
 
     @state.setter
-    def state(self, state: SimulationStateInterface):
+    def state(self, state: SimulationState):
         self._state = state
 
     @property
-    def ready_state(self) -> SimulationStateInterface:
+    def ready_state(self) -> SimulationState:
         return self._ready_state
 
     @property
-    def running_state(self) -> SimulationStateInterface:
+    def running_state(self) -> SimulationState:
         return self._running_state
 
     @property
-    def extinct_state(self) -> SimulationStateInterface:
+    def extinct_state(self) -> SimulationState:
         return self._extinct_state
 
     @property
-    def timed_out_state(self) -> SimulationStateInterface:
+    def timed_out_state(self) -> SimulationState:
         return self._timed_out_state
 
     @property
-    def max_nodes_infectious_state(self) -> SimulationStateInterface:
+    def max_nodes_infectious_state(self) -> SimulationState:
         return self._max_nodes_infectious_state
 
     @abstractmethod

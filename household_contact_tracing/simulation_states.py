@@ -1,30 +1,12 @@
-class SimulationStateInterface:
+from abc import ABC, abstractmethod
+
+
+class SimulationState(ABC):
+
     """
-        Simulation State interface (State pattern)
+        Simulation State Abstract class (State pattern)
     """
 
-    def start_run(self):
-        """ The simulation has started running."""
-        pass
-
-    def timed_out(self):
-        """ The simulation timed out """
-        pass
-
-    def go_extinct(self):
-        """ The simulation went extinct (no more infectious nodes) """
-        pass
-
-    def max_nodes_infectious(self):
-        """  The max number of infectious nodes was reached """
-        pass
-
-    def initialise(self):
-        """ The simulation was re-set to initialised """
-        pass
-
-
-class SimulationState(SimulationStateInterface):
     def __init__(self, simulation_model):
         self._simulation_model = simulation_model
 
@@ -36,6 +18,31 @@ class SimulationState(SimulationStateInterface):
     def name(self):
         return self.get_state_name()
 
+    @abstractmethod
+    def start_run(self):
+        """ The simulation has started running."""
+        pass
+
+    @abstractmethod
+    def timed_out(self):
+        """ The simulation timed out """
+        pass
+
+    @abstractmethod
+    def go_extinct(self):
+        """ The simulation went extinct (no more infectious nodes) """
+        pass
+
+    @abstractmethod
+    def max_nodes_infectious(self):
+        """  The max number of infectious nodes was reached """
+        pass
+
+    @abstractmethod
+    def initialise(self):
+        """ The simulation was re-set to initialised """
+        pass
+
 
 class ReadyState(SimulationState):
     """
@@ -44,26 +51,24 @@ class ReadyState(SimulationState):
 
     def initialise(self):
         """ The simulation was re-set to initial pre-run state """
-        print('In ready/initialised state!')
         self._simulation_model.state = self._simulation_model.ready_state
 
     def start_run(self):
         """ The simulation has started running."""
-        print('Changing to running state')
         self._simulation_model.state = self._simulation_model.running_state
         self._simulation_model.notify_observers_state_change()
 
     def timed_out(self):
         """ The simulation timed out """
-        print('You can\'t time-out during ready state!')
+        raise ValueError('Not possible to time-out during ready state!')
 
     def go_extinct(self):
         """ The simulation went extinct (no more infectious nodes) """
-        print('You can\'t go extinct during ready state!')
+        raise ValueError('Not possible to go extinct during ready state!')
 
     def max_nodes_infectious(self):
         """  The max number of infectious nodes was reached """
-        print('You can\'t reach max num infectious nodes during ready state!')
+        raise ValueError('Not possible to reach max num infectious nodes during ready state!')
 
 
 class RunningState(SimulationState):
@@ -73,27 +78,24 @@ class RunningState(SimulationState):
 
     def initialise(self):
         """ The simulation was re-set to initial pre-run state """
-        print('Cannot initialise whilst running. Wait for stop and then re-initialise model')
+        raise ValueError('Cannot initialise whilst running. Wait for stop and then re-initialise model')
 
     def start_run(self):
         """ The simulation has started running."""
-        print('Already in Running state')
+        raise ValueError('Already in Running state, cannot start run')
 
     def timed_out(self):
         """ The simulation timed out """
-        print('Timed out state')
         self._simulation_model.state = self._simulation_model.timed_out_state
         self._simulation_model.notify_observers_state_change()
 
     def go_extinct(self):
         """ The simulation went extinct (no more infectious nodes) """
-        print('Gone extinct state')
         self._simulation_model.state = self._simulation_model.extinct_state
         self._simulation_model.notify_observers_state_change()
 
     def max_nodes_infectious(self):
         """  The max number of infectious nodes was reached """
-        print('Max infectious nodes threshold met')
         self._simulation_model.state = self._simulation_model.max_nodes_infectious_state
         self._simulation_model.notify_observers_state_change()
 
@@ -105,25 +107,24 @@ class ExtinctState(SimulationState):
 
     def initialise(self):
         """ The simulation was re-set to initial pre-run state """
-        print('Can\'t initialise from extinct state. Re-initialise model')
+        raise ValueError('Not possible to initialise from extinct state. Re-initialise the model')
 
     def start_run(self):
         """ The simulation has started running."""
-        print('Changing to running state')
         self._simulation_model.state = self._simulation_model.running_state
         self._simulation_model.notify_observers_state_change()
 
     def timed_out(self):
         """ The simulation timed out """
-        print('Cannot time out if extinct!')
+        raise ValueError('Can not time out if extinct!')
 
     def go_extinct(self):
         """ The simulation went extinct (no more infectious nodes) """
-        print('Already extinct!')
+        raise ValueError('Cannot go extinct if already extinct')
 
     def max_nodes_infectious(self):
         """  The max number of infectious nodes was reached """
-        print('Cannot reach max infectious nodes if extinct!')
+        raise ValueError('Can not reach max infectious nodes if extinct')
 
 
 class TimedOutState(SimulationState):
@@ -133,25 +134,24 @@ class TimedOutState(SimulationState):
 
     def initialise(self):
         """ The simulation was re-set to initial pre-run state """
-        print('Can\'t initialise from timed out state. Re-initialise model')
+        raise ValueError('Can not initialise from timed out state. Re-initialise the model')
 
     def start_run(self):
         """ The simulation has started running."""
-        print('Changing to running state')
         self._simulation_model.state = self._simulation_model.running_state
         self._simulation_model.notify_observers_state_change()
 
     def timed_out(self):
         """ The simulation timed out """
-        print('Already timed out!')
+        raise ValueError('Can not time out if already timed out.')
 
     def go_extinct(self):
         """ The simulation went extinct (no more infectious nodes) """
-        print('Cannot go extinct if timed out!')
+        raise ValueError('Can not go extinct if timed out.')
 
     def max_nodes_infectious(self):
         """  The max number of infectious nodes was reached """
-        print('Cannot reach max infectious nodes if timed out!')
+        raise ValueError('Can not reach max infectious nodes if timed out.')
 
 
 class MaxNodesInfectiousState(SimulationState):
@@ -161,22 +161,21 @@ class MaxNodesInfectiousState(SimulationState):
 
     def initialise(self):
         """ The simulation was re-set to initial pre-run state """
-        print('Can\'t initialise from max nodes reached state. Re-initialise model')
+        raise ValueError('Can not initialise from max nodes reached state. Re-initialise the model')
 
     def start_run(self):
         """ The simulation has started running."""
-        print('Changing to running state')
         self._simulation_model.state = self._simulation_model.running_state
         self._simulation_model.notify_observers_state_change()
 
     def timed_out(self):
         """ The simulation timed out """
-        print('Cannot time out if already reached max nodes infectious!')
+        raise ValueError('Can not time out if already reached max nodes infectious.')
 
     def go_extinct(self):
         """ The simulation went extinct (no more infectious nodes) """
-        print('Cannot go extinct if reached max nodes infectious!')
+        raise ValueError('Can not go extinct if reached max nodes infectious.')
 
     def max_nodes_infectious(self):
         """  The max number of infectious nodes was reached """
-        print('Already reach max infectious nodes!')
+        raise ValueError('Can not reach maximum number of infectious nodes if it is already reached.')
