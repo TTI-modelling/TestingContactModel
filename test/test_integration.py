@@ -47,8 +47,8 @@ class TestSimpleHousehold:
 
     @staticmethod
     def run_simulation(params: dict, days=10) -> SimulationModel:
-        """Run the Household simulation for 10 steps with the given params and return the
-        network."""
+        """Run the Household model for 10 days with the given params and return the
+        model."""
         controller = SimulationController(bpm.HouseholdLevelContactTracing(params))
         controller.set_display(False)
         controller.run_simulation(days)
@@ -295,8 +295,8 @@ class TestIndividualTracing:
 
     @staticmethod
     def run_simulation(params: dict, days=10) -> SimulationModel:
-        """Run the Household simulation for 10 steps with the given params and return the
-        network."""
+        """Run the IndividualTracing model for 10 days with the given params and return the
+        model."""
         controller = SimulationController(bpm.IndividualLevelContactTracing(params))
         controller.set_display(False)
         controller.run_simulation(days)
@@ -322,3 +322,60 @@ class TestIndividualTracing:
         assert edge_counts[EdgeType.within_house] > 0
         assert edge_counts[EdgeType.between_house] > 0
         assert len(edge_counts) == 3
+
+
+@pytest.fixture
+def daily_testing_params():
+    params = {"outside_household_infectivity_scaling": 0.3,
+              "contact_tracing_success_prob": 0.7,
+              "asymptomatic_prob": 0.2,
+              "asymptomatic_relative_infectivity": 0.35,
+              "infection_reporting_prob": 0.5,
+              "reduce_contacts_by": 0.5,
+              "starting_infections": 5,
+              "self_isolation_duration": 10,
+              "lateral_flow_testing_duration": 14
+              }
+    return copy.deepcopy(params)
+
+
+class TestIndividualTracingDailyTesting:
+    """The individual level tracing can be extended with daily testing of contacts. Instead of
+    traced contacts quarantining, they take daily tests."""
+
+    @staticmethod
+    def run_simulation(params: dict, days=10) -> SimulationModel:
+        """Run the IndividualTracingDailyTesting model for 10 days with the given params and
+        return the model."""
+        controller = SimulationController(bpm.IndividualTracingDailyTesting(params))
+        controller.set_display(False)
+        controller.run_simulation(days)
+
+        return controller.model
+
+    @staticmethod
+    def prob_positive_pcr(time_relative_to_symptom_onset):
+        """This function controls the sensitivity of the pcr test and prevents people testing
+        positive as soon as they are infected."""
+        if time_relative_to_symptom_onset in [4, 5, 6]:
+            return 0.75
+        else:
+            return 0
+
+    @staticmethod
+    def prob_positive_lfa(time_relative_to_symptom_onset):
+        """This function controls the sensitivity of the lfa test. A value of 0 is unrealistic,
+        but it makes it easier to see nodes being lfa tested since they won't move to
+        the isolation status due to lfa testing."""
+        return 0
+
+    def test_simple_individual_model(self, daily_testing_params: dict):
+        """Run the daily testing with with "no lfa testing only quarantine" policy. This means
+        that household contacts are quarantined, and are not lateral flow tested. Only those traced
+        via a between household contact tracing are lateral flow tested
+        (if they are not already isolating).
+        """
+        numpy.random.seed(40)
+        daily_testing_params["policy_for_household_contacts_of_a_positive_case"] = "no lfa testing only quarantine"
+        model = self.run_simulation(daily_testing_params, 15)
+        network = model.network
