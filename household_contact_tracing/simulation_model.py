@@ -4,8 +4,7 @@ import os
 from typing import TYPE_CHECKING
 
 from household_contact_tracing.views.simulation_view import SimulationView
-from household_contact_tracing.simulation_states import SimulationState, ReadyState, \
-    RunningState, ExtinctState, TimedOutState, MaxNodesInfectiousState
+from household_contact_tracing.simulation_states import SimulationState, ReadyState, RunningState
 
 if TYPE_CHECKING:
     from household_contact_tracing.network import Network
@@ -28,41 +27,12 @@ class SimulationModel(ABC):
         self._observers_step_increment = []
         self._observers_simulation_stopped = []
 
-        # States
-        self._ready_state = ReadyState(self)
-        self._running_state = RunningState(self)
-        self._extinct_state = ExtinctState(self)
-        self._timed_out_state = TimedOutState(self)
-        self._max_nodes_infectious_state = MaxNodesInfectiousState(self)
-        self._state = self._ready_state
+        # State
+        self._state = ReadyState(self)
 
     @property
     def state(self) -> SimulationState:
         return self._state
-
-    @state.setter
-    def state(self, state: SimulationState):
-        self._state = state
-
-    @property
-    def ready_state(self) -> SimulationState:
-        return self._ready_state
-
-    @property
-    def running_state(self) -> SimulationState:
-        return self._running_state
-
-    @property
-    def extinct_state(self) -> SimulationState:
-        return self._extinct_state
-
-    @property
-    def timed_out_state(self) -> SimulationState:
-        return self._timed_out_state
-
-    @property
-    def max_nodes_infectious_state(self) -> SimulationState:
-        return self._max_nodes_infectious_state
 
     @abstractmethod
     def run_simulation(self, max_time: int, infection_threshold: int) -> None:
@@ -78,19 +48,9 @@ class SimulationModel(ABC):
     def infection(self) -> Infection:
         """Return the Infection object."""
 
-    def simulation_initialised(self):
-        """ Initialise the simulation to starting values."""
-        # NOTIFY OF STATE CHANGE
-        self._state.initialise()
-
     def updated_parameters(self):
         """ Increment simulation by one step """
         self.notify_observer_param_change()
-
-    def simulation_started(self):
-        """ Start the simulation running."""
-        # NOTIFY OF STATE CHANGE
-        self._state.start_run()
 
     def simulation_stopped(self):
         """ The has stopped running """

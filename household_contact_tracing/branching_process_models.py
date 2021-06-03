@@ -15,6 +15,7 @@ import household_contact_tracing.behaviours.pcr_testing as pcr_testing
 import household_contact_tracing.behaviours.contact_trace_household as tracing
 import household_contact_tracing.behaviours.increment_tracing as increment
 import household_contact_tracing.behaviours.new_infection as new_infection
+from household_contact_tracing.simulation_states import *
 
 
 class HouseholdLevelContactTracing(SimulationModel):
@@ -28,12 +29,12 @@ class HouseholdLevelContactTracing(SimulationModel):
             params (dict): A dictionary of parameters that are used in the model.
         """
 
-        # Call parent init
-        SimulationModel.__init__(self)
-
         # Parse parameters against schema to check they are valid
         validate_parameters(params, os.path.join(self.ROOT_DIR,
                                                  "schemas/household_sim_contact_tracing.json"))
+
+        # Call parent init
+        SimulationModel.__init__(self)
 
         # Set network
         self._network = Network()
@@ -44,9 +45,6 @@ class HouseholdLevelContactTracing(SimulationModel):
 
         # Set the simulated time to the start (days)
         self.time = 0
-
-        # Call parent initialised_simulation
-        SimulationModel.simulation_initialised(self)
 
     @property
     def network(self):
@@ -118,8 +116,8 @@ class HouseholdLevelContactTracing(SimulationModel):
             None
         """
 
-        # Tell parent simulation started
-        SimulationModel.simulation_started(self)
+        # Switch model to RunningState
+        self._state.switch(RunningState, max_time=max_time, infection_threshold=infection_threshold)
 
         while type(self.state) is RunningState:
             prev_network = deepcopy(self.network)
@@ -134,13 +132,25 @@ class HouseholdLevelContactTracing(SimulationModel):
             # Call parent completed step
             SimulationModel.completed_step_increment(self)
 
-            # Simulation ends if max_time is reached
             if self.time >= max_time:
-                self.state.timed_out()
+                # Simulation ends if max_time is reached
+                self.state.switch(TimedOutState,
+                                  total_increments=self.time,
+                                  non_recovered_nodes=self.network.count_non_recovered_nodes(),
+                                  total_nodes=self.network.node_count
+                                  )
             elif self.network.count_non_recovered_nodes() == 0:
-                self.state.go_extinct()
+                # Simulation ends if no more infectious nodes
+                self.state.switch(ExtinctState,
+                                  total_increments=self.time,
+                                  non_recovered_nodes=0,
+                                  total_nodes=self.network.node_count)
             elif self.network.count_non_recovered_nodes() > infection_threshold:
-                self.state.max_nodes_infectious()
+                # Simulation ends if number of infectious nodes > threshold
+                self.state.switch(MaxNodesInfectiousState,
+                                  total_increments=self.time,
+                                  non_recovered_nodes=0,
+                                  total_nodes=self.network.node_count)
 
         # Tell parent simulation stopped
         SimulationModel.simulation_stopped(self)
