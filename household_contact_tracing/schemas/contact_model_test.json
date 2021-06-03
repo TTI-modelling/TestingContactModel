@@ -46,6 +46,5 @@
       "description": "",
       "type": "boolean"
     }
-  },
-  "required": ["LFA_testing_requires_confirmatory_PCR", "policy_for_household_contacts_of_a_positive_case"]
+  }
 }
