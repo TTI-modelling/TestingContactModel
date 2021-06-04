@@ -11,7 +11,7 @@ class SimulationState(ABC):
     allowed = []
     info = {}
 
-    def __init__(self, simulation_model: 'SimulationModel'):
+    def __init__(self, simulation_model):
         self._simulation_model = simulation_model
 
     def switch(self, state, **state_info):
