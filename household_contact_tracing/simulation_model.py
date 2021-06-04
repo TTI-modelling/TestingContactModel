@@ -12,11 +12,8 @@ if TYPE_CHECKING:
 
 
 class SimulationModel(ABC):
-    """
-        Simulation Model
-    """
-
-    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+    
+    __ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
     def __init__(self):
 
@@ -34,6 +31,10 @@ class SimulationModel(ABC):
     def state(self) -> SimulationState:
         return self._state
 
+    @property
+    def root_dir(self) -> str:
+        return self.__ROOT_DIR
+
     @abstractmethod
     def run_simulation(self, max_time: int, infection_threshold: int) -> None:
         """ Run the simulation until it stops (e.g times out, or too many infectious nodes) """
@@ -47,10 +48,6 @@ class SimulationModel(ABC):
     @abstractmethod
     def infection(self) -> Infection:
         """Return the Infection object."""
-
-    def updated_parameters(self):
-        """ Increment simulation by one step """
-        self.notify_observer_param_change()
 
     def simulation_stopped(self):
         """ The has stopped running """

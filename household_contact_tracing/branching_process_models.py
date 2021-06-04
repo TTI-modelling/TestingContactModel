@@ -30,7 +30,7 @@ class HouseholdLevelContactTracing(SimulationModel):
         """
 
         # Parse parameters against schema to check they are valid
-        validate_parameters(params, os.path.join(self.ROOT_DIR,
+        validate_parameters(params, os.path.join(self.root_dir,
                                                  "schemas/household_sim_contact_tracing.json"))
 
         # Call parent init
