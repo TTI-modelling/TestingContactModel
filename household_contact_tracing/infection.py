@@ -149,11 +149,11 @@ class Infection:
                                                                        additional_attributes)
             return new_household
 
-    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
+    def new_infection(self, time: int, household_id: int, infecting_node: Optional[ContactTracingNode] = None):
         if self.new_infection_behaviour:
             self.new_infection_behaviour.new_infection(time, household_id, infecting_node)
 
-    def get_contact_rate_reduction(self, node: Node) -> int:
+    def get_contact_rate_reduction(self, node: ContactTracingNode) -> int:
         if self.contact_rate_reduction_behaviour:
             return self.contact_rate_reduction_behaviour.get_contact_rate_reduction(node)
 
@@ -325,7 +325,7 @@ class Infection:
             else:
                 return self.symptomatic_global_infection_probs[infectious_age]
 
-    def new_outside_household_infection(self, time: int, infecting_node: Node):
+    def new_outside_household_infection(self, time: int, infecting_node: ContactTracingNode):
         # We assume all new outside household infections are in a new household
         # i.e: You do not infect 2 people in a new household
         # you do not spread the infection to a household that already has an infection
@@ -347,7 +347,7 @@ class Infection:
         self._network.graph.edges[infecting_node.id, node_count].update(
             {"edge_type": EdgeType.default})
 
-    def new_within_household_infection(self, time, infecting_node: Node):
+    def new_within_household_infection(self, time, infecting_node: ContactTracingNode):
         """Add a new node to the network.
 
         The new node will be a member of the same household as the infecting node.

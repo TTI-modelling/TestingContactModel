@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional
 import numpy as np
 from collections.abc import Callable
 
-from household_contact_tracing.network import Network, Household, Node, TestType, InfectionStatus
+from household_contact_tracing.network import Network, Household, ContactTracingNode, TestType, InfectionStatus
 
 if TYPE_CHECKING:
     import household_contact_tracing.behaviours.isolation as isolation
@@ -148,7 +148,7 @@ class ContactTracing:
         if self.pcr_testing_behaviour:
             self.pcr_testing_behaviour.receive_pcr_test_results(time)
 
-    def pcr_test_node(self, node: Node, time: int):
+    def pcr_test_node(self, node: ContactTracingNode, time: int):
         if self.pcr_testing_behaviour:
             self.pcr_testing_behaviour.pcr_test_node(node, time)
 
@@ -219,11 +219,11 @@ class ContactTracing:
             if node.will_uptake_isolation:
                 node.isolated = True
 
-    def lfa_test_node(self, node: Node, time: int):
+    def lfa_test_node(self, node: ContactTracingNode, time: int):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
-            node (Node): The node to be tested today
+            node (ContactTracingNode): The node to be tested today
         """
 
         infectious_age = time - node.time_infected
@@ -235,7 +235,7 @@ class ContactTracing:
         else:
             return False
 
-    def will_lfa_test_today(self, node: Node) -> bool:
+    def will_lfa_test_today(self, node: ContactTracingNode) -> bool:
 
         if node.propensity_to_miss_lfa_tests:
 
@@ -261,7 +261,7 @@ class ContactTracing:
         """Performs a days worth of lateral flow testing.
 
         Returns:
-            List[Nodes]: A list of nodes who have tested positive through the lateral flow tests.
+            List[ContactTracingNode]: A list of nodes who have tested positive through the lateral flow tests.
         """
 
         return [
@@ -293,11 +293,11 @@ class ContactTracing:
                     not self.LFA_testing_requires_confirmatory_PCR:
                 self.apply_policy_for_household_contacts_of_a_positive_case(node.household, time)
 
-    def take_confirmatory_pcr_test(self, node: Node, time: int):
+    def take_confirmatory_pcr_test(self, node: ContactTracingNode, time: int):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
-            node (Node): The node to be tested today
+            node (ContactTracingNode): The node to be tested today
         """
 
         infectious_age_when_tested = time - node.time_infected
