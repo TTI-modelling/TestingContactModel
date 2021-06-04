@@ -34,7 +34,7 @@ class ShellView(SimulationView):
 
     def model_state_change(self, subject):
         """ Respond to changes in model state (e.g. running, extinct, timed-out) """
-        print('shell view observed state change. New state: {}; {}'.format(subject.state.name, subject.state.info))
+        print('shell view observed state change. New state: {}'.format(subject.state))
 
     def model_step_increment(self, subject):
         """ Respond to increment in simulation """
