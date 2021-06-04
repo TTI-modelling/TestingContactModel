@@ -2,8 +2,8 @@ from typing import Callable
 import os
 from copy import deepcopy
 
-from household_contact_tracing.network import Network
-from household_contact_tracing.simulation_model import SimulationModel
+from household_contact_tracing.network import ContactTracingNetwork
+from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.simulation_states import RunningState
 from household_contact_tracing.infection import Infection, \
@@ -15,10 +15,38 @@ import household_contact_tracing.behaviours.pcr_testing as pcr_testing
 import household_contact_tracing.behaviours.contact_trace_household as tracing
 import household_contact_tracing.behaviours.increment_tracing as increment
 import household_contact_tracing.behaviours.new_infection as new_infection
-from household_contact_tracing.simulation_states import *
+from household_contact_tracing.simulation_states import ReadyState, RunningState, ExtinctState,\
+    MaxNodesInfectiousState, TimedOutState
 
 
-class HouseholdLevelContactTracing(SimulationModel):
+class HouseholdLevelContactTracing(BranchingProcessModel):
+    """
+        A class used to represent a simulation of contact tracing of households only,
+         (without contacting every individual and their contacts)
+
+
+        Attributes
+        ----------
+        network : ContactTracingNetwork
+            the persistent storage of model data
+
+        infection: Infection
+            the processes/behaviours relating to the spread of infection
+
+        contact_tracing: ContactTracing
+            the processes/behaviours relating to the containment of the infection via contact tracing
+
+
+        Methods
+        -------
+
+        run_simulation(self, max_time: int, infection_threshold: int = 1000) -> None
+            Runs the simulation up to a maximum number of increments and max allowed number of infected nodes.
+
+        simulate_one_step(self)
+            Simulates one imcrement (day) of the infection and contact tracing.
+
+    """
 
     def __init__(self, params: dict):
 
@@ -34,10 +62,10 @@ class HouseholdLevelContactTracing(SimulationModel):
                                                  "schemas/household_sim_contact_tracing.json"))
 
         # Call parent init
-        SimulationModel.__init__(self)
+        BranchingProcessModel.__init__(self)
 
         # Set network
-        self._network = Network()
+        self._network = ContactTracingNetwork()
 
         # Set strategies (Strategy pattern)
         self._infection = self._initialise_infection(self._network, params)
@@ -47,7 +75,7 @@ class HouseholdLevelContactTracing(SimulationModel):
         self.time = 0
 
     @property
-    def network(self):
+    def network(self) -> ContactTracingNetwork:
         return self._network
 
     @property
@@ -66,14 +94,14 @@ class HouseholdLevelContactTracing(SimulationModel):
     def contact_tracing(self, contact_tracing: ContactTracing):
         self._contact_tracing = contact_tracing
 
-    def _initialise_infection(self, network: Network, params: dict):
+    def _initialise_infection(self, network: ContactTracingNetwork, params: dict):
         return Infection(network,
                          NewHouseholdLevel(network),
                          new_infection.NewInfectionHouseholdLevel(network),
                          ContactRateReductionHouseholdLevelContactTracing(),
                          params)
 
-    def _initialise_contact_tracing(self, network: Network, params: dict):
+    def _initialise_contact_tracing(self, network: ContactTracingNetwork, params: dict):
         return ContactTracing(network,
                               tracing.ContactTraceHouseholdLevel(network),
                               increment.IncrementTracingHouseholdLevel(network),
@@ -107,7 +135,7 @@ class HouseholdLevelContactTracing(SimulationModel):
                 Announces start/stopped and step increments to observers
 
         Arguments:
-            max steps -- The maximum number of step increments to perform (stops if self.time >= max_time)
+            max_time -- The maximum number of step increments to perform (stops if self.time >= max_time)
                          Note: self.time is cumulative throughout multiple calls to run_simulation.
             infection_threshold -- The maximum number of infectious nodes allowed,
               before stopping simulation
@@ -127,10 +155,10 @@ class HouseholdLevelContactTracing(SimulationModel):
 
             # If graph changed, tell parent
             if not prev_network == self.network:
-                SimulationModel.graph_changed(self)
+                BranchingProcessModel.graph_changed(self)
 
             # Call parent completed step
-            SimulationModel.completed_step_increment(self)
+            super()._completed_step_increment()
 
             if self.time >= max_time:
                 # Simulation ends if max_time is reached
@@ -153,10 +181,28 @@ class HouseholdLevelContactTracing(SimulationModel):
                                   total_nodes=self.network.node_count)
 
         # Tell parent simulation stopped
-        SimulationModel.simulation_stopped(self)
+        super()._simulation_stopped()
 
 
 class IndividualLevelContactTracing(HouseholdLevelContactTracing):
+    """
+        A class used to represent a simulation of contact tracing of households along with
+         contacting every individual and their contacts, whether they have tested positive or not.
+
+
+        Attributes
+        ----------
+        prob_testing_positive_lfa_func(self) -> Callable[[int], float]
+            function that calculates probability of postive LFA test result
+
+        prob_testing_positive_pcr_func(self) -> Callable[[int], float]
+            function that calculates probability of positive PCR test result
+
+
+        Methods
+        -------
+
+    """
 
     @property
     def prob_testing_positive_lfa_func(self) -> Callable[[int], float]:
@@ -174,14 +220,14 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
     def prob_testing_positive_pcr_func(self, fn: Callable[[int], float]):
         self.contact_tracing.prob_testing_positive_pcr_func = fn
 
-    def _initialise_infection(self, network: Network, params: dict):
+    def _initialise_infection(self, network: ContactTracingNetwork, params: dict):
         return Infection(network,
                          NewHouseholdLevel(network),
                          new_infection.NewInfectionHouseholdLevel(network),
                          ContactRateReductionHouseholdLevelContactTracing(),
                          params)
 
-    def _initialise_contact_tracing(self, network: Network, params: dict):
+    def _initialise_contact_tracing(self, network: ContactTracingNetwork, params: dict):
         return ContactTracing(network,
                               tracing.ContactTraceHouseholdIndividualLevel(network),
                               increment.IncrementTracingIndividualLevel(self.network),
@@ -191,20 +237,32 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
 
 
 class IndividualTracingDailyTesting(IndividualLevelContactTracing):
+    """
+        A class used to represent a simulation of contact tracing of households along with
+         contacting every individual and their contacts, whether they have tested positive or not, along with
+         daily testing.
+
+        Attributes
+        ----------
+
+        Methods
+        -------
+
+    """
 
     def __init__(self, params):
 
         # Call superclass constructor (which overwrites defaults with new params if present)
         super().__init__(params)
 
-    def _initialise_infection(self, network: Network, params: dict):
+    def _initialise_infection(self, network: ContactTracingNetwork, params: dict):
         return Infection(network,
                          NewHouseholdIndividualTracingDailyTesting(self.network),
                          new_infection.NewInfectionIndividualTracingDailyTesting(self.network),
                          ContactRateReductionIndividualTracingDaily(),
                          params)
 
-    def _initialise_contact_tracing(self, network: Network, params: dict):
+    def _initialise_contact_tracing(self, network: ContactTracingNetwork, params: dict):
         return ContactTracing(network,
                               tracing.ContactTraceHouseholdIndividualTracingDailyTest(self.network),
                               increment.IncrementTracingIndividualDailyTesting(self.network),

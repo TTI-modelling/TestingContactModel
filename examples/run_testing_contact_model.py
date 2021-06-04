@@ -1,4 +1,4 @@
-from household_contact_tracing.simulation_controller import SimulationController
+from household_contact_tracing.simulation_controller import BranchingProcessController
 from household_contact_tracing.branching_process_models import IndividualTracingDailyTesting
 
 
@@ -32,7 +32,7 @@ def main():
     model = IndividualTracingDailyTesting(params)
     model.prob_testing_positive_lfa_func = prob_testing_positive_function
     model.prob_testing_positive_pcr_func = prob_testing_positive_function
-    controller = SimulationController(model)
+    controller = BranchingProcessController(model)
     controller.graph_pyvis_view.set_display(True)
     controller.graph_pyvis_view.open_in_browser = True
     controller.run_simulation(15)
@@ -91,7 +91,7 @@ def recreate_pytest_1():
         time=0
     )
 
-    controller = SimulationController(model=model)
+    controller = BranchingProcessController(model=model)
     controller.shell_view.set_display(False)
     controller.timeline_view.set_display(False)
     controller.graph_pyvis_view.set_display(False)

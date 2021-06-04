@@ -8,14 +8,14 @@ from typing import Optional
 import sys
 
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
-from household_contact_tracing.network import Node, EdgeType, Network, Household
+from household_contact_tracing.network import ContactTracingNode, EdgeType, ContactTracingNetwork, Household
 import household_contact_tracing.behaviours.new_infection as new_infection
 
 
 class Infection:
     """ 'Context' class for infection processes/strategies (Strategy pattern) """
 
-    def __init__(self, network: Network, new_household: NewHouseholdBehaviour,
+    def __init__(self, network: ContactTracingNetwork, new_household: NewHouseholdBehaviour,
                  new_infection: new_infection.NewInfection,
                  contact_rate_reduction: ContactRateReductionBehaviour, params: dict):
         self._network = network
@@ -419,7 +419,7 @@ class Infection:
 
 
 class NewHouseholdBehaviour(ABC):
-    def __init__(self, network: Network):
+    def __init__(self, network: ContactTracingNetwork):
         self._network = network
         self._infection = None
 

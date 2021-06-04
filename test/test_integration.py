@@ -8,7 +8,7 @@ from collections import Counter
 import pytest
 
 from household_contact_tracing.network import EdgeType, NodeType, Network
-from household_contact_tracing.simulation_controller import SimulationController
+from household_contact_tracing.simulation_controller import BranchingProcessController
 import household_contact_tracing.branching_process_models as bpm
 from household_contact_tracing.simulation_model import SimulationModel
 
@@ -49,7 +49,7 @@ class TestSimpleHousehold:
     def run_simulation(params: dict, days=10) -> SimulationModel:
         """Run the Household model for 10 days with the given params and return the
         model."""
-        controller = SimulationController(bpm.HouseholdLevelContactTracing(params))
+        controller = BranchingProcessController(bpm.HouseholdLevelContactTracing(params))
         controller.set_display(False)
         controller.run_simulation(days)
 
@@ -297,7 +297,7 @@ class TestIndividualTracing:
     def run_simulation(params: dict, days=10) -> SimulationModel:
         """Run the IndividualTracing model for 10 days with the given params and return the
         model."""
-        controller = SimulationController(bpm.IndividualLevelContactTracing(params))
+        controller = BranchingProcessController(bpm.IndividualLevelContactTracing(params))
         controller.set_display(False)
         controller.run_simulation(days)
 
@@ -347,7 +347,7 @@ class TestIndividualTracingDailyTesting:
     def run_simulation(params: dict, days=10) -> SimulationModel:
         """Run the IndividualTracingDailyTesting model for 10 days with the given params and
         return the model."""
-        controller = SimulationController(bpm.IndividualTracingDailyTesting(params))
+        controller = BranchingProcessController(bpm.IndividualTracingDailyTesting(params))
         controller.set_display(False)
         controller.run_simulation(days)
 
