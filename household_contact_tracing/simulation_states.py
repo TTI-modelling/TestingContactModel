@@ -5,6 +5,19 @@ from abc import ABC
 class SimulationState(ABC):
     """
         Simulation State Abstract class (State pattern)
+        For all simulations (not just e.g. Branching process models)
+
+        Attributes
+        ----------
+        name (str): name of the state (replicates subclass name)
+        allowed (list): list of state names that can be entered, following from this current state
+        info (dict): extra information about the state
+
+        Methods
+        -------
+        switch(self, state, **state_info)
+            switch to a new state (state) and store useful info about the new state (state_info)
+
     """
 
     name = ''
@@ -29,7 +42,15 @@ class SimulationState(ABC):
              'info': self.info})
 
 
-class ReadyState(SimulationState):
+class BranchingProcessState(SimulationState):
+    """
+        Branching Process simulation states Abstract class (State pattern)
+        Included to allow other BranchingProcess states sub-classes
+    """
+    pass
+
+
+class ReadyState(BranchingProcessState):
     """
         Simulation is ready to start
     """
@@ -37,7 +58,7 @@ class ReadyState(SimulationState):
     allowed = ['RunningState']
 
 
-class RunningState(SimulationState):
+class RunningState(BranchingProcessState):
     """
         Simulation is running
     """
@@ -45,7 +66,7 @@ class RunningState(SimulationState):
     allowed = ['TimedOutState', 'ExtinctState', 'MaxNodesInfectiousState']
 
 
-class ExtinctState(SimulationState):
+class ExtinctState(BranchingProcessState):
     """
         Simulated outbreak has gone extinct
     """
@@ -53,7 +74,7 @@ class ExtinctState(SimulationState):
     allowed = ['RunningState']
 
 
-class TimedOutState(SimulationState):
+class TimedOutState(BranchingProcessState):
     """
         Simulated outbreak has timed out
     """
@@ -61,7 +82,7 @@ class TimedOutState(SimulationState):
     allowed = ['RunningState']
 
 
-class MaxNodesInfectiousState(SimulationState):
+class MaxNodesInfectiousState(BranchingProcessState):
     """
         Simulated outbreak has reached maximum number of infectious nodes
     """

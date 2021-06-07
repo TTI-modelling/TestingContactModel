@@ -4,85 +4,54 @@ import os
 from typing import TYPE_CHECKING
 
 from household_contact_tracing.views.simulation_view import SimulationView
-from household_contact_tracing.simulation_states import SimulationState, ReadyState
+from household_contact_tracing.simulation_states import SimulationState, BranchingProcessState, ReadyState
+
 
 if TYPE_CHECKING:
     from household_contact_tracing.network import Network
-    from household_contact_tracing.infection import Infection
 
 
 class SimulationModel(ABC):
     """
-        Simulation Model
+        An abstract base class used to represent simulation models at the highest level.
+
+        Attributes
+        ----------
+        __ROOT_DIR : str
+            root directory of containing package
+
+        Methods
+        -------
+
     """
 
-    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+    __ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
     def __init__(self):
 
         # Set observer lists
-        self._observers_param_change = []
-        self._observers_graph_change = []
-        self._observers_state_change = []
         self._observers_step_increment = []
         self._observers_simulation_stopped = []
-
-        # State
-        self._state = ReadyState(self)
+        self._observers_state_change = []
 
     @property
+    @abstractmethod
     def state(self) -> SimulationState:
-        return self._state
-
-    @abstractmethod
-    def run_simulation(self, max_time: int, infection_threshold: int) -> None:
-        """ Run the simulation until it stops (e.g times out, or too many infectious nodes) """
+        """Return the state of the model"""
 
     @property
-    @abstractmethod
-    def network(self) -> Network:
-        """Return the network object that holds the Nodes."""
+    def root_dir(self) -> str:
+        return self.__ROOT_DIR
 
-    @property
-    @abstractmethod
-    def infection(self) -> Infection:
-        """Return the Infection object."""
-
-    def updated_parameters(self):
-        """ Increment simulation by one step """
-        self.notify_observer_param_change()
-
-    def simulation_stopped(self):
-        """ The has stopped running """
+    def _simulation_stopped(self):
+        """ The simulation has stopped running """
         self.notify_observers_simulation_stopped()
 
-    def graph_changed(self):
-        """ The graph has changed """
-        self.notify_observers_graph_change()
-
-    def completed_step_increment(self):
+    def _completed_step_increment(self):
         """ Completed incrementing simulation by one step """
         self.notify_observers_step_increment()
 
     # Register observers
-
-    def register_observer_param_change(self, observer: object):
-        """ Register as observer for parameter changes
-
-        Arguments:
-            observer -- the object to be added to the param change observers list
-        """
-        if observer not in self._observers_param_change:
-            self._observers_param_change.append(observer)
-
-    def register_observer_graph_change(self, observer: SimulationView):
-        """ Register as observer for changes in model graph (nodes/households network)
-
-        Arguments:
-            observer -- the object to be added to the graph change observers list
-        """
-        if observer not in self._observers_graph_change:
-            self._observers_graph_change.append(observer)
 
     def register_observer_state_change(self, observer: SimulationView):
         """ Register as observer for changes in model state (e.g. running, extinct, timed-out)
@@ -109,19 +78,6 @@ class SimulationModel(ABC):
             self._observers_step_increment.append(observer)
 
     # Remove observers
-    def remove_observer_param_change(self, observer: SimulationView):
-        """ Remove as observer for parameter changes """
-        try:
-            self._observers_param_change.remove(observer)
-        except ValueError:
-            pass
-
-    def remove_observer_graph_change(self, observer: SimulationView):
-        """ Remove as observer for graph changes """
-        try:
-            self._observers_graph_change.remove(observer)
-        except ValueError:
-            pass
 
     def remove_observer_state_change(self, observer: SimulationView):
         """ Remove as observer for changes in model state (e.g. running, extinct, timed-out) """
@@ -145,11 +101,6 @@ class SimulationModel(ABC):
             pass
 
     # Notify Observers
-    def notify_observers_graph_change(self, modifier=None):
-        """ Notify observer about changes in graph (nodes/households network) """
-        for observer in self._observers_graph_change:
-            if observer != modifier:
-                observer.graph_change(self)
 
     def notify_observers_state_change(self, modifier=None):
         """ Notify observer about changes in model state (e.g. running, extinct, timed-out)  """
@@ -168,3 +119,74 @@ class SimulationModel(ABC):
         for observer in self._observers_step_increment:
             if observer != modifier:
                 observer.model_step_increment(self)
+
+
+class BranchingProcessModel(SimulationModel):
+    """
+    An abstract base class used to represent all branching process simulation models.
+
+    Attributes
+    ----------
+    state (BranchingProcessModel): The current state of the simulation
+    network (Network): The network that stores the model data
+
+    Methods
+    -------
+    run_simulation(self, max_time: int, infection_threshold: int) -> None:
+        runs the simulation
+
+    """
+
+    def __init__(self):
+        # Call superclass constructor
+        super().__init__()
+
+        # Set observer lists
+        self._observers_graph_change = []
+
+        # State
+        self._state = ReadyState(self)
+
+    @property
+    def state(self) -> BranchingProcessState:
+        return self._state
+
+
+    @property
+    @abstractmethod
+    def network(self) -> Network:
+        """Return the network object that holds the Nodes."""
+
+    @abstractmethod
+    def run_simulation(self, max_time: int, infection_threshold: int) -> None:
+        """ Run the simulation until it stops (e.g times out, or too many infectious nodes) """
+
+    def graph_changed(self):
+        """ The graph has changed """
+        self.notify_observers_graph_change()
+
+    # Register observers
+
+    def register_observer_graph_change(self, observer: SimulationView):
+        """ Register as observer for changes in model graph (nodes/households network)
+
+        Arguments:
+            observer -- the object to be added to the graph change observers list
+        """
+        if observer not in self._observers_graph_change:
+            self._observers_graph_change.append(observer)
+
+    # Remove observers
+    def remove_observer_graph_change(self, observer: SimulationView):
+        """ Remove as observer for graph changes """
+        try:
+            self._observers_graph_change.remove(observer)
+        except ValueError:
+            pass
+
+    # Notify Observers
+    def notify_observers_graph_change(self, modifier=None):
+        """ Notify observer about changes in graph (nodes/households network) """
+        for observer in self._observers_graph_change:
+            if observer != modifier:
+                observer.graph_change(self)

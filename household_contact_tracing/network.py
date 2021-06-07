@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Optional, Iterator, List, Tuple, Dict
 from enum import Enum
+from abc import ABC, abstractmethod
 
 import networkx as nx
 
@@ -41,11 +42,17 @@ class TestType(Enum):
     pcr = 0
     lfa = 1
 
-
-class Network:
+class Network(ABC):
     def __init__(self):
-        self._house_dict: Dict[int, Household] = {}
         self.graph = nx.Graph()
+
+
+class ContactTracingNetwork(Network):
+    def __init__(self):
+        # Call superclass constructor
+        super().__init__()
+        self._house_dict: Dict[int, Household] = {}
+
 
     def add_household(self, house_size: int, time_infected: int,
                       infected_by: Optional[Household], propensity_trace_app: bool,
@@ -88,11 +95,11 @@ class Network:
         """ Determine whether graphs have identical network structures."""
         return nx.is_isomorphic(self.graph, network.graph)
 
-    def is_identical(self, graph):
+    def __eq__(self, other):
         """ Currently only determines whether graphs have identical network structures,
             but we may want to compare more details.
         """
-        return self.is_isomorphic(graph)
+        return self.is_isomorphic(other)
 
     def count_non_recovered_nodes(self) -> int:
         """Returns the number of nodes not in the recovered state."""
@@ -124,7 +131,8 @@ class Network:
         new_node_id = self.node_count + 1
         self.graph.add_node(new_node_id)
         new_node_household = self.household(household_id)
-        node = Node(id=new_node_id, time_infected=time_infected,
+        node = ContactTracingNode(
+                    id=new_node_id, time_infected=time_infected,
                     household=new_node_household, isolated=isolated,
                     will_uptake_isolation=will_uptake_isolation,
                     propensity_imperfect_isolation=propensity_imperfect_isolation,
@@ -169,7 +177,15 @@ class Network:
             self.graph.edges[edge[0], edge[1]].update({"edge_type": new_edge_type})
 
 
-class Node:
+class Node(ABC):
+
+    def __init__(self, id: int, time_infected: int):
+        self.id = id
+        self.time_infected = time_infected
+
+
+class ContactTracingNode(Node):
+
     def __init__(self, id: int, time_infected: int, household: Household, isolated: bool,
                  will_uptake_isolation: bool, propensity_imperfect_isolation: bool,
                  asymptomatic: bool, symptom_onset_time: float, pseudo_symptom_onset_time: int,
@@ -177,8 +193,10 @@ class Node:
                  has_contact_tracing_app: bool, contact_traced: bool, testing_delay: int = 0,
                  completed_isolation=False, outside_house_contacts_made=0, recovered=False,
                  infecting_node: Optional[Node] = None, additional_attributes: dict = None):
-        self.id = id
-        self.time_infected = time_infected
+
+        # Call superclass constructor
+        super().__init__(id, time_infected)
+
         self.household = household
         self.isolated = isolated
         self.will_uptake_isolation = will_uptake_isolation
