@@ -5,7 +5,6 @@ from copy import deepcopy
 from household_contact_tracing.network import ContactTracingNetwork
 from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.parameters import validate_parameters
-from household_contact_tracing.simulation_states import RunningState
 from household_contact_tracing.infection import Infection, \
     NewHouseholdLevel, NewHouseholdIndividualTracingDailyTesting, \
     ContactRateReductionHouseholdLevelContactTracing, ContactRateReductionIndividualTracingDaily

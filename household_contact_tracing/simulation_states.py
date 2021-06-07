@@ -1,3 +1,4 @@
+import json
 from abc import ABC
 
 
@@ -36,11 +37,9 @@ class SimulationState(ABC):
             raise ValueError('Current:', self, ' => switching to', state.name, 'not possible.')
 
     def __str__(self):
-        return self.name
-
-    def __repr__(self):
-        return {'name': self.name,
-                'info': self.info}
+        return json.dumps(
+            {'name': self.name,
+             'info': self.info})
 
 
 class BranchingProcessState(SimulationState):

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from household_contact_tracing.views.simulation_view import SimulationView
 from household_contact_tracing.simulation_states import SimulationState, BranchingProcessState, ReadyState
 
+
 if TYPE_CHECKING:
     from household_contact_tracing.network import Network
 
