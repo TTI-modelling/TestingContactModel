@@ -1,17 +1,19 @@
-# UoM AQ Data Tools
+# TTI-modelling / TestingContactModel
 
 [![Build Status]()] # Todo complete this
 
-This repository contains tools for obtaining and processing UK air quality data.
+This repository contains tools to perform simulated infection and contact tracing using a branching process model
 
 The sections below are:
 - [Repository Structure](#repository-structure)
 - [Requirements](#requirements)
 - [Research](#research)
-- [Authors](#authors)
-
+  - [Abstract](#abstract)
+  - [Authors](#authors)
 - [Testing](#testing) 
-  - [Unit testing](#unit-testing)
+  - [Unit testing](#unit-testing)  
+- [Developers](#developers)
+- [Copyright and Licensing](#copyright--licensing)
 
 <!-- toc -->
 
@@ -25,52 +27,41 @@ been gathered from the MEDMI and AURN sources.
 
 ```
 .
-├── environmental_data_modules
-├── scripts
-│   ├── AURN_Data_Download
-│   ├── Combine_Data
-│   ├── Data_Imputation_Testing
-│   ├── Data_Processing
-│   ├── EMEP_Data_Extraction
-│   └── MEDMI_Data_Download
-└── station_data
+├── examples
+├── household_contact_tracing
+│   ├── behaviours
+│   ├── schemas
+│   ├── temp
+│   ├── views
+├── test
+
 ```
 
 
 ## Requirements
 
-The processing scripts in this repository are written in python, tested on unix and OSX
-systems.
+The example scripts are written in jupyter notebook and are in the examples directory
+'''todo'''
 
-The EMEP (and WRF) models are written in fortran - follow the references below for compiling 
-these, preparing model inputs, and performing the simulations.
+## Research
 
-The MEDMI dataset are accessed using the python2 installation on their system, no more
-packages require installing to run the scripts for this.
+### Abstract
+We explore strategies of contact tracing, isolation of infected individuals and quarantine of exposed individuals to control the SARS-Cov-2 epidemic using a household-individual branching process model. The explicit presence of households allows for modelling of household quarantine, and improved estimation of the effects of contact tracing. A contact tracing process designed to take advantage of the household structure is implemented, to understand whether such a strategy could control the epidemic. We evaluate the effects of different strategies of contact tracing, isolation and quarantine, such as two-step tracing, backwards tracing, smartphone tracing apps, and whether to test before the propagation contact tracing attempts. Uncertainty in SARS-Cov-2 transmission dynamics and contact tracing processes is modelled using prior distributions. The primary model outcome is the effect on the growth rate and doubling times of the epidemic, in combination with different levels of social distancing. Models of uptake and adherence to quarantine are applied, as well as contact recall, and how these affect the dynamics of contact tracing are considered. We find that a household contact tracing strategy allows for some relaxation of social distancing measures; however, it is unable to completely control the epidemic in the absence of other measures. Effectiveness of contact tracing and isolation is sensitive to delays, so strategies to improve speed relative to transmission could improve epidemic control, but non-uptake, imperfect recall and non-adherence to isolation can erode effectiveness. Improvements to the case identification rate could greatly benefit contact tracing interventions of SARS-Cov-2. Further, we find that once the epidemic has become established, the extinction times are on the scale of years when there is a small relaxation of the UK lockdown and contact tracing is employed.
 
-We recommend using conda to import the required python libraries. Using standalone pip is
-untested. 
+### Authors
+Martyn Fyles Elizabeth Fearon
 
-The processing scripts for extracting the EMEP data are written in python3. To
-install the packages needed for these (using conda and pip) use this script:
-`conda env create -f env_emep.yml`.
-To activate this environment use `conda activate emep`.
+## Testing
 
-The processing scripts for obtaining the AURN dataset, and processing all datasets, are
-written in python3. To install the packages needed for these, use this script: 
-`conda env create -f env_aurn_medmi.yml`.
-To activate this environment this `conda activate aurn_medmi`.
-
-
+## Developers
 
 
 ## Copyright & Licensing
+'''todo: this is from the previous/template'''
 
-# Todo: this is from the previous/template
-
-This software has been developed by the [Research IT](https://research-it.manchester.ac.uk/) 
+This software has been developed by the XXX (https://xxx/) and [Research IT](https://research-it.manchester.ac.uk/) 
 group at the [University of Manchester](https://www.manchester.ac.uk/) for an 
-[Alan Turing Institute](https://www.turing.ac.uk/) project.
+[YYY](https://www.yyy/) project.
 
-(c) 2019-2021 University of Manchester.
+(c) 2020-2021 University of Manchester and XXX.
 Licensed under the GPL-3.0 license, see the file LICENSE for details.
