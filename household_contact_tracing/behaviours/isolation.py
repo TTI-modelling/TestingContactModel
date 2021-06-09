@@ -4,16 +4,14 @@ and Household attributes."""
 
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Callable
 
-from household_contact_tracing.network import Network, TestType, Household, EdgeType
+from household_contact_tracing.network import Network, TestType, Household, EdgeType, PositivePolicy
 
 
 class UpdateIsolation(ABC):
-    def __init__(self, network: Network,
-                 apply_policy_for_household_contacts_of_a_positive_case: Callable):
+    def __init__(self, network: Network, household_positive_policy: PositivePolicy):
         self.network = network
-        self.apply_policy_for_household_contacts_of_a_positive_case = apply_policy_for_household_contacts_of_a_positive_case
+        self.household_positive_policy = household_positive_policy
 
     @abstractmethod
     def update_isolation(self, time):
@@ -110,8 +108,8 @@ class UpdateIsolationIndividualTracingDailyTesting(UpdateIsolation):
             if node.positive_test_time == time:
                 if node.avenue_of_testing == TestType.pcr:
                     if node.received_positive_test_result:
-                        if not node.household.applied_policy_for_household_contacts_of_a_positive_case:
-                            self.apply_policy_for_household_contacts_of_a_positive_case(node.household, time)
+                        if not node.household.applied_household_positive_policy:
+                            node.household.apply_positive_policy(time, self.household_positive_policy)
 
     def contact_trace_household(self, household: Household, time: int):
         self.update_network(household)

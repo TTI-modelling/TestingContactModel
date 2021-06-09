@@ -42,6 +42,19 @@ class TestType(Enum):
     lfa = 1
 
 
+class PositivePolicy(Enum):
+    """What happens to the contacts of a Household if a Household member tests positive.
+    lfa_testing_no_quarantine: Household contacts start LFA testing, but do not quarantine
+      unless they develop symptoms
+    lfa_testing_and_quarantine: Household contacts start LFA testing, and quarantine.
+    only_quarantine: Household contacts do not start LFA testing, quarantine.
+      They will book a PCR test if they develop symptoms.
+    """
+    lfa_testing_no_quarantine = 1
+    lfa_testing_and_quarantine = 2
+    only_quarantine = 3
+
+
 class Network:
     def __init__(self):
         # Call superclass constructor
@@ -353,7 +366,7 @@ class Household:
 
         self.being_lateral_flow_tested = False,
         self.being_lateral_flow_tested_start_time = None
-        self.applied_policy_for_household_contacts_of_a_positive_case = False
+        self.applied_household_positive_policy = False
 
         # add custom attributes
         if additional_attributes:
@@ -445,3 +458,53 @@ class Household:
 
         # Update edges within household
         self._network.label_edges_inside_household(self, EdgeType.within_house)
+
+    def start_lateral_flow_testing_household(self, time: int):
+        """Sets the household to the lateral flow testing status so that new within household
+        infections are tested. All nodes in the household start lateral flow testing
+        """
+        self.being_lateral_flow_tested = True
+        self.being_lateral_flow_tested_start_time = time
+
+        for node in self.nodes:
+            if node.node_will_take_up_lfa_testing:
+                if not node.received_positive_test_result:
+                    if not node.being_lateral_flow_tested:
+                        node.being_lateral_flow_tested = True
+                        node.time_started_lfa_testing = time
+
+    def start_lateral_flow_testing_household_and_quarantine(self, time):
+        """Sets the household to the lateral flow testing status so that new within household
+        infections are tested. All nodes in the household start lateral flow testing and
+        start quarantining
+        """
+        self.being_lateral_flow_tested = True
+        self.being_lateral_flow_tested_start_time = time
+        self.isolated = True
+        self.isolated_time = True
+        self.contact_traced = True
+
+        for node in self.nodes:
+            if node.node_will_take_up_lfa_testing:
+                if not node.received_positive_test_result:
+                    if not node.being_lateral_flow_tested:
+                        node.being_lateral_flow_tested = True
+                        node.time_started_lfa_testing = time
+
+            if node.will_uptake_isolation:
+                node.isolated = True
+
+    def apply_positive_policy(self, time: int, household_positive_policy: PositivePolicy):
+        """We apply different policies to the household contacts of a discovered case."""
+
+        # set the household attributes to declare that we have already applied the policy
+        self.applied_household_positive_policy = True
+
+        if household_positive_policy == PositivePolicy.lfa_testing_no_quarantine:
+            self.start_lateral_flow_testing_household(time)
+        elif household_positive_policy == PositivePolicy.lfa_testing_and_quarantine:
+            self.start_lateral_flow_testing_household_and_quarantine(time)
+        elif household_positive_policy == PositivePolicy.only_quarantine:
+            self.isolate_household(time)
+        else:
+            raise Exception("household_positive_policy not recognised.")

@@ -7,7 +7,7 @@ from collections import Counter
 
 import pytest
 
-from household_contact_tracing.network import EdgeType, NodeType, Network
+from household_contact_tracing.network import EdgeType, NodeType, Network, PositivePolicy
 from household_contact_tracing.simulation_controller import BranchingProcessController
 import household_contact_tracing.branching_process_models as bpm
 from household_contact_tracing.simulation_model import SimulationModel
@@ -376,6 +376,6 @@ class TestIndividualTracingDailyTesting:
         (if they are not already isolating).
         """
         numpy.random.seed(40)
-        daily_testing_params["policy_for_household_contacts_of_a_positive_case"] = "no lfa testing only quarantine"
+        daily_testing_params["household_positive_policy"] = PositivePolicy.only_quarantine
         model = self.run_simulation(daily_testing_params, 15)
         network = model.network

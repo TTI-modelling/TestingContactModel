@@ -1,3 +1,4 @@
+from household_contact_tracing.network import PositivePolicy
 from household_contact_tracing.simulation_controller import BranchingProcessController
 from household_contact_tracing.branching_process_models import IndividualTracingDailyTesting
 
@@ -25,7 +26,7 @@ params = {"outside_household_infectivity_scaling": 0.3,
           "self_isolation_duration": 10,
           "lateral_flow_testing_duration": 14,
           "LFA_testing_requires_confirmatory_PCR": False,
-          "policy_for_household_contacts_of_a_positive_case": "no lfa testing only quarantine"}
+          "household_positive_policy": PositivePolicy.only_quarantine}
 
 
 def main():
@@ -69,7 +70,7 @@ def recreate_pytest_1():
                       "household_pairwise_survival_prob": 0.2,
                       "propensity_risky_behaviour_lfa_testing": 0,
                       "global_contact_reduction_risky_behaviour": 0,
-                      "policy_for_household_contacts_of_a_positive_case": 'lfa testing no quarantine'
+                      "household_positive_policy": PositivePolicy.lfa_testing_no_quarantine
                       }
 
     model = IndividualTracingDailyTesting(default_params)
@@ -121,7 +122,7 @@ def recreate_pytest_2():
               "LFA_testing_requires_confirmatory_PCR": False, "test_delay": 1, "contact_trace_delay": 1,
               "incubation_period_delay": 5, "symptom_reporting_delay": 1, "household_pairwise_survival_prob": 0.2,
               "propensity_risky_behaviour_lfa_testing": 0, "global_contact_reduction_risky_behaviour": 0,
-              "policy_for_household_contacts_of_a_positive_case": 'lfa testing and quarantine'}
+              "household_positive_policy": PositivePolicy.lfa_testing_and_quarantine}
 
     model = IndividualTracingDailyTesting(params)
     model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
@@ -140,7 +141,7 @@ def recreate_pytest_2():
     )
 
     assert model.network.node(1).isolated
-    assert model.network.household(1).applied_policy_for_household_contacts_of_a_positive_case
+    assert model.network.household(1).applied_household_positive_policy
     assert model.network.node(1).received_positive_test_result
     assert model.network.node(2).isolated
     assert model.network.node(2).being_lateral_flow_tested

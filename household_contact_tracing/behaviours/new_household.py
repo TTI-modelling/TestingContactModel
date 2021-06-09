@@ -57,5 +57,5 @@ class NewHouseholdIndividualTracingDailyTesting(NewHouseholdLevel):
         return super().new_household(time, infected_by=infected_by,
                                      additional_attributes={'being_lateral_flow_tested': False,
                                                             'being_lateral_flow_tested_start_time': None,
-                                                            'applied_policy_for_household_contacts_of_a_positive_case': False}
+                                                            'applied_household_positive_policy': False}
                                      )

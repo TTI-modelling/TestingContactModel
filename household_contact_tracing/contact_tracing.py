@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import List
 
 from collections.abc import Callable
 
-from household_contact_tracing.network import Network, Household, TestType, Node
+from household_contact_tracing.network import Network, TestType, Node, PositivePolicy
 
 
 class ContactTracing:
@@ -15,7 +16,7 @@ class ContactTracing:
 
         # Parameter Inputs:
         # contact tracing parameters
-        self.policy_for_household_contacts_of_a_positive_case = 'lfa testing no quarantine'
+        self.household_positive_policy = PositivePolicy.lfa_testing_no_quarantine
         self.LFA_testing_requires_confirmatory_PCR = False
         self.node_daily_prob_lfa_test = 1
 
@@ -56,78 +57,6 @@ class ContactTracing:
         else:
             return 0
 
-    def apply_policy_for_household_contacts_of_a_positive_case(self, household: Household,
-                                                               time: int):
-        """We apply different policies to the household contacts of a discovered case.
-        The policy is set using the policy_for_household_contacts_of_a_positive_case input.
-
-        Available policy settings:
-            * "lfa testing no quarantine" - Household contacts start LFA testing, but do not quarantine unless they develop symptoms
-            * "lfa testing and quarantine" - Household contacts start LFA testing, and quarantine.
-            * "no lfa testing and quarantine" - Household contacts do not start LFA testing, quarantine. They will book a PCR test if they develop symptoms.
-        """
-
-        # set the household attributes to declare that we have already applied the policy
-        household.applied_policy_for_household_contacts_of_a_positive_case = True
-
-        if self.policy_for_household_contacts_of_a_positive_case == 'lfa testing no quarantine':
-            self.start_lateral_flow_testing_household(household, time)
-        elif self.policy_for_household_contacts_of_a_positive_case == 'lfa testing and quarantine':
-            self.start_lateral_flow_testing_household_and_quarantine(household, time)
-        elif self.policy_for_household_contacts_of_a_positive_case == 'no lfa testing only quarantine':
-            household.isolate_household(time)
-        else:
-            raise Exception("""policy_for_household_contacts_of_a_positive_case not recognised. Must be one of the 
-            following options:
-                * "lfa testing no quarantine"
-                * "lfa testing and quarantine"
-                * "no lfa testing only quarantine" """)
-
-    @staticmethod
-    def start_lateral_flow_testing_household(household: Household, time: int):
-        """Sets the household to the lateral flow testing status so that new within household
-        infections are tested
-
-        All nodes in the household start lateral flow testing
-
-        Args:
-            household (Household): The household which is initiating testing
-        """
-
-        household.being_lateral_flow_tested = True
-        household.being_lateral_flow_tested_start_time = time
-
-        for node in household.nodes:
-            if node.node_will_take_up_lfa_testing and not node.received_positive_test_result and \
-                    not node.being_lateral_flow_tested:
-                node.being_lateral_flow_tested = True
-                node.time_started_lfa_testing = time
-
-    @staticmethod
-    def start_lateral_flow_testing_household_and_quarantine(household: Household, time: int):
-        """Sets the household to the lateral flow testing status so that new within household
-        infections are tested
-
-        All nodes in the household start lateral flow testing and start quarantining
-
-        Args:
-            household (Household): The household which is initiating testing
-        """
-        household.being_lateral_flow_tested = True
-        household.being_lateral_flow_tested_start_time = time
-        household.isolated = True
-        household.isolated_time = True
-        household.contact_traced = True
-
-        for node in household.nodes:
-            if node.node_will_take_up_lfa_testing and not node.received_positive_test_result and \
-                    not node.being_lateral_flow_tested:
-                node.being_lateral_flow_tested = True
-                node.time_started_lfa_testing = time
-
-            if node.will_uptake_isolation:
-                node.isolated = True
-
     def act_on_confirmatory_pcr_results(self, time: int):
         """Once on a individual receives a positive pcr result we need to act on it.
 
@@ -137,7 +66,7 @@ class ContactTracing:
         """
         for node in self.network.all_nodes():
             if node.confirmatory_PCR_test_result_time == time:
-                self.apply_policy_for_household_contacts_of_a_positive_case(node.household, time)
+                node.household.apply_positive_policy(time, self.household_positive_policy)
 
     def isolate_positive_lateral_flow_tests(self, time: int, positive_nodes: List[Node]):
         """A if a node tests positive on LFA, we assume that they isolate and stop LFA testing
@@ -156,9 +85,9 @@ class ContactTracing:
             node.positive_test_time = time
             node.being_lateral_flow_tested = False
 
-            if not node.household.applied_policy_for_household_contacts_of_a_positive_case and \
+            if not node.household.applied_household_positive_policy and \
                     not self.LFA_testing_requires_confirmatory_PCR:
-                self.apply_policy_for_household_contacts_of_a_positive_case(node.household, time)
+                node.household.apply_positive_policy(time, self.household_positive_policy)
 
     def confirmatory_pcr_test_LFA_nodes(self, time: int, positive_nodes: List[Node]):
         """Nodes who receive a positive LFA result will be tested using a PCR test."""

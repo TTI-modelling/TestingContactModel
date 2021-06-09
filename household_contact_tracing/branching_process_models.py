@@ -52,6 +52,7 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
             Simulates one increment (day) of the infection and contact tracing.
 
     """
+    schema_path = "schemas/household_sim_contact_tracing.json"
 
     def __init__(self, params: dict):
         """Initializes a household branching process epidemic. Various contact tracing strategies
@@ -63,8 +64,7 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
 
         self.params = params
         # Parse parameters against schema to check they are valid
-        validate_parameters(params, os.path.join(self.root_dir,
-                                                 "schemas/household_sim_contact_tracing.json"))
+        validate_parameters(params, os.path.join(self.root_dir, self.schema_path))
         # Call parent init
         BranchingProcessModel.__init__(self)
 
@@ -93,7 +93,7 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         isolate_self_reporting_cases(self.network, self.time)
         # isolate self-reporting-nodes while they wait for tests
-        new_isolation = isolation.UpdateIsolationHouseholdLevel(self.network, self.contact_tracing.apply_policy_for_household_contacts_of_a_positive_case)
+        new_isolation = isolation.UpdateIsolationHouseholdLevel(self.network, self.contact_tracing.household_positive_policy)
         new_isolation.update_isolation(self.time)
         # propagate contact tracing
         new_increment = increment.IncrementTracingHouseholdLevel(self.network, self.contact_tracing.prob_testing_positive_pcr_func, self.contact_tracing.LFA_testing_requires_confirmatory_PCR, self.params)
@@ -178,6 +178,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
         -------
 
     """
+    schema_path = "schemas/uk_model.json"
 
     def _initialise_infection(self, network: Network):
         return Infection(network,
@@ -194,7 +195,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         isolate_self_reporting_cases(self.network, self.time)
         # isolate self-reporting-nodes while they wait for tests
-        new_isolation = isolation.UpdateIsolationIndividualLevelTracing(self.network, self.contact_tracing.apply_policy_for_household_contacts_of_a_positive_case)
+        new_isolation = isolation.UpdateIsolationIndividualLevelTracing(self.network, self.contact_tracing.household_positive_policy)
         new_isolation.update_isolation(self.time)
         # propagate contact tracing
         new_increment = increment.IncrementTracingIndividualLevel(self.network,
@@ -224,6 +225,7 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
         -------
 
     """
+    schema_path = "schemas/contact_model_test.json"
 
     def __init__(self, params):
 
@@ -243,7 +245,7 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         isolate_self_reporting_cases(self.network, self.time)
         new_isolation = isolation.UpdateIsolationIndividualTracingDailyTesting(self.network,
-                                                                               self.contact_tracing.apply_policy_for_household_contacts_of_a_positive_case)
+                                                                               self.contact_tracing.household_positive_policy)
         # isolate self-reporting-nodes while they wait for tests
         new_isolation.update_isolation(self.time)
         # isolate self reporting nodes
