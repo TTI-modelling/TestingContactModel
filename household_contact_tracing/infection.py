@@ -4,9 +4,10 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import numpy.random as npr
-from typing import Optional
+from typing import Optional, Type
 import sys
 
+from household_contact_tracing.behaviours.new_household import NewHousehold
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
 from household_contact_tracing.network import EdgeType, Household, Network, Node
 import household_contact_tracing.behaviours.new_infection as new_infection
@@ -15,13 +16,12 @@ import household_contact_tracing.behaviours.new_infection as new_infection
 class Infection:
     """ 'Context' class for infection processes/strategies (Strategy pattern) """
 
-    def __init__(self, network: Network, new_household: NewHouseholdBehaviour,
+    def __init__(self, network: Network, new_household: Type[NewHousehold],
                  new_infection: new_infection.NewInfection,
                  contact_rate_reduction: ContactRateReductionBehaviour, params: dict):
         self._network = network
 
         # Declare behaviours
-        self.new_household_behaviour = new_household
         self.new_infection_behaviour = new_infection
         self.contact_rate_reduction_behaviour = contact_rate_reduction
 
@@ -105,6 +105,9 @@ class Infection:
             self.asymptomatic_global_infection_probs.append(self.outside_household_infectivity_scaling *
                                                             self.asymptomatic_relative_infectivity *
                                                             current_rate_infection(day))
+        self.new_household_behaviour = new_household(self.network,
+                                                     self.hh_propensity_to_use_trace_app,
+                                                     self.size_mean_contacts_biased_distribution)
 
         self.initialise()
 
@@ -113,11 +116,11 @@ class Infection:
         return self._network
 
     @property
-    def new_household_behaviour(self) -> NewHouseholdBehaviour:
+    def new_household_behaviour(self) -> NewHousehold:
         return self._new_household_behaviour
 
     @new_household_behaviour.setter
-    def new_household_behaviour(self, new_household_behaviour: NewHouseholdBehaviour):
+    def new_household_behaviour(self, new_household_behaviour: NewHousehold):
         self._new_household_behaviour = new_household_behaviour
         if self._new_household_behaviour:
             self._new_household_behaviour.infection = self
@@ -248,14 +251,6 @@ class Infection:
             return sys.maxsize
         else:
             return round(self.incubation_period_delay)
-
-    def size_of_household(self) -> int:
-        """Generates a random household size
-
-        Returns:
-        household_size {int}
-        """
-        return npr.choice([1, 2, 3, 4, 5, 6], p=self.size_mean_contacts_biased_distribution)
 
     def contacts_made_today(self, household_size) -> int:
         """Generates the number of contacts made today by a node, given the house size of the node. Uses an
@@ -393,12 +388,6 @@ class Infection:
     def has_contact_tracing_app(self) -> bool:
         return npr.binomial(1, self.prob_has_trace_app) == 1
 
-    def hh_propensity_use_trace_app(self) -> bool:
-        if npr.binomial(1, self.hh_propensity_to_use_trace_app) == 1:
-            return True
-        else:
-            return False
-
     def testing_delay(self) -> int:
         if self.test_before_propagate_tracing is False:
             return 0
@@ -415,53 +404,6 @@ class Infection:
         for node in self.network.all_nodes():
             if node.recovery_time == time:
                 node.recovered = True
-
-
-class NewHouseholdBehaviour(ABC):
-    def __init__(self, network: Network):
-        self._network = network
-        self._infection = None
-
-    @property
-    def infection(self) -> Infection:
-        return self._infection
-
-    @infection.setter
-    def infection(self, infection: Infection):
-        self._infection = infection
-
-    @abstractmethod
-    def new_household(self, time: int, infected_by: Optional[Household],
-                      additional_attributes: Optional[dict] = None) -> Household:
-        """Add a new Household to the model."""
-
-
-class NewHouseholdLevel(NewHouseholdBehaviour):
-
-    def new_household(self, time: int, infected_by: Optional[Household],
-                      additional_attributes: Optional[dict] = None) -> Household:
-        """Adds a new household to the household dictionary"""
-        house_size = self._infection.size_of_household()
-
-        return self._network.add_household(house_size=house_size,
-                                           time_infected=time,
-                                           infected_by=infected_by,
-                                           propensity_trace_app=self.infection.hh_propensity_use_trace_app(),
-                                           additional_attributes=additional_attributes
-                                           )
-
-
-class NewHouseholdIndividualTracingDailyTesting(NewHouseholdLevel):
-
-    def new_household(self, time: int, infected_by: Optional[Household],
-                      additional_attributes: Optional[dict] = None) -> Household:
-
-        return super().new_household(time, infected_by=infected_by,
-                                     additional_attributes={'being_lateral_flow_tested': False,
-                                                            'being_lateral_flow_tested_start_time': None,
-                                                            'applied_policy_for_household_contacts_of_a_positive_case': False
-                                                            }
-                                     )
 
 
 class ContactRateReductionBehaviour:

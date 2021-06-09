@@ -3,11 +3,12 @@ import os
 from copy import deepcopy
 
 from household_contact_tracing.behaviours.isolate_self_reporting import isolate_self_reporting_cases
+from household_contact_tracing.behaviours.new_household import NewHouseholdLevel, \
+    NewHouseholdIndividualTracingDailyTesting
 from household_contact_tracing.network import Network
 from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.infection import Infection, \
-    NewHouseholdLevel, NewHouseholdIndividualTracingDailyTesting, \
     ContactRateReductionHouseholdLevelContactTracing, ContactRateReductionIndividualTracingDaily
 from household_contact_tracing.contact_tracing import ContactTracing
 import household_contact_tracing.behaviours.isolation as isolation
@@ -77,7 +78,7 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
 
     def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
-                         NewHouseholdLevel(network),
+                         NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel(network),
                          ContactRateReductionHouseholdLevelContactTracing(),
                          params)
@@ -173,7 +174,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
         Attributes
         ----------
         prob_testing_positive_lfa_func(self) -> Callable[[int], float]
-            function that calculates probability of postive LFA test result
+            function that calculates probability of positive LFA test result
 
         prob_testing_positive_pcr_func(self) -> Callable[[int], float]
             function that calculates probability of positive PCR test result
@@ -202,7 +203,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
 
     def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
-                         NewHouseholdLevel(network),
+                         NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel(network),
                          ContactRateReductionHouseholdLevelContactTracing(),
                          params)
@@ -236,7 +237,7 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
 
     def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
-                         NewHouseholdIndividualTracingDailyTesting(self.network),
+                         NewHouseholdIndividualTracingDailyTesting,
                          new_infection.NewInfectionIndividualTracingDailyTesting(self.network),
                          ContactRateReductionIndividualTracingDaily(),
                          params)
