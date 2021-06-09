@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from abc import ABC, abstractmethod
-from typing import Optional, TYPE_CHECKING, Callable
+from typing import Optional, TYPE_CHECKING
 
 import numpy
 import numpy as np
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 class NewInfection(ABC):
-    def __init__(self, network: Network, will_uptake_isolation: Callable, params: dict):
+    def __init__(self, network: Network, params: dict):
         self.network = network
         self.symptom_reporting_delay = 1
         self.incubation_period_delay = 5
@@ -27,7 +27,7 @@ class NewInfection(ABC):
         self.node_prob_will_take_up_lfa_testing = 1
         self.propensity_risky_behaviour_lfa_testing = 0
         self.proportion_with_propensity_miss_lfa_tests = 0.
-        self.will_uptake_isolation = will_uptake_isolation
+        self.node_will_uptake_isolation_prob = 1
 
         update_params(self, params)
 
@@ -79,6 +79,16 @@ class NewInfection(ABC):
 
     def propensity_to_miss_lfa_tests(self) -> bool:
         return np.random.binomial(1, self.proportion_with_propensity_miss_lfa_tests) == 1
+
+    def will_uptake_isolation(self) -> bool:
+        """Based on the node_will_uptake_isolation_prob, return a bool
+        where True implies they do take up isolation and False implies they do not uptake isolation
+
+        Returns:
+            bool: If True they uptake isolation, if False they do not uptake isolation
+        """
+        return numpy.random.choice([True, False], p=(self.node_will_uptake_isolation_prob, 1 -
+                                                     self.node_will_uptake_isolation_prob))
 
 
 class NewInfectionHouseholdLevel(NewInfection):

@@ -2,8 +2,7 @@ import os
 from copy import deepcopy
 
 from household_contact_tracing.behaviours.contact_rate_reduction import \
-    ContactRateReductionHouseholdLevelContactTracing, ContactRateReductionIndividualTracingDaily
-from household_contact_tracing.behaviours.isolate_self_reporting import isolate_self_reporting_cases
+    ContactRateReductionHouseholdLevelTracing, ContactRateReductionIndividualTracingDaily
 from household_contact_tracing.behaviours.new_household import NewHouseholdLevel, \
     NewHouseholdIndividualTracingDailyTesting
 from household_contact_tracing.behaviours.perform_recoveries import perform_recoveries
@@ -85,7 +84,7 @@ class HouseholdLevelTracing(BranchingProcessModel):
         return Infection(network,
                          NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel,
-                         ContactRateReductionHouseholdLevelContactTracing,
+                         ContactRateReductionHouseholdLevelTracing,
                          self.params)
 
     def simulate_one_step(self):
@@ -94,7 +93,7 @@ class HouseholdLevelTracing(BranchingProcessModel):
         # Perform one day of the infection
         self.infection.increment(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
-        isolate_self_reporting_cases(self.network, self.time)
+        household_level_isolation.isolate_self_reporting_cases(self.network, self.time)
         # isolate self-reporting-nodes while they wait for tests
         household_level_isolation.update_households_contact_traced(self.network, self.time)
         household_level_isolation.update_isolation(self.network, self.time)
@@ -187,7 +186,7 @@ class IndividualLevelTracing(HouseholdLevelTracing):
         return Infection(network,
                          NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel,
-                         ContactRateReductionHouseholdLevelContactTracing,
+                         ContactRateReductionHouseholdLevelTracing,
                          self.params)
 
     def simulate_one_step(self):
@@ -196,7 +195,7 @@ class IndividualLevelTracing(HouseholdLevelTracing):
         # Perform one day of the infection
         self.infection.increment(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
-        isolate_self_reporting_cases(self.network, self.time)
+        household_level_isolation.isolate_self_reporting_cases(self.network, self.time)
         # isolate self-reporting-nodes while they wait for tests
         individual_level_isolation.update_households_contact_traced(self.network, self.time)
         individual_level_isolation.update_isolation(self.network, self.time)
@@ -246,7 +245,7 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
         """ Simulates one day of the infection and contact tracing.
         """
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
-        isolate_self_reporting_cases(self.network, self.time)
+        household_level_isolation.isolate_self_reporting_cases(self.network, self.time)
         # isolate self-reporting-nodes while they wait for tests
         daily_testing_isolation.update_households_contact_traced(self.network, self.time)
         daily_testing_isolation.update_isolation(self.network, self.time,

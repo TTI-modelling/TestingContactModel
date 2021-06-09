@@ -2,29 +2,25 @@ from __future__ import annotations
 
 import numpy as np
 import numpy.random as npr
-from typing import Optional, Type
+from typing import Type
 
 from household_contact_tracing.behaviours.contact_rate_reduction import \
-    ContactRateReductionBehaviour
+    ContactRateReduction
 from household_contact_tracing.behaviours.new_household import NewHousehold
 from household_contact_tracing.behaviours.new_infection import NewInfection
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, \
     compute_negbin_cdf
-from household_contact_tracing.network import EdgeType, Household, Network, Node
+from household_contact_tracing.network import EdgeType, Network, Node
 from household_contact_tracing.utilities import update_params
 
 
 class Infection:
-    """ 'Context' class for infection processes/strategies (Strategy pattern) """
+    """Logic for creation of infectives and daily increment of infection."""
 
     def __init__(self, network: Network, new_household: Type[NewHousehold],
                  new_infection: Type[NewInfection],
-                 contact_rate_reduction: Type[ContactRateReductionBehaviour], params: dict):
+                 contact_rate_reduction: Type[ContactRateReduction], params: dict):
         self.network = network
-
-        # Probability of each household size
-        self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886,
-                                 0.045067385, 0.021455526]
 
         # The mean number of contacts made by each household
         self.total_contact_means = [7.238, 10.133, 11.419, 12.844, 14.535, 15.844]
@@ -39,35 +35,14 @@ class Infection:
         self.starting_infections = 1
         self.household_pairwise_survival_prob = 0.2
 
-        # adherence parameters
-        self.node_will_uptake_isolation_prob = 1
-
-        self.hh_propensity_to_use_trace_app = 1
-
         update_params(self, params)
 
+        household_size = len(self.total_contact_means)
+
         # Precomputing the cdf's for generating the overdispersed contact data
-        self.cdf_dict = {
-            1: compute_negbin_cdf(self.total_contact_means[0], self.overdispersion, 100),
-            2: compute_negbin_cdf(self.total_contact_means[1], self.overdispersion, 100),
-            3: compute_negbin_cdf(self.total_contact_means[2], self.overdispersion, 100),
-            4: compute_negbin_cdf(self.total_contact_means[3], self.overdispersion, 100),
-            5: compute_negbin_cdf(self.total_contact_means[4], self.overdispersion, 100),
-            6: compute_negbin_cdf(self.total_contact_means[5], self.overdispersion, 100)
-        }
+        self.cdf_dict = {i + 1: compute_negbin_cdf(self.total_contact_means[i], self.overdispersion)
+                         for i in range(household_size)}
 
-        # Calculate the expected local contacts
-        expected_local_contacts = [self.local_contact_probs[i] * i for i in range(6)]
-
-        # Calculate the expected global contacts
-        expected_global_contacts = np.array(self.total_contact_means) - np.array(expected_local_contacts)
-
-        # Size biased distribution of households (choose a node, what is the prob they are in a house size 6, this is
-        # biased by the size of the house)
-        size_mean_contacts_biased_distribution = [(i + 1) * self.house_size_probs[i] * expected_global_contacts[i] for i
-                                                  in range(6)]
-        total = sum(size_mean_contacts_biased_distribution)
-        self.size_mean_contacts_biased_distribution = [prob / total for prob in size_mean_contacts_biased_distribution]
 
         self.symptomatic_local_infection_probs = self.compute_hh_infection_probs(self.household_pairwise_survival_prob)
         asymptomatic_household_pairwise_survival_prob = (1 - self.asymptomatic_relative_infectivity
@@ -85,31 +60,20 @@ class Infection:
             self.asymptomatic_global_infection_probs.append(self.outside_household_infectivity_scaling *
                                                             self.asymptomatic_relative_infectivity *
                                                             current_rate_infection(day))
-        self.new_household_behaviour = new_household(self.network,
-                                                     self.hh_propensity_to_use_trace_app,
-                                                     self.size_mean_contacts_biased_distribution)
 
-        self.new_infection_behaviour = new_infection(self.network, self.will_uptake_isolation,
-                                                     params)
+        self.new_household = new_household(self.network, params, self.local_contact_probs,
+                                           self.total_contact_means)
+
+        self.new_infection = new_infection(self.network, params)
         self.contact_rate_reduction = contact_rate_reduction(params)
 
         self.initialise()
 
-    def new_household(self, time: int, infected_by: Optional[Household],
-                      additional_attributes=None) -> Household:
-        new_household = self.new_household_behaviour.new_household(time, infected_by,
-                                                                   additional_attributes)
-        return new_household
-
-    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
-        if self.new_infection_behaviour:
-            self.new_infection_behaviour.new_infection(time, household_id, infecting_node)
-
     def initialise(self):
         # Create the starting infectives
         for households in range(self.starting_infections):
-            new_household = self.new_household(time=0, infected_by=None)
-            self.new_infection(time=0, household_id=new_household.house_id)
+            new_household = self.new_household.new_household(time=0, infected_by=None)
+            self.new_infection.new_infection(time=0, household_id=new_household.house_id)
 
     def increment(self, time):
         """Create a new days worth of infections."""
@@ -146,10 +110,7 @@ class Infection:
                                                             infectious_age=days_since_infected,
                                                             asymptomatic=node.asymptomatic)
 
-            local_infective_contacts = npr.binomial(
-                local_contacts,
-                local_infection_probs
-            )
+            local_infective_contacts = npr.binomial(local_contacts, local_infection_probs)
 
             for _ in range(local_infective_contacts):
                 # A further thinning has to happen since each attempt may choose an
@@ -188,8 +149,8 @@ class Infection:
                 node.spread_to_global_node_time_tuples.append(node_time_tuple)
 
     def contacts_made_today(self, household_size) -> int:
-        """Generates the number of contacts made today by a node, given the house size of the node. Uses an
-        overdispersed negative binomial distribution.
+        """Generates the number of contacts made today by a node, given the house size of the node.
+         Uses an overdispersed negative binomial distribution.
 
         Arguments:
             house_size {int} -- size of the nodes household
@@ -210,16 +171,6 @@ class Infection:
             current_prob_infection = hazard * (survival_function / contact_prob)
             infection_probs = np.append(infection_probs, current_prob_infection)
         return infection_probs
-
-    def will_uptake_isolation(self) -> bool:
-        """Based on the node_will_uptake_isolation_prob, return a bool
-        where True implies they do take up isolation and False implies they do not uptake isolation
-
-        Returns:
-            bool: If True they uptake isolation, if False they do not uptake isolation
-        """
-        return npr.choice([True, False], p=(self.node_will_uptake_isolation_prob, 1 -
-                                            self.node_will_uptake_isolation_prob))
 
     def get_infection_prob(self, local: bool, infectious_age: int, asymptomatic: bool) -> float:
         """Get the current probability per global infectious contact
@@ -253,13 +204,15 @@ class Infection:
         infecting_household = infecting_node.household
 
         # Create a new household, since the infection was outside the household
-        new_household = self.new_household(time=time, infected_by=infecting_node.household)
+        new_household = self.new_household.new_household(time=time,
+                                                         infected_by=infecting_node.household)
 
         # We record which house spread to which other house
         infecting_household.spread_to.append(new_household)
 
         # add a new infection in the house just created
-        self.new_infection(time=time, household_id=house_id, infecting_node=infecting_node)
+        self.new_infection.new_infection(time=time, household_id=house_id,
+                                         infecting_node=infecting_node)
 
         # Add the edge to the graph and give it the default label
         self.network.graph.add_edge(infecting_node.id, node_count)
@@ -276,8 +229,8 @@ class Infection:
         infecting_node_household = infecting_node.household
 
         # Adds the new infection to the network
-        self.new_infection(time=time, household_id=infecting_node_household.house_id,
-                           infecting_node=infecting_node)
+        self.new_infection.new_infection(time=time, household_id=infecting_node_household.house_id,
+                                         infecting_node=infecting_node)
 
         # Add the edge to the graph and give it the default label if the house is not
         # traced/isolated
@@ -295,4 +248,3 @@ class Infection:
 
         # We record which edges are within this household for visualisation later on
         infecting_node_household.within_house_edges.append((infecting_node.id, node_count))
-

@@ -86,7 +86,7 @@ def negbin_pdf(x, m, a):
     return A * B * C
 
 
-def compute_negbin_cdf(mean, overdispersion, length_out):
+def compute_negbin_cdf(mean, overdispersion, length_out=100):
     """
     Computes the overdispersed negative binomial cdf, which we use to generate random numbers by generating uniform(0,1)
     rv's.

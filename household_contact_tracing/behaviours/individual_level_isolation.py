@@ -1,4 +1,3 @@
-from household_contact_tracing.behaviours.household_level_isolation import quarantine_traced_node
 from household_contact_tracing.network import Network
 
 
@@ -9,7 +8,7 @@ def update_households_contact_traced(network: Network, time: int):
         if household.time_until_contact_traced <= time:
             if not household.contact_traced:
                 household.update_network()
-                quarantine_traced_node(household)
+                household.quarantine_traced_node()
 
 
 def update_isolation(network: Network, time: int):

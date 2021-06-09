@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from household_contact_tracing.utilities import update_params
 
 
-class ContactRateReductionBehaviour(ABC):
+class ContactRateReduction(ABC):
     def __init__(self, params: dict):
 
         self.reduce_contacts_by = 0
@@ -18,7 +18,7 @@ class ContactRateReductionBehaviour(ABC):
         isolation parameters"""
 
 
-class ContactRateReductionHouseholdLevelContactTracing(ContactRateReductionBehaviour):
+class ContactRateReductionHouseholdLevelTracing(ContactRateReduction):
 
     def get_contact_rate_reduction(self, node) -> int:
         """Returns a contact rate reduction, depending upon a nodes current status and various
@@ -34,7 +34,7 @@ class ContactRateReductionHouseholdLevelContactTracing(ContactRateReductionBehav
             return self.reduce_contacts_by
 
 
-class ContactRateReductionIndividualTracingDaily (ContactRateReductionBehaviour):
+class ContactRateReductionIndividualTracingDaily(ContactRateReduction):
 
     def get_contact_rate_reduction(self, node) -> int:
         """This method overrides the default behaviour. Previously the override behaviour allowed

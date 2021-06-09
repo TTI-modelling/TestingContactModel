@@ -536,3 +536,10 @@ class Household:
             if node.symptom_onset_time <= time and not node.completed_isolation:
                 self.isolate_household(time)
                 break
+
+    def quarantine_traced_node(self):
+        traced_node = self.find_traced_node()
+
+        # the traced node should go into quarantine
+        if not traced_node.isolated and traced_node.will_uptake_isolation:
+            traced_node.isolated = True
