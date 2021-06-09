@@ -1,14 +1,10 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 import os
-from typing import TYPE_CHECKING
 
 from household_contact_tracing.views.simulation_view import SimulationView
-from household_contact_tracing.simulation_states import SimulationState, BranchingProcessState, ReadyState
-
-
-if TYPE_CHECKING:
-    from household_contact_tracing.network import Network
+from household_contact_tracing.simulation_states import SimulationState, BranchingProcessState, \
+    ReadyState
 
 
 class SimulationModel(ABC):
@@ -17,7 +13,7 @@ class SimulationModel(ABC):
 
         Attributes
         ----------
-        __ROOT_DIR : str
+        __ROOT_DIR: str
             root directory of containing package
 
         Methods
@@ -150,12 +146,6 @@ class BranchingProcessModel(SimulationModel):
     @property
     def state(self) -> BranchingProcessState:
         return self._state
-
-
-    @property
-    @abstractmethod
-    def network(self) -> Network:
-        """Return the network object that holds the Nodes."""
 
     @abstractmethod
     def run_simulation(self, max_time: int, infection_threshold: int) -> None:

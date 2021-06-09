@@ -34,22 +34,23 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
             the processes/behaviours relating to the spread of infection
 
         contact_tracing: ContactTracing
-            the processes/behaviours relating to the containment of the infection via contact tracing
+            the processes/behaviours relating to the containment of the infection via contact
+            tracing
 
 
         Methods
         -------
 
         run_simulation(self, max_time: int, infection_threshold: int = 1000) -> None
-            Runs the simulation up to a maximum number of increments and max allowed number of infected nodes.
+            Runs the simulation up to a maximum number of increments and max allowed number of
+            infected nodes.
 
         simulate_one_step(self)
-            Simulates one imcrement (day) of the infection and contact tracing.
+            Simulates one increment (day) of the infection and contact tracing.
 
     """
 
     def __init__(self, params: dict):
-
         """Initializes a household branching process epidemic. Various contact tracing strategies
         can be utilized in an attempt to control the epidemic.
 
@@ -65,34 +66,14 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
         BranchingProcessModel.__init__(self)
 
         # Set network
-        self._network = Network()
+        self.network = Network()
 
         # Set strategies (Strategy pattern)
-        self._infection = self._initialise_infection(self._network, params)
-        self._contact_tracing = self._initialise_contact_tracing(self._network, params)
+        self.infection = self._initialise_infection(self.network, params)
+        self.contact_tracing = self._initialise_contact_tracing(self.network, params)
 
         # Set the simulated time to the start (days)
         self.time = 0
-
-    @property
-    def network(self) -> Network:
-        return self._network
-
-    @property
-    def infection(self) -> Infection:
-        return self._infection
-
-    @infection.setter
-    def infection(self, infection: Infection):
-        self._infection = infection
-
-    @property
-    def contact_tracing(self) -> ContactTracing:
-        return self._contact_tracing
-
-    @contact_tracing.setter
-    def contact_tracing(self, contact_tracing: ContactTracing):
-        self._contact_tracing = contact_tracing
 
     def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
@@ -110,8 +91,7 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
                               params)
 
     def simulate_one_step(self):
-        """ Simulates one day of the infection and contact tracing.
-        """
+        """Simulates one day of the infection and contact tracing."""
 
         # Perform one day of the infection
         self.infection.increment(self.time)
@@ -135,8 +115,8 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
                 Announces start/stopped and step increments to observers
 
         Arguments:
-            max_time -- The maximum number of step increments to perform (stops if self.time >= max_time)
-                         Note: self.time is cumulative throughout multiple calls to run_simulation.
+            max_time -- The maximum number of step increments to perform (stops if self.time >=
+              max_time). Self.time is cumulative throughout multiple calls to run_simulation.
             infection_threshold -- The maximum number of infectious nodes allowed,
               before stopping simulation
 
@@ -237,10 +217,9 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
 
 
 class IndividualTracingDailyTesting(IndividualLevelContactTracing):
-    """
-        A class used to represent a simulation of contact tracing of households along with
-         contacting every individual and their contacts, whether they have tested positive or not, along with
-         daily testing.
+    """A class used to represent a simulation of contact tracing of households along with
+    contacting every individual and their contacts, whether they have tested positive or not, along
+    with daily testing.
 
         Attributes
         ----------
