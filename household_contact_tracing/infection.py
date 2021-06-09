@@ -3,12 +3,13 @@ from __future__ import annotations
 import numpy as np
 import numpy.random as npr
 from typing import Optional, Type
-import sys
 
 from household_contact_tracing.behaviours.new_household import NewHousehold
 from household_contact_tracing.behaviours.new_infection import NewInfection
-from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
+from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, \
+    compute_negbin_cdf
 from household_contact_tracing.network import EdgeType, Household, Network, Node
+from household_contact_tracing.utilities import update_params
 
 
 class Infection:
@@ -32,33 +33,19 @@ class Infection:
         # infection parameters
         self.outside_household_infectivity_scaling = 1.0
         self.overdispersion = 0.32
-        self.asymptomatic_prob = 0.5
         self.asymptomatic_relative_infectivity = 0.5
-        self.infection_reporting_prob = 1.0
         self.reduce_contacts_by = 0
         self.starting_infections = 1
-        self.symptom_reporting_delay = 1
-        self.incubation_period_delay = 5
         self.global_contact_reduction_risky_behaviour = 0
         self.household_pairwise_survival_prob = 0.2
 
         # adherence parameters
         self.node_will_uptake_isolation_prob = 1
-        self.propensity_imperfect_quarantine = 0
         self.global_contact_reduction_imperfect_quarantine = 0
 
-        self.node_prob_will_take_up_lfa_testing = 1
-        self.propensity_risky_behaviour_lfa_testing = 0
         self.hh_propensity_to_use_trace_app = 1
-        self.test_before_propagate_tracing = True
-        self.test_delay = 1
-        self.prob_has_trace_app = 0
-        self.proportion_with_propensity_miss_lfa_tests = 0.
 
-        # Update instance variables with anything in params
-        for param_name in self.__dict__:
-            if param_name in params:
-                self.__dict__[param_name] = params[param_name]
+        update_params(self, params)
 
         # Precomputing the cdf's for generating the overdispersed contact data
         self.cdf_dict = {
@@ -103,7 +90,8 @@ class Infection:
                                                      self.hh_propensity_to_use_trace_app,
                                                      self.size_mean_contacts_biased_distribution)
 
-        self.new_infection_behaviour = new_infection(self.network, self)
+        self.new_infection_behaviour = new_infection(self.network, self.will_uptake_isolation,
+                                                     params)
         self.contact_rate_reduction_behaviour = contact_rate_reduction(self)
 
         self.initialise()
@@ -204,16 +192,6 @@ class Infection:
 
                 node.spread_to_global_node_time_tuples.append(node_time_tuple)
 
-    def is_asymptomatic_infection(self) -> bool:
-        """Determine whether a node"""
-        return npr.binomial(1, self.asymptomatic_prob) == 1
-
-    def incubation_period(self, asymptomatic: bool) -> int:
-        if asymptomatic:
-            return sys.maxsize
-        else:
-            return round(self.incubation_period_delay)
-
     def contacts_made_today(self, household_size) -> int:
         """Generates the number of contacts made today by a node, given the house size of the node. Uses an
         overdispersed negative binomial distribution.
@@ -238,12 +216,6 @@ class Infection:
             infection_probs = np.append(infection_probs, current_prob_infection)
         return infection_probs
 
-    def reporting_delay(self, asymptomatic: bool) -> int:
-        if asymptomatic:
-            return sys.maxsize
-        else:
-            return round(self.symptom_reporting_delay)
-
     def will_uptake_isolation(self) -> bool:
         """Based on the node_will_uptake_isolation_prob, return a bool
         where True implies they do take up isolation and False implies they do not uptake isolation
@@ -253,10 +225,6 @@ class Infection:
         """
         return npr.choice([True, False], p=(self.node_will_uptake_isolation_prob, 1 -
                                             self.node_will_uptake_isolation_prob))
-
-    def get_propensity_imperfect_isolation(self) -> bool:
-        return npr.choice([True, False], p=(self.propensity_imperfect_quarantine, 1 -
-                                            self.propensity_imperfect_quarantine))
 
     def get_infection_prob(self, local: bool, infectious_age: int, asymptomatic: bool) -> float:
         """Get the current probability per global infectious contact
@@ -332,29 +300,6 @@ class Infection:
 
         # We record which edges are within this household for visualisation later on
         infecting_node_household.within_house_edges.append((infecting_node.id, node_count))
-
-    def will_take_up_lfa_testing(self) -> bool:
-        return npr.binomial(1, self.node_prob_will_take_up_lfa_testing) == 1
-
-    def will_engage_in_risky_behaviour_while_being_lfa_tested(self):
-        """Will the node engage in more risky behaviour if they are being LFA tested?
-        """
-        if npr.binomial(1, self.propensity_risky_behaviour_lfa_testing) == 1:
-            return True
-        else:
-            return False
-
-    def propensity_to_miss_lfa_tests(self) -> bool:
-        return npr.binomial(1, self.proportion_with_propensity_miss_lfa_tests) == 1
-
-    def has_contact_tracing_app(self) -> bool:
-        return npr.binomial(1, self.prob_has_trace_app) == 1
-
-    def testing_delay(self) -> int:
-        if self.test_before_propagate_tracing is False:
-            return 0
-        else:
-            return round(self.test_delay)
 
     def perform_recoveries(self, time):
         """

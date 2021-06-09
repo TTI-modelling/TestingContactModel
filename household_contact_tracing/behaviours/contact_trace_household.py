@@ -8,7 +8,7 @@ from household_contact_tracing.network import Network, Household, EdgeType
 class ContactTraceHousehold(ABC):
 
     def __init__(self, network: Network):
-        self._network = network
+        self.network = network
 
     @abstractmethod
     def contact_trace_household(self, household: Household, time: int):
@@ -27,7 +27,7 @@ class ContactTraceHousehold(ABC):
             node.contact_traced = True
 
         # Colour the edges within household
-        self._network.label_edges_inside_household(household, EdgeType.within_house)
+        self.network.label_edges_inside_household(household, EdgeType.within_house)
 
     def quarantine_traced_node(self, household):
         traced_node = self.find_traced_node(household)
@@ -39,8 +39,8 @@ class ContactTraceHousehold(ABC):
     def find_traced_node(self, household: Household):
         """Work out which was the traced node."""
         tracing_household = household.being_contact_traced_from
-        traced_node_id = self._network.get_edge_between_household(household, tracing_household)[0]
-        return self._network.node(traced_node_id)
+        traced_node_id = self.network.get_edge_between_household(household, tracing_household)[0]
+        return self.network.node(traced_node_id)
 
 
 class ContactTraceHouseholdLevel(ContactTraceHousehold):
