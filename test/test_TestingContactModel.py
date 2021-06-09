@@ -153,14 +153,14 @@ def test_lfa_test_node(simple_model_high_test_prob):
 
     node_of_interest = model.network.node(1)
 
-    assert not model.contact_tracing.lfa_test_node(node_of_interest, model.time)
+    assert not node_of_interest.lfa_test_node(model.time, model.contact_tracing.prob_testing_positive_lfa_func)
 
     # set the model time to 5
     # the time relative to symptom onset should now be 0
     # the node should test positive as a result
     model.time = 5
 
-    assert model.contact_tracing.lfa_test_node(node_of_interest, model.time)
+    assert node_of_interest.lfa_test_node(model.time, model.contact_tracing.prob_testing_positive_lfa_func)
 
 
 def test_being_lateral_flow_tested_attribute(simple_model):
@@ -176,7 +176,7 @@ def test_get_positive_lateral_flow_nodes_default_exclusion(simple_model_high_tes
 
     model = simple_model_high_test_prob
 
-    assert model.contact_tracing.get_positive_lateral_flow_nodes(model.time) == []
+    assert model.contact_tracing.lft_nodes(model.time) == []
 
 
 def test_get_positive_lateral_flow_nodes_timings(simple_model_high_test_prob):
@@ -189,7 +189,7 @@ def test_get_positive_lateral_flow_nodes_timings(simple_model_high_test_prob):
 
     node_of_interest.being_lateral_flow_tested = True
 
-    assert model.contact_tracing.get_positive_lateral_flow_nodes(model.time) == []
+    assert model.contact_tracing.lft_nodes(model.time) == []
 
 
 def test_get_positive_lateral_flow_nodes(simple_model_high_test_prob):
@@ -204,7 +204,7 @@ def test_get_positive_lateral_flow_nodes(simple_model_high_test_prob):
 
     model.time = 5
 
-    assert model.contact_tracing.get_positive_lateral_flow_nodes(model.time) == [node_of_interest]
+    assert model.contact_tracing.lft_nodes(model.time) == [node_of_interest]
 
 
 def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
@@ -265,11 +265,8 @@ def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: Indivi
 
     model.network.node(1).being_lateral_flow_tested = True
 
-    # this line is required before the isolate_positive_lateral_flow_tests func
-    # can work
-    model.contact_tracing.current_LFA_positive_nodes = model.contact_tracing.get_positive_lateral_flow_nodes(model.time)
-
-    model.contact_tracing.isolate_positive_lateral_flow_tests(model.time)
+    positive_nodes = model.contact_tracing.lft_nodes(model.time)
+    model.contact_tracing.isolate_positive_lateral_flow_tests(model.time, positive_nodes)
 
     # add another infection to the household, so we can check that they are not quarantining
     # but they are lfa testing
@@ -326,10 +323,8 @@ def test_start_lateral_flow_testing_household_and_quarantine(
 
     model.network.node(1).being_lateral_flow_tested = True
 
-    # this line is required before the isolate_positive_lateral_flow_tests func can work
-    model.contact_tracing.current_LFA_positive_nodes = model.contact_tracing.get_positive_lateral_flow_nodes(model.time)
-
-    model.contact_tracing.isolate_positive_lateral_flow_tests(model.time)
+    positive_nodes = model.contact_tracing.lft_nodes(model.time)
+    model.contact_tracing.isolate_positive_lateral_flow_tests(model.time, positive_nodes)
 
     model.infection.new_within_household_infection(time=model.time,
                                                    infecting_node=model.network.node(1))
@@ -387,9 +382,8 @@ def test_household_contacts_quarantine_only(
     model.network.node(1).being_lateral_flow_tested = True
 
     # this line is required before the isolate_positive_lateral_flow_tests func can work
-    model.contact_tracing.current_LFA_positive_nodes = model.contact_tracing.get_positive_lateral_flow_nodes(model.time)
-
-    model.contact_tracing.isolate_positive_lateral_flow_tests(model.time)
+    positive_nodes = model.contact_tracing.lft_nodes(model.time)
+    model.contact_tracing.isolate_positive_lateral_flow_tests(model.time, positive_nodes)
 
     model.infection.new_within_household_infection(time=model.time,
                                                    infecting_node=model.network.node(1))

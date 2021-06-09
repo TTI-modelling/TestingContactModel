@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Optional, Iterator, List, Tuple, Dict
+from typing import Optional, Iterator, List, Tuple, Dict, Callable
 from enum import Enum
 
 import networkx as nx
+import numpy
 
 
 class EdgeType(Enum):
@@ -287,6 +288,43 @@ class Node:
             return NodeType.asymptomatic
         else:
             return NodeType.default
+
+    def take_confirmatory_pcr_test(self, time: int, prob_testing_positive_pcr_func: Callable):
+        """Given a the time relative to a nodes symptom onset, will that node test positive."""
+
+        infectious_age_when_tested = time - self.time_infected
+        prob_positive_result = prob_testing_positive_pcr_func(infectious_age_when_tested)
+
+        self.confirmatory_PCR_test_time = time
+        self.confirmatory_PCR_test_result_time = time + self.testing_delay
+        self.taken_confirmatory_PCR_test = True
+
+        if numpy.random.binomial(1, prob_positive_result) == 1:
+            self.confirmatory_PCR_result_was_positive = True
+
+        else:
+            self.confirmatory_PCR_result_was_positive = False
+
+    def will_lfa_test_today(self, daily_prob_lfa_test: float) -> bool:
+        """Determine whether a node will do an LFT test today."""
+        if not self.propensity_to_miss_lfa_tests:
+            return True
+
+        if numpy.random.binomial(1, daily_prob_lfa_test) == 1:
+            return True
+        else:
+            return False
+
+    def lfa_test_node(self, time: int, prob_testing_positive_lfa_func: Callable):
+        """Given a the time relative to a nodes symptom onset, will that node test positive"""
+        infectious_age = time - self.time_infected
+
+        prob_positive_result = prob_testing_positive_lfa_func(infectious_age)
+
+        if numpy.random.binomial(1, prob_positive_result) == 1:
+            return True
+        else:
+            return False
 
 
 class Household:

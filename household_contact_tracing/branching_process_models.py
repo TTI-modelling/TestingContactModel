@@ -1,4 +1,3 @@
-from typing import Callable
 import os
 from copy import deepcopy
 
@@ -74,7 +73,7 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
 
         # Set strategies (Strategy pattern)
         self.infection = self._initialise_infection(self.network)
-        self.contact_tracing = self._initialise_contact_tracing(self.network)
+        self.contact_tracing = ContactTracing(self.network, self.params)
 
         # Set the simulated time to the start (days)
         self.time = 0
@@ -85,10 +84,6 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
                          new_infection.NewInfectionHouseholdLevel,
                          ContactRateReductionHouseholdLevelContactTracing,
                          self.params)
-
-    def _initialise_contact_tracing(self, network: Network):
-        return ContactTracing(network,
-                              self.params)
 
     def simulate_one_step(self):
         """Simulates one day of the infection and contact tracing."""
@@ -175,9 +170,6 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
 
         Attributes
         ----------
-        prob_testing_positive_lfa_func(self) -> Callable[[int], float]
-            function that calculates probability of positive LFA test result
-
         prob_testing_positive_pcr_func(self) -> Callable[[int], float]
             function that calculates probability of positive PCR test result
 
@@ -187,31 +179,12 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
 
     """
 
-    @property
-    def prob_testing_positive_lfa_func(self) -> Callable[[int], float]:
-        return self.contact_tracing.prob_testing_positive_lfa_func
-
-    @prob_testing_positive_lfa_func.setter
-    def prob_testing_positive_lfa_func(self, fn: Callable[[int], float]):
-        self.contact_tracing.prob_testing_positive_lfa_func = fn
-
-    @property
-    def prob_testing_positive_pcr_func(self) -> Callable[[int], float]:
-        return self.contact_tracing.prob_testing_positive_pcr_func
-
-    @prob_testing_positive_pcr_func.setter
-    def prob_testing_positive_pcr_func(self, fn: Callable[[int], float]):
-        self.contact_tracing.prob_testing_positive_pcr_func = fn
-
     def _initialise_infection(self, network: Network):
         return Infection(network,
                          NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel,
                          ContactRateReductionHouseholdLevelContactTracing,
                          self.params)
-
-    def _initialise_contact_tracing(self, network: Network):
-        return ContactTracing(network, self.params)
 
     def simulate_one_step(self):
         """Simulates one day of the infection and contact tracing."""
@@ -263,10 +236,6 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
                          new_infection.NewInfectionIndividualTracingDailyTesting,
                          ContactRateReductionIndividualTracingDaily,
                          self.params)
-
-    def _initialise_contact_tracing(self, network: Network):
-        return ContactTracing(network,
-                              self.params)
 
     def simulate_one_step(self):
         """ Simulates one day of the infection and contact tracing.

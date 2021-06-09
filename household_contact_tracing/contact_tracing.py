@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import numpy as np
+from typing import List
+
 from collections.abc import Callable
 
 from household_contact_tracing.network import Network, Household, TestType, Node
@@ -21,8 +22,6 @@ class ContactTracing:
         # contact tracing functions (runtime updatable)
         self.prob_testing_positive_lfa_func = self.prob_testing_positive_lfa
         self.prob_testing_positive_pcr_func = self.prob_testing_positive_pcr
-
-        self.current_LFA_positive_nodes = []
 
         # Update instance variables with anything in params
         for param_name in self.__dict__:
@@ -129,33 +128,6 @@ class ContactTracing:
             if node.will_uptake_isolation:
                 node.isolated = True
 
-    def lfa_test_node(self, node: Node, time: int):
-        """Given a the time relative to a nodes symptom onset, will that node test positive
-
-        Args:
-            node (ContactTracingNode): The node to be tested today
-        """
-
-        infectious_age = time - node.time_infected
-
-        prob_positive_result = self.prob_testing_positive_lfa_func(infectious_age)
-
-        if np.random.binomial(1, prob_positive_result) == 1:
-            return True
-        else:
-            return False
-
-    def will_lfa_test_today(self, node: Node) -> bool:
-
-        if node.propensity_to_miss_lfa_tests:
-
-            if np.random.binomial(1, self.node_daily_prob_lfa_test) == 1:
-                return True
-            else:
-                return False
-        else:
-            return True
-
     def act_on_confirmatory_pcr_results(self, time: int):
         """Once on a individual receives a positive pcr result we need to act on it.
 
@@ -167,29 +139,14 @@ class ContactTracing:
             if node.confirmatory_PCR_test_result_time == time:
                 self.apply_policy_for_household_contacts_of_a_positive_case(node.household, time)
 
-    def get_positive_lateral_flow_nodes(self, time: int):
-        """Performs a days worth of lateral flow testing.
-
-        Returns:
-            List[ContactTracingNode]: A list of nodes who have tested positive through the lateral flow tests.
-        """
-
-        return [
-            node for node in self.network.all_nodes()
-            if node.being_lateral_flow_tested
-               and self.will_lfa_test_today(node)
-               and not node.received_positive_test_result
-               and self.lfa_test_node(node, time)
-        ]
-
-    def isolate_positive_lateral_flow_tests(self, time: int):
+    def isolate_positive_lateral_flow_tests(self, time: int, positive_nodes: List[Node]):
         """A if a node tests positive on LFA, we assume that they isolate and stop LFA testing
 
         If confirmatory PCR testing is not required, then we do not start LFA testing the household at this point
         in time.
         """
 
-        for node in self.current_LFA_positive_nodes:
+        for node in positive_nodes:
             node.received_positive_test_result = True
 
             if node.will_uptake_isolation:
@@ -203,39 +160,34 @@ class ContactTracing:
                     not self.LFA_testing_requires_confirmatory_PCR:
                 self.apply_policy_for_household_contacts_of_a_positive_case(node.household, time)
 
-    def take_confirmatory_pcr_test(self, node: Node, time: int):
-        """Given a the time relative to a nodes symptom onset, will that node test positive
-
-        Args:
-            node (ContactTracingNode): The node to be tested today
-        """
-
-        infectious_age_when_tested = time - node.time_infected
-        prob_positive_result = self.prob_testing_positive_pcr_func(infectious_age_when_tested)
-
-        node.confirmatory_PCR_test_time = time
-        node.confirmatory_PCR_test_result_time = time + node.testing_delay
-        node.taken_confirmatory_PCR_test = True
-
-        if np.random.binomial(1, prob_positive_result) == 1:
-            node.confirmatory_PCR_result_was_positive = True
-
-        else:
-            node.confirmatory_PCR_result_was_positive = False
-
-    def confirmatory_pcr_test_LFA_nodes(self, time: int):
+    def confirmatory_pcr_test_LFA_nodes(self, time: int, positive_nodes: List[Node]):
         """Nodes who receive a positive LFA result will be tested using a PCR test."""
-        for node in self.current_LFA_positive_nodes:
+        for node in positive_nodes:
             if not node.taken_confirmatory_PCR_test:
-                self.take_confirmatory_pcr_test(node, time)
+                node.take_confirmatory_pcr_test(time, self.prob_testing_positive_pcr)
 
     def act_on_positive_LFA_tests(self, time: int):
         """For nodes who test positive on their LFA test, take the appropriate action depending
         on the policy
         """
-        self.current_LFA_positive_nodes = self.get_positive_lateral_flow_nodes(time)
+        positive_nodes = self.lft_nodes(time)
 
-        self.isolate_positive_lateral_flow_tests(time)
+        self.isolate_positive_lateral_flow_tests(time, positive_nodes)
 
         if self.LFA_testing_requires_confirmatory_PCR:
-            self.confirmatory_pcr_test_LFA_nodes(time)
+            self.confirmatory_pcr_test_LFA_nodes(time, positive_nodes)
+
+    def lft_nodes(self, time: int) -> List[Node]:
+        """Performs a days worth of lateral flow testing.
+
+        Returns:
+            A list of nodes who have tested positive through the lateral flow tests.
+        """
+        positive_nodes = []
+        for node in self.network.all_nodes():
+            if node.being_lateral_flow_tested:
+                if node.will_lfa_test_today(self.node_daily_prob_lfa_test):
+                    if not node.received_positive_test_result:
+                        if node.lfa_test_node(time, self.prob_testing_positive_lfa_func):
+                            positive_nodes.append(node)
+        return positive_nodes

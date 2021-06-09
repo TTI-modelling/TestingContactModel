@@ -131,10 +131,8 @@ def recreate_pytest_2():
 
     model.network.node(1).being_lateral_flow_tested = True
 
-    # this line is required before the isolate_positive_lateral_flow_tests func can work
-    model.contact_tracing.current_LFA_positive_nodes = model.contact_tracing.get_positive_lateral_flow_nodes(model.time)
-
-    model.contact_tracing.isolate_positive_lateral_flow_tests(model.time)
+    positive_nodes = model.contact_tracing.lft_nodes(model.time)
+    model.contact_tracing.isolate_positive_lateral_flow_tests(model.time, positive_nodes)
 
     model.infection.new_within_household_infection(
         time=model.time,
