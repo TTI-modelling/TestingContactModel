@@ -6,7 +6,6 @@ import numpy as np
 from collections.abc import Callable
 
 from household_contact_tracing.behaviours.increment_tracing import IncrementTracing
-from household_contact_tracing.behaviours.isolation import UpdateIsolation
 from household_contact_tracing.behaviours.pcr_testing import PCRTesting
 from household_contact_tracing.network import Network, Household, TestType, InfectionStatus, Node
 
@@ -16,7 +15,6 @@ class ContactTracing:
 
     def __init__(self, network: Network,
                  increment_tracing: Type[IncrementTracing],
-                 update_isolation: Type[UpdateIsolation],
                  pcr_testing: Optional[Type[PCRTesting]], params: dict):
         self.network = network
 
@@ -46,8 +44,7 @@ class ContactTracing:
         self.increment_behaviour = increment_tracing(self.network, self.receive_pcr_test_results,
                                                      self.LFA_testing_requires_confirmatory_PCR,
                                                      params)
-        self.update_isolation_behaviour = update_isolation(self.network,
-                                                           self.apply_policy_for_household_contacts_of_a_positive_case)
+
         if pcr_testing:
             self.pcr_testing_behaviour = pcr_testing(self.network,
                                                      self.prob_testing_positive_pcr_func,
@@ -80,10 +77,6 @@ class ContactTracing:
             return 1
         else:
             return 0
-
-    def update_isolation(self, time: int):
-        if self.update_isolation_behaviour:
-            self.update_isolation_behaviour.update_isolation(time)
 
     def increment(self, time: int):
         if self.increment_behaviour:

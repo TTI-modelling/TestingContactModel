@@ -86,7 +86,6 @@ class UpdateIsolationHouseholdLevel(UpdateIsolation):
                 break
 
 
-
 class UpdateIsolationIndividualLevelTracing(UpdateIsolation):
     def update_isolation(self, time: int):
         self.update_all_households_contact_traced(time)
