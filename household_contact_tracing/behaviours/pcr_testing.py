@@ -1,20 +1,21 @@
 """These methods implement PCR testing for the various models."""
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import Callable
 
 import numpy as np
 
 from household_contact_tracing.network import Network, Node, TestType
-
-if TYPE_CHECKING:
-    from household_contact_tracing.contact_tracing import ContactTracing
+from household_contact_tracing.utilities import update_params
 
 
 class PCRTesting(ABC):
-    def __init__(self, network: Network, contact_tracing: ContactTracing):
+    def __init__(self, network: Network, prob_testing_positive_pcr_func: Callable, params: dict):
         self.network = network
-        self.contact_tracing = contact_tracing
+        self.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
+        self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
+
+        update_params(self, params)
 
     @abstractmethod
     def receive_pcr_test_results(self, time: int):
@@ -50,7 +51,7 @@ class PCRTestingIndividualLevelTracing(PCRTesting):
     def pcr_test_node(self, node: Node, time: int):
         node.received_result = True
         infectious_age_when_tested = time - node.testing_delay - node.time_infected
-        prob_positive_result = self.contact_tracing.prob_testing_positive_pcr_func(infectious_age_when_tested)
+        prob_positive_result = self.prob_testing_positive_pcr_func(infectious_age_when_tested)
         node.avenue_of_testing = TestType.pcr
 
         if np.random.binomial(1, prob_positive_result) == 1:
@@ -65,7 +66,7 @@ class PCRTestingIndividualDailyTesting(PCRTestingIndividualLevelTracing):
     def receive_pcr_test_results(self, time: int):
         """For nodes who would receive a PCR test result today, update"""
 
-        if self.contact_tracing.lfa_tested_nodes_book_pcr_on_symptom_onset:
+        if self.lfa_tested_nodes_book_pcr_on_symptom_onset:
             super().receive_pcr_test_results(time)
         else:
             for node in self.network.all_nodes():

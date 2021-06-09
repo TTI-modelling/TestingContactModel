@@ -4,18 +4,19 @@ and Household attributes."""
 
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import Type, Callable
 
-if TYPE_CHECKING:
-    from household_contact_tracing.contact_tracing import ContactTracing
+from household_contact_tracing.behaviours.contact_trace_household import ContactTraceHousehold
 
 from household_contact_tracing.network import Network, TestType
 
 
 class UpdateIsolation(ABC):
-    def __init__(self, network: Network, contact_tracing: ContactTracing):
+    def __init__(self, network: Network, contact_trace_household: Type[ContactTraceHousehold],
+                 apply_policy_for_household_contacts_of_a_positive_case: Callable):
         self.network = network
-        self.contact_tracing = contact_tracing
+        self.contact_trace_household = contact_trace_household(self.network)
+        self.apply_policy_for_household_contacts_of_a_positive_case = apply_policy_for_household_contacts_of_a_positive_case
 
     @abstractmethod
     def update_isolation(self, time):
@@ -29,7 +30,7 @@ class UpdateIsolation(ABC):
         for household in self.network.all_households:
             if household.time_until_contact_traced <= time:
                 if not household.contact_traced:
-                    self.contact_tracing.contact_trace_household(household, time)
+                    self.contact_trace_household.contact_trace_household(household, time)
 
 
 class UpdateIsolationHouseholdLevel(UpdateIsolation):
@@ -64,4 +65,4 @@ class UpdateIsolationIndividualTracingDailyTesting(UpdateIsolation):
                 if node.avenue_of_testing == TestType.pcr:
                     if node.received_positive_test_result:
                         if not node.household.applied_policy_for_household_contacts_of_a_positive_case:
-                            self.contact_tracing.apply_policy_for_household_contacts_of_a_positive_case(node.household, time)
+                            self.apply_policy_for_household_contacts_of_a_positive_case(node.household, time)

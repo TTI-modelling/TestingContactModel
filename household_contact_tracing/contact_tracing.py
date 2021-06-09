@@ -30,7 +30,6 @@ class ContactTracing:
         self.policy_for_household_contacts_of_a_positive_case = 'lfa testing no quarantine'
         self.LFA_testing_requires_confirmatory_PCR = False
         self.node_daily_prob_lfa_test = 1
-        self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
         self.number_of_days_to_trace_backwards = 2
         self.number_of_days_to_trace_forwards = 7
         self.recall_probability_fall_off = 1
@@ -55,9 +54,13 @@ class ContactTracing:
         # Declare behaviours
         self.contact_trace_household_behaviour = contact_trace_household(self.network)
         self.increment_behaviour = increment_tracing(self.network, self)
-        self.update_isolation_behaviour = update_isolation(self.network, self)
+        self.update_isolation_behaviour = update_isolation(self.network,
+                                                           contact_trace_household,
+                                                           self.apply_policy_for_household_contacts_of_a_positive_case)
         if pcr_testing:
-            self.pcr_testing_behaviour = pcr_testing(self.network, self)
+            self.pcr_testing_behaviour = pcr_testing(self.network,
+                                                     self.prob_testing_positive_pcr_func,
+                                                     params)
 
     @property
     def prob_testing_positive_lfa_func(self) -> Callable[[int], float]:
@@ -107,7 +110,8 @@ class ContactTracing:
         if self.pcr_testing_behaviour:
             self.pcr_testing_behaviour.pcr_test_node(node, time)
 
-    def apply_policy_for_household_contacts_of_a_positive_case(self, household: Household, time: int):
+    def apply_policy_for_household_contacts_of_a_positive_case(self, household: Household,
+                                                               time: int):
         """We apply different policies to the household contacts of a discovered case.
         The policy is set using the policy_for_household_contacts_of_a_positive_case input.
 
@@ -133,8 +137,10 @@ class ContactTracing:
                 * "lfa testing and quarantine"
                 * "no lfa testing only quarantine" """)
 
-    def start_lateral_flow_testing_household(self, household: Household, time: int):
-        """Sets the household to the lateral flow testing status so that new within household infections are tested
+    @staticmethod
+    def start_lateral_flow_testing_household(household: Household, time: int):
+        """Sets the household to the lateral flow testing status so that new within household
+        infections are tested
 
         All nodes in the household start lateral flow testing
 
@@ -151,8 +157,10 @@ class ContactTracing:
                 node.being_lateral_flow_tested = True
                 node.time_started_lfa_testing = time
 
-    def start_lateral_flow_testing_household_and_quarantine(self, household: Household, time: int):
-        """Sets the household to the lateral flow testing status so that new within household infections are tested
+    @staticmethod
+    def start_lateral_flow_testing_household_and_quarantine(household: Household, time: int):
+        """Sets the household to the lateral flow testing status so that new within household
+        infections are tested
 
         All nodes in the household start lateral flow testing and start quarantining
 
