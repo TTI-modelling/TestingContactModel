@@ -58,10 +58,10 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
             params (dict): A dictionary of parameters that are used in the model.
         """
 
+        self.params = params
         # Parse parameters against schema to check they are valid
         validate_parameters(params, os.path.join(self.root_dir,
                                                  "schemas/household_sim_contact_tracing.json"))
-
         # Call parent init
         BranchingProcessModel.__init__(self)
 
@@ -69,24 +69,23 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
         self.network = Network()
 
         # Set strategies (Strategy pattern)
-        self.infection = self._initialise_infection(self.network, params)
-        self.contact_tracing = self._initialise_contact_tracing(self.network, params)
+        self.infection = self._initialise_infection(self.network)
+        self.contact_tracing = self._initialise_contact_tracing(self.network)
 
         # Set the simulated time to the start (days)
         self.time = 0
 
-    def _initialise_infection(self, network: Network, params: dict):
+    def _initialise_infection(self, network: Network):
         return Infection(network,
                          NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel,
                          ContactRateReductionHouseholdLevelContactTracing,
-                         params)
+                         self.params)
 
-    def _initialise_contact_tracing(self, network: Network, params: dict):
+    def _initialise_contact_tracing(self, network: Network):
         return ContactTracing(network,
-                              increment.IncrementTracingHouseholdLevel,
                               None,
-                              params)
+                              self.params)
 
     def simulate_one_step(self):
         """Simulates one day of the infection and contact tracing."""
@@ -99,8 +98,9 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
         new_isolation = isolation.UpdateIsolationHouseholdLevel(self.network, self.contact_tracing.apply_policy_for_household_contacts_of_a_positive_case)
         new_isolation.update_isolation(self.time)
         # propagate contact tracing
+        new_increment = increment.IncrementTracingHouseholdLevel(self.network, self.contact_tracing.receive_pcr_test_results, self.contact_tracing.LFA_testing_requires_confirmatory_PCR, self.params)
         for step in range(5):
-            self.contact_tracing.increment(self.time)
+            new_increment.increment_contact_tracing(self.time)
         # node recoveries
         self.infection.perform_recoveries(self.time)
         # release nodes from quarantine or isolation if the time has arrived
@@ -199,18 +199,17 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
     def prob_testing_positive_pcr_func(self, fn: Callable[[int], float]):
         self.contact_tracing.prob_testing_positive_pcr_func = fn
 
-    def _initialise_infection(self, network: Network, params: dict):
+    def _initialise_infection(self, network: Network):
         return Infection(network,
                          NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel,
                          ContactRateReductionHouseholdLevelContactTracing,
-                         params)
+                         self.params)
 
-    def _initialise_contact_tracing(self, network: Network, params: dict):
+    def _initialise_contact_tracing(self, network: Network):
         return ContactTracing(network,
-                              increment.IncrementTracingIndividualLevel,
                               pcr_testing.PCRTestingIndividualLevelTracing,
-                              params)
+                              self.params)
 
     def simulate_one_step(self):
         """Simulates one day of the infection and contact tracing."""
@@ -223,8 +222,12 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
         new_isolation = isolation.UpdateIsolationIndividualLevelTracing(self.network, self.contact_tracing.apply_policy_for_household_contacts_of_a_positive_case)
         new_isolation.update_isolation(self.time)
         # propagate contact tracing
+        new_increment = increment.IncrementTracingIndividualLevel(self.network,
+                                                                  self.contact_tracing.receive_pcr_test_results,
+                                                                  self.contact_tracing.LFA_testing_requires_confirmatory_PCR,
+                                                                  self.params)
         for step in range(5):
-            self.contact_tracing.increment(self.time)
+            new_increment.increment_contact_tracing(self.time)
         # node recoveries
         self.infection.perform_recoveries(self.time)
         # release nodes from quarantine or isolation if the time has arrived
@@ -251,18 +254,17 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
         # Call superclass constructor (which overwrites defaults with new params if present)
         super().__init__(params)
 
-    def _initialise_infection(self, network: Network, params: dict):
+    def _initialise_infection(self, network: Network):
         return Infection(network,
                          NewHouseholdIndividualTracingDailyTesting,
                          new_infection.NewInfectionIndividualTracingDailyTesting,
                          ContactRateReductionIndividualTracingDaily,
-                         params)
+                         self.params)
 
-    def _initialise_contact_tracing(self, network: Network, params: dict):
+    def _initialise_contact_tracing(self, network: Network):
         return ContactTracing(network,
-                              increment.IncrementTracingIndividualDailyTesting,
                               pcr_testing.PCRTestingIndividualDailyTesting,
-                              params)
+                              self.params)
 
     def simulate_one_step(self):
         """ Simulates one day of the infection and contact tracing.
@@ -270,7 +272,8 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
         self.contact_tracing.receive_pcr_test_results(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         isolate_self_reporting_cases(self.network, self.time)
-        new_isolation = isolation.UpdateIsolationIndividualTracingDailyTesting(self.network, self.contact_tracing.apply_policy_for_household_contacts_of_a_positive_case)
+        new_isolation = isolation.UpdateIsolationIndividualTracingDailyTesting(self.network,
+                                                                               self.contact_tracing.apply_policy_for_household_contacts_of_a_positive_case)
         # isolate self-reporting-nodes while they wait for tests
         new_isolation.update_isolation(self.time)
         # isolate self reporting nodes
@@ -281,8 +284,12 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
         # Perform one day of the infection
         self.infection.increment(self.time)
         # propagate contact tracing
+        new_increment = increment.IncrementTracingIndividualDailyTesting(self.network,
+                                                                         self.contact_tracing.receive_pcr_test_results,
+                                                                         self.contact_tracing.LFA_testing_requires_confirmatory_PCR,
+                                                                         self.params)
         for _ in range(5):
-            self.contact_tracing.increment(self.time)
+            new_increment.increment_contact_tracing(self.time)
         # node recoveries
         self.infection.perform_recoveries(self.time)
         # release nodes from quarantine or isolation if the time has arrived

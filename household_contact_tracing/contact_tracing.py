@@ -14,7 +14,6 @@ class ContactTracing:
     """ 'Context' class for contact tracing processes/strategies (Strategy pattern) """
 
     def __init__(self, network: Network,
-                 increment_tracing: Type[IncrementTracing],
                  pcr_testing: Optional[Type[PCRTesting]], params: dict):
         self.network = network
 
@@ -41,10 +40,6 @@ class ContactTracing:
                 self.__dict__[param_name] = params[param_name]
 
         # Declare behaviours
-        self.increment_behaviour = increment_tracing(self.network, self.receive_pcr_test_results,
-                                                     self.LFA_testing_requires_confirmatory_PCR,
-                                                     params)
-
         if pcr_testing:
             self.pcr_testing_behaviour = pcr_testing(self.network,
                                                      self.prob_testing_positive_pcr_func,
@@ -77,10 +72,6 @@ class ContactTracing:
             return 1
         else:
             return 0
-
-    def increment(self, time: int):
-        if self.increment_behaviour:
-            self.increment_behaviour.increment_contact_tracing(time)
 
     def receive_pcr_test_results(self, time: int):
         if self.pcr_testing_behaviour:

@@ -1,5 +1,7 @@
 import copy
 
+from household_contact_tracing.behaviours.increment_tracing import \
+    IncrementTracingIndividualDailyTesting
 from household_contact_tracing.branching_process_models import IndividualTracingDailyTesting
 import pytest
 
@@ -215,14 +217,32 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
         * Simulate one day twice
 
     """
+    def prob_testing_positive_lfa_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 1
+        else:
+            return 0
 
-    model = simple_model_high_test_prob
+    def prob_testing_positive_pcr_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 0
+        else:
+            return 0
 
-    model.contact_tracing.contact_tracing_success_prob = 1
+    params = copy.deepcopy(default_params)
+    params["contact_tracing_success_prob"] = 1
+
+    model = IndividualTracingDailyTesting(params)
+    model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
+    model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
 
     model.infection.new_outside_household_infection(time=0, infecting_node=model.network.node(1))
-    
-    model.contact_tracing.increment_behaviour.attempt_contact_trace_of_household(
+
+    increment_tracing = IncrementTracingIndividualDailyTesting(model.network,
+                                                               model.contact_tracing.receive_pcr_test_results,
+                                                               model.contact_tracing.LFA_testing_requires_confirmatory_PCR,
+                                                               params)
+    increment_tracing.attempt_contact_trace_of_household(
         house_to=model.network.household(2),
         house_from=model.network.household(1),
         days_since_contact_occurred=0,
