@@ -13,7 +13,6 @@ from household_contact_tracing.infection import Infection, \
 from household_contact_tracing.contact_tracing import ContactTracing
 import household_contact_tracing.behaviours.isolation as isolation
 import household_contact_tracing.behaviours.pcr_testing as pcr_testing
-import household_contact_tracing.behaviours.contact_trace_household as tracing
 import household_contact_tracing.behaviours.increment_tracing as increment
 import household_contact_tracing.behaviours.new_infection as new_infection
 from household_contact_tracing.simulation_states import RunningState, ExtinctState,\
@@ -85,7 +84,6 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
 
     def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
-                              tracing.ContactTraceHouseholdLevel,
                               increment.IncrementTracingHouseholdLevel,
                               isolation.UpdateIsolationHouseholdLevel,
                               None,
@@ -210,7 +208,6 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
 
     def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
-                              tracing.ContactTraceHouseholdIndividualLevel,
                               increment.IncrementTracingIndividualLevel,
                               isolation.UpdateIsolationIndividualLevelTracing,
                               pcr_testing.PCRTestingIndividualLevelTracing,
@@ -244,7 +241,6 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
 
     def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
-                              tracing.ContactTraceHouseholdIndividualTracingDailyTest,
                               increment.IncrementTracingIndividualDailyTesting,
                               isolation.UpdateIsolationIndividualTracingDailyTesting,
                               pcr_testing.PCRTestingIndividualDailyTesting,

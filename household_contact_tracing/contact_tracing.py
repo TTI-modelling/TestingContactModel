@@ -5,7 +5,6 @@ from typing import Optional, Type
 import numpy as np
 from collections.abc import Callable
 
-from household_contact_tracing.behaviours.contact_trace_household import ContactTraceHousehold
 from household_contact_tracing.behaviours.increment_tracing import IncrementTracing
 from household_contact_tracing.behaviours.isolation import UpdateIsolation
 from household_contact_tracing.behaviours.pcr_testing import PCRTesting
@@ -16,7 +15,6 @@ class ContactTracing:
     """ 'Context' class for contact tracing processes/strategies (Strategy pattern) """
 
     def __init__(self, network: Network,
-                 contact_trace_household: Type[ContactTraceHousehold],
                  increment_tracing: Type[IncrementTracing],
                  update_isolation: Type[UpdateIsolation],
                  pcr_testing: Optional[Type[PCRTesting]], params: dict):
@@ -52,10 +50,8 @@ class ContactTracing:
                 self.__dict__[param_name] = params[param_name]
 
         # Declare behaviours
-        self.contact_trace_household_behaviour = contact_trace_household(self.network)
         self.increment_behaviour = increment_tracing(self.network, self)
         self.update_isolation_behaviour = update_isolation(self.network,
-                                                           contact_trace_household,
                                                            self.apply_policy_for_household_contacts_of_a_positive_case)
         if pcr_testing:
             self.pcr_testing_behaviour = pcr_testing(self.network,
@@ -93,10 +89,6 @@ class ContactTracing:
     def update_isolation(self, time: int):
         if self.update_isolation_behaviour:
             self.update_isolation_behaviour.update_isolation(time)
-
-    def contact_trace_household(self, household: Household, time: int):
-        if self.contact_trace_household_behaviour:
-            self.contact_trace_household_behaviour.contact_trace_household(household, time)
 
     def increment(self, time: int):
         if self.increment_behaviour:
