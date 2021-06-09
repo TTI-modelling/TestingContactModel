@@ -1,34 +1,26 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import Optional, Type
 
 import numpy as np
 from collections.abc import Callable
 
+from household_contact_tracing.behaviours.contact_trace_household import ContactTraceHousehold
+from household_contact_tracing.behaviours.increment_tracing import IncrementTracing
+from household_contact_tracing.behaviours.isolation import UpdateIsolation
+from household_contact_tracing.behaviours.pcr_testing import PCRTesting
 from household_contact_tracing.network import Network, Household, TestType, InfectionStatus, Node
-
-if TYPE_CHECKING:
-    import household_contact_tracing.behaviours.isolation as isolation
-    import household_contact_tracing.behaviours.pcr_testing as pcr
-    import household_contact_tracing.behaviours.contact_trace_household as tracing
-    import household_contact_tracing.behaviours.increment_tracing as increment
 
 
 class ContactTracing:
     """ 'Context' class for contact tracing processes/strategies (Strategy pattern) """
 
     def __init__(self, network: Network,
-                 contact_trace_household: tracing.ContactTraceHousehold,
-                 increment_tracing: increment.IncrementTracing,
-                 update_isolation: isolation.UpdateIsolation,
-                 pcr_testing: Optional[pcr.PCRTesting], params: dict):
-        self._network = network
-
-        # Declare behaviours
-        self.contact_trace_household_behaviour = contact_trace_household
-        self.increment_behaviour = increment_tracing
-        self.update_isolation_behaviour = update_isolation
-        self.pcr_testing_behaviour = pcr_testing
+                 contact_trace_household: Type[ContactTraceHousehold],
+                 increment_tracing: Type[IncrementTracing],
+                 update_isolation: Type[UpdateIsolation],
+                 pcr_testing: Optional[Type[PCRTesting]], params: dict):
+        self.network = network
 
         # Parameter Inputs:
         # contact tracing parameters
@@ -60,49 +52,12 @@ class ContactTracing:
             if param_name in params:
                 self.__dict__[param_name] = params[param_name]
 
-    @property
-    def network(self) -> Network:
-        return self._network
-
-    @property
-    def update_isolation_behaviour(self) -> isolation.UpdateIsolation:
-        return self._update_isolation_behaviour
-
-    @update_isolation_behaviour.setter
-    def update_isolation_behaviour(self, update_isolation_behaviour: isolation.UpdateIsolation):
-        self._update_isolation_behaviour = update_isolation_behaviour
-        if self._update_isolation_behaviour:
-            self._update_isolation_behaviour.contact_tracing = self
-
-    @property
-    def contact_trace_household_behaviour(self) -> tracing.ContactTraceHousehold:
-        return self._contact_trace_household_behaviour
-
-    @contact_trace_household_behaviour.setter
-    def contact_trace_household_behaviour(self, contact_trace_household_behaviour: tracing.ContactTraceHousehold):
-        self._contact_trace_household_behaviour = contact_trace_household_behaviour
-        if self._contact_trace_household_behaviour:
-            self._contact_trace_household_behaviour.contact_tracing = self
-
-    @property
-    def increment_behaviour(self) -> increment.IncrementTracing:
-        return self._increment_behaviour
-
-    @increment_behaviour.setter
-    def increment_behaviour(self, increment_behaviour: increment.IncrementTracing):
-        self._increment_behaviour = increment_behaviour
-        if self._increment_behaviour:
-            self._increment_behaviour.contact_tracing = self
-
-    @property
-    def pcr_testing_behaviour(self) -> pcr.PCRTesting:
-        return self._pcr_testing_behaviour
-
-    @pcr_testing_behaviour.setter
-    def pcr_testing_behaviour(self, pcr_testing_behaviour: pcr.PCRTesting):
-        self._pcr_testing_behaviour = pcr_testing_behaviour
-        if self._pcr_testing_behaviour:
-            self._pcr_testing_behaviour.contact_tracing = self
+        # Declare behaviours
+        self.contact_trace_household_behaviour = contact_trace_household(self.network)
+        self.increment_behaviour = increment_tracing(self.network, self)
+        self.update_isolation_behaviour = update_isolation(self.network, self)
+        if pcr_testing:
+            self.pcr_testing_behaviour = pcr_testing(self.network, self)
 
     @property
     def prob_testing_positive_lfa_func(self) -> Callable[[int], float]:

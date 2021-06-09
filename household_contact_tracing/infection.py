@@ -1,29 +1,23 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-
 import numpy as np
 import numpy.random as npr
 from typing import Optional, Type
 import sys
 
 from household_contact_tracing.behaviours.new_household import NewHousehold
+from household_contact_tracing.behaviours.new_infection import NewInfection
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
 from household_contact_tracing.network import EdgeType, Household, Network, Node
-import household_contact_tracing.behaviours.new_infection as new_infection
 
 
 class Infection:
     """ 'Context' class for infection processes/strategies (Strategy pattern) """
 
     def __init__(self, network: Network, new_household: Type[NewHousehold],
-                 new_infection: new_infection.NewInfection,
-                 contact_rate_reduction: ContactRateReductionBehaviour, params: dict):
-        self._network = network
-
-        # Declare behaviours
-        self.new_infection_behaviour = new_infection
-        self.contact_rate_reduction_behaviour = contact_rate_reduction
+                 new_infection: Type[NewInfection],
+                 contact_rate_reduction: Type[ContactRateReductionBehaviour], params: dict):
+        self.network = network
 
         # Probability of each household size
         self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886,
@@ -109,48 +103,16 @@ class Infection:
                                                      self.hh_propensity_to_use_trace_app,
                                                      self.size_mean_contacts_biased_distribution)
 
+        self.new_infection_behaviour = new_infection(self.network, self)
+        self.contact_rate_reduction_behaviour = contact_rate_reduction(self)
+
         self.initialise()
-
-    @property
-    def network(self):
-        return self._network
-
-    @property
-    def new_household_behaviour(self) -> NewHousehold:
-        return self._new_household_behaviour
-
-    @new_household_behaviour.setter
-    def new_household_behaviour(self, new_household_behaviour: NewHousehold):
-        self._new_household_behaviour = new_household_behaviour
-        if self._new_household_behaviour:
-            self._new_household_behaviour.infection = self
-
-    @property
-    def new_infection_behaviour(self) -> new_infection.NewInfection:
-        return self._new_infection_behaviour
-
-    @new_infection_behaviour.setter
-    def new_infection_behaviour(self, new_infection_behaviour: new_infection.NewInfection):
-        self._new_infection_behaviour = new_infection_behaviour
-        if self._new_infection_behaviour:
-            self._new_infection_behaviour.infection = self
-
-    @property
-    def contact_rate_reduction_behaviour(self) -> ContactRateReductionBehaviour:
-        return self._contact_rate_reduction_behaviour
-
-    @contact_rate_reduction_behaviour.setter
-    def contact_rate_reduction_behaviour(self, contact_rate_reduction_behaviour: ContactRateReductionBehaviour):
-        self._contact_rate_reduction_behaviour = contact_rate_reduction_behaviour
-        if self._contact_rate_reduction_behaviour:
-            self._contact_rate_reduction_behaviour.infection = self
 
     def new_household(self, time: int, infected_by: Optional[Household],
                       additional_attributes=None) -> Household:
-        if self.new_household_behaviour:
-            new_household = self.new_household_behaviour.new_household(time, infected_by,
-                                                                       additional_attributes)
-            return new_household
+        new_household = self.new_household_behaviour.new_household(time, infected_by,
+                                                                   additional_attributes)
+        return new_household
 
     def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
         if self.new_infection_behaviour:
@@ -337,8 +299,8 @@ class Infection:
         self.new_infection(time=time, household_id=house_id, infecting_node=infecting_node)
 
         # Add the edge to the graph and give it the default label
-        self._network.graph.add_edge(infecting_node.id, node_count)
-        self._network.graph.edges[infecting_node.id, node_count].update(
+        self.network.graph.add_edge(infecting_node.id, node_count)
+        self.network.graph.edges[infecting_node.id, node_count].update(
             {"edge_type": EdgeType.default})
 
     def new_within_household_infection(self, time, infecting_node: Node):
@@ -346,7 +308,7 @@ class Infection:
 
         The new node will be a member of the same household as the infecting node.
         """
-        node_count = self._network.node_count + 1
+        node_count = self.network.node_count + 1
 
         infecting_node_household = infecting_node.household
 
@@ -407,16 +369,8 @@ class Infection:
 
 
 class ContactRateReductionBehaviour:
-    def __init__(self):
-        self._infection = None
-
-    @property
-    def infection(self) -> Infection:
-        return self._infection
-
-    @infection.setter
-    def infection(self, infection: Infection):
-        self._infection = infection
+    def __init__(self, infection: Infection):
+        self.infection = infection
 
     def get_contact_rate_reduction(self, node) -> int:
         pass
@@ -430,12 +384,12 @@ class ContactRateReductionHouseholdLevelContactTracing(ContactRateReductionBehav
         """
 
         if node.isolated and node.propensity_imperfect_isolation:
-            return self._infection.global_contact_reduction_imperfect_quarantine
+            return self.infection.global_contact_reduction_imperfect_quarantine
         elif node.isolated and not node.propensity_imperfect_isolation:
             # return 1 means 100% of contacts are stopped
             return 1
         else:
-            return self._infection.reduce_contacts_by
+            return self.infection.reduce_contacts_by
 
 
 class ContactRateReductionIndividualTracingDaily (ContactRateReductionBehaviour):
@@ -458,12 +412,12 @@ class ContactRateReductionIndividualTracingDaily (ContactRateReductionBehaviour)
 
         elif node.isolated and node.propensity_imperfect_isolation:
             # imperfect isolation
-            return self._infection.global_contact_reduction_imperfect_quarantine
+            return self.infection.global_contact_reduction_imperfect_quarantine
 
         elif node.being_lateral_flow_tested and node.propensity_risky_behaviour_lfa_testing:
             # engaging in risky behaviour while testing negative
-            return self._infection.global_contact_reduction_risky_behaviour
+            return self.infection.global_contact_reduction_risky_behaviour
 
         else:
             # normal levels of social distancing
-            return self._infection.reduce_contacts_by
+            return self.infection.reduce_contacts_by

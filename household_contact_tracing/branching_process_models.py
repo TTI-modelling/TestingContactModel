@@ -79,15 +79,15 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
     def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
                          NewHouseholdLevel,
-                         new_infection.NewInfectionHouseholdLevel(network),
-                         ContactRateReductionHouseholdLevelContactTracing(),
+                         new_infection.NewInfectionHouseholdLevel,
+                         ContactRateReductionHouseholdLevelContactTracing,
                          params)
 
     def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
-                              tracing.ContactTraceHouseholdLevel(network),
-                              increment.IncrementTracingHouseholdLevel(network),
-                              isolation.UpdateIsolationHouseholdLevel(network),
+                              tracing.ContactTraceHouseholdLevel,
+                              increment.IncrementTracingHouseholdLevel,
+                              isolation.UpdateIsolationHouseholdLevel,
                               None,
                               params)
 
@@ -204,16 +204,16 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
     def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
                          NewHouseholdLevel,
-                         new_infection.NewInfectionHouseholdLevel(network),
-                         ContactRateReductionHouseholdLevelContactTracing(),
+                         new_infection.NewInfectionHouseholdLevel,
+                         ContactRateReductionHouseholdLevelContactTracing,
                          params)
 
     def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
-                              tracing.ContactTraceHouseholdIndividualLevel(network),
-                              increment.IncrementTracingIndividualLevel(self.network),
-                              isolation.UpdateIsolationIndividualLevelTracing(network),
-                              pcr_testing.PCRTestingIndividualLevelTracing(self.network),
+                              tracing.ContactTraceHouseholdIndividualLevel,
+                              increment.IncrementTracingIndividualLevel,
+                              isolation.UpdateIsolationIndividualLevelTracing,
+                              pcr_testing.PCRTestingIndividualLevelTracing,
                               params)
 
 
@@ -238,16 +238,16 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
     def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
                          NewHouseholdIndividualTracingDailyTesting,
-                         new_infection.NewInfectionIndividualTracingDailyTesting(self.network),
-                         ContactRateReductionIndividualTracingDaily(),
+                         new_infection.NewInfectionIndividualTracingDailyTesting,
+                         ContactRateReductionIndividualTracingDaily,
                          params)
 
     def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
-                              tracing.ContactTraceHouseholdIndividualTracingDailyTest(self.network),
-                              increment.IncrementTracingIndividualDailyTesting(self.network),
-                              isolation.UpdateIsolationIndividualTracingDailyTesting(self.network),
-                              pcr_testing.PCRTestingIndividualDailyTesting(self.network),
+                              tracing.ContactTraceHouseholdIndividualTracingDailyTest,
+                              increment.IncrementTracingIndividualDailyTesting,
+                              isolation.UpdateIsolationIndividualTracingDailyTesting,
+                              pcr_testing.PCRTestingIndividualDailyTesting,
                               params)
 
     def simulate_one_step(self):

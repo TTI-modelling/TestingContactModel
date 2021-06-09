@@ -1,25 +1,20 @@
 """These methods implement PCR testing for the various models."""
-
+from __future__ import annotations
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from household_contact_tracing.contact_tracing import ContactTracing
 from household_contact_tracing.network import Network, Node, TestType
+
+if TYPE_CHECKING:
+    from household_contact_tracing.contact_tracing import ContactTracing
 
 
 class PCRTesting(ABC):
-    def __init__(self, network: Network):
-        self._network = network
-        self._contact_tracing = None
-
-    @property
-    def contact_tracing(self) -> ContactTracing:
-        return self._contact_tracing
-
-    @contact_tracing.setter
-    def contact_tracing(self, contact_tracing: ContactTracing):
-        self._contact_tracing = contact_tracing
+    def __init__(self, network: Network, contact_tracing: ContactTracing):
+        self.network = network
+        self.contact_tracing = contact_tracing
 
     @abstractmethod
     def receive_pcr_test_results(self, time: int):
@@ -39,14 +34,14 @@ class PCRTestingIndividualLevelTracing(PCRTesting):
 
     def receive_pcr_test_results(self, time: int):
         # self reporting infections
-        for node in self._network.all_nodes():
+        for node in self.network.all_nodes():
             if node.time_of_reporting + node.testing_delay == time:
                 if not node.contact_traced:
                     if not node.received_result:
                         self.pcr_test_node(node, time)
 
         # contact traced nodes
-        for node in self._network.all_nodes():
+        for node in self.network.all_nodes():
             if node.symptom_onset_time + node.testing_delay == time:
                 if node.contact_traced:
                     if not node.received_result:
@@ -73,7 +68,7 @@ class PCRTestingIndividualDailyTesting(PCRTestingIndividualLevelTracing):
         if self.contact_tracing.lfa_tested_nodes_book_pcr_on_symptom_onset:
             super().receive_pcr_test_results(time)
         else:
-            for node in self._network.all_nodes():
+            for node in self.network.all_nodes():
                 if node.time_of_reporting + node.testing_delay == time:
                     if not node.contact_traced:
                         if not node.received_result:

@@ -1,24 +1,20 @@
 """Various methods of doing a day worth of contact tracing."""
+from __future__ import annotations
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from household_contact_tracing.contact_tracing import ContactTracing
 from household_contact_tracing.network import Network, Household, EdgeType, Node, TestType
+
+if TYPE_CHECKING:
+    from household_contact_tracing.contact_tracing import ContactTracing
 
 
 class IncrementTracing(ABC):
-    def __init__(self, network: Network):
-        self._network = network
-        self._contact_tracing = None
-
-    @property
-    def contact_tracing(self) -> ContactTracing:
-        return self._contact_tracing
-
-    @contact_tracing.setter
-    def contact_tracing(self, contact_tracing: ContactTracing):
-        self._contact_tracing = contact_tracing
+    def __init__(self, network: Network, contact_tracing: ContactTracing):
+        self.network = network
+        self.contact_tracing = contact_tracing
 
     @abstractmethod
     def increment_contact_tracing(self, time: int):
@@ -41,7 +37,7 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
 
         # Isolate all households under observation that now display symptoms (excludes those who will not take up
         # isolation if prob <1)
-        for node in self._network.all_nodes():
+        for node in self.network.all_nodes():
             if node.symptom_onset_time <= time:
                 if node.contact_traced:
                     if not node.isolated:
@@ -50,14 +46,14 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
 
         # Propagate the contact tracing for all households that self-reported and have had their
         # test results come back
-        for node in self._network.all_nodes():
+        for node in self.network.all_nodes():
             if node.time_of_reporting + node.testing_delay == time:
                 if not node.household.propagated_contact_tracing:
                     self.propagate_contact_tracing(node.household, time)
 
         # Propagate the contact tracing for all households that are isolated due to exposure,
         # have developed symptoms and had a test come back
-        for node in self._network.all_nodes():
+        for node in self.network.all_nodes():
             if node.symptom_onset_time <= time:
                 if not node.household.propagated_contact_tracing:
                     if node.household.isolated_time + node.testing_delay <= time:
@@ -68,9 +64,9 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
         # (traced + symptom_onset_time + testing_delay)
         self.update_contact_tracing_index(time)
 
-        if self._contact_tracing.do_2_step:
+        if self.contact_tracing.do_2_step:
             # Propagate the contact tracing from any households with a contact tracing index of 1
-            for household in self._network.all_households:
+            for household in self.network.all_households:
                 if household.contact_tracing_index == 1:
                     if not household.propagated_contact_tracing:
                         if household.isolated:
@@ -99,13 +95,13 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
     def attempt_contact_trace_of_household(self, house_to: Household, house_from: Household,
                                            time: int, contact_trace_delay: int = 0):
         # Decide if the edge was traced by the app
-        app_traced = self._network.is_edge_app_traced(self._network.get_edge_between_household(house_from, house_to))
+        app_traced = self.network.is_edge_app_traced(self.network.get_edge_between_household(house_from, house_to))
 
         # Get the success probability
         if app_traced:
             success_prob = 1
         else:
-            success_prob = self._contact_tracing.contact_tracing_success_prob
+            success_prob = self.contact_tracing.contact_tracing_success_prob
 
         # is the trace successful
         if np.random.binomial(1, success_prob) == 1:
@@ -116,7 +112,7 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
             house_to.contact_tracing_index = house_from.contact_tracing_index + 1
 
             # work out the time delay
-            contact_trace_delay = contact_trace_delay + self._contact_tracing.contact_trace_delay
+            contact_trace_delay = contact_trace_delay + self.contact_tracing.contact_trace_delay
             proposed_time_until_contact_trace = time + contact_trace_delay
 
             # Get the current time until contact trace, and compare against the proposed
@@ -129,16 +125,16 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
 
             # Edge labelling
             if app_traced:
-                self._network.label_edges_between_houses(house_to, house_from, EdgeType.app_traced)
+                self.network.label_edges_between_houses(house_to, house_from, EdgeType.app_traced)
             else:
-                self._network.label_edges_between_houses(house_to, house_from,
-                                                         EdgeType.between_house)
+                self.network.label_edges_between_houses(house_to, house_from,
+                                                        EdgeType.between_house)
         else:
-            self._network.label_edges_between_houses(house_to, house_from,
-                                                     EdgeType.failed_contact_tracing)
+            self.network.label_edges_between_houses(house_to, house_from,
+                                                    EdgeType.failed_contact_tracing)
 
     def update_contact_tracing_index(self, time):
-        for household in self._network.all_households:
+        for household in self.network.all_households:
             # loop over households with non-zero indexes, those that have been contact traced but with
             if household.contact_tracing_index != 0:
                 for node in household.nodes:
@@ -180,14 +176,14 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
         # isolation if prob <1)
         self.contact_tracing.receive_pcr_test_results(time)
 
-        for node in self._network.all_nodes():
+        for node in self.network.all_nodes():
             if node.symptom_onset_time <= time:
                 if node.received_positive_test_result:
                     if not node.isolated:
                         if not node.completed_isolation:
                             node.household.isolate_household(time)
 
-        for node in self._network.all_nodes():
+        for node in self.network.all_nodes():
             if node.received_result:
                 if not node.propagated_contact_tracing:
                     self.propagate_contact_tracing(node, time)
@@ -231,7 +227,7 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
             # Get the child node_id and the time of transmission/time of contact
             child_node_id, time_t = global_infection
 
-            child_node = self._network.node(child_node_id)
+            child_node = self.network.node(child_node_id)
 
             # If the node was infected 2 days prior to symptom onset, or 7 days post and is not already isolated
             if time_t >= node.symptom_onset_time - self.contact_tracing.number_of_days_to_trace_backwards and \
@@ -252,7 +248,7 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
                                            time: int,
                                            contact_trace_delay: int = 0):
         # Decide if the edge was traced by the app
-        app_traced = self._network.is_edge_app_traced(self._network.get_edge_between_household(house_from, house_to))
+        app_traced = self.network.is_edge_app_traced(self.network.get_edge_between_household(house_from, house_to))
 
         # Get the success probability
         if app_traced:
@@ -281,34 +277,34 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
 
             # Edge labelling
             if app_traced:
-                self._network.label_edges_between_houses(house_to, house_from,
-                                                         EdgeType.app_traced)
+                self.network.label_edges_between_houses(house_to, house_from,
+                                                        EdgeType.app_traced)
             else:
-                self._network.label_edges_between_houses(house_to, house_from,
-                                                         EdgeType.between_house)
+                self.network.label_edges_between_houses(house_to, house_from,
+                                                        EdgeType.between_house)
         else:
-            self._network.label_edges_between_houses(house_to, house_from,
-                                                     EdgeType.failed_contact_tracing)
+            self.network.label_edges_between_houses(house_to, house_from,
+                                                    EdgeType.failed_contact_tracing)
 
 
 class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
 
     def increment_contact_tracing(self, time: int):
-        for node in self._network.all_nodes():
+        for node in self.network.all_nodes():
             if node.received_positive_test_result:
                 if node.avenue_of_testing == TestType.pcr:
                     if not node.propagated_contact_tracing:
                         self.propagate_contact_tracing(node, time)
 
         if not self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
-            for node in self._network.all_nodes():
+            for node in self.network.all_nodes():
                 if node.received_positive_test_result:
                     if node.avenue_of_testing == TestType.lfa:
                         if not node.propagated_contact_tracing:
                             self.propagate_contact_tracing(node, time)
 
         elif self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
-            for node in self._network.all_nodes():
+            for node in self.network.all_nodes():
                 if node.confirmatory_PCR_test_result_time == time:
                     if node.confirmatory_PCR_result_was_positive:
                         if node.avenue_of_testing == TestType.lfa:
@@ -372,7 +368,7 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
             # Get the child node_id and the time of transmission/time of contact
             child_node_id, time_t = global_infection
 
-            child_node = self._network.node(child_node_id)
+            child_node = self.network.node(child_node_id)
 
             if node.avenue_of_testing == TestType.pcr:
 

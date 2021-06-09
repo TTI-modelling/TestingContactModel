@@ -13,17 +13,9 @@ from household_contact_tracing.network import Network, TestType
 
 
 class UpdateIsolation(ABC):
-    def __init__(self, network: Network):
-        self._network = network
-        self.contact_tracing = None
-
-    @property
-    def contact_tracing(self) -> ContactTracing:
-        return self._contact_tracing
-
-    @contact_tracing.setter
-    def contact_tracing(self, contact_tracing: ContactTracing):
-        self._contact_tracing = contact_tracing
+    def __init__(self, network: Network, contact_tracing: ContactTracing):
+        self.network = network
+        self.contact_tracing = contact_tracing
 
     @abstractmethod
     def update_isolation(self, time):
@@ -34,7 +26,7 @@ class UpdateIsolation(ABC):
     def update_all_households_contact_traced(self, time):
         """Update the contact traced status for all households that have had the
          contact tracing process get there."""
-        for household in self._network.all_households:
+        for household in self.network.all_households:
             if household.time_until_contact_traced <= time:
                 if not household.contact_traced:
                     self.contact_tracing.contact_trace_household(household, time)
@@ -44,7 +36,7 @@ class UpdateIsolationHouseholdLevel(UpdateIsolation):
     def update_isolation(self, time: int):
         self.update_all_households_contact_traced(time)
 
-        for node in self._network.all_nodes():
+        for node in self.network.all_nodes():
             if node.time_of_reporting + node.testing_delay == time:
                 if not node.household.isolated:
                     if not node.household.contact_traced:
@@ -55,7 +47,7 @@ class UpdateIsolationIndividualLevelTracing(UpdateIsolation):
     def update_isolation(self, time: int):
         self.update_all_households_contact_traced(time)
 
-        for node in self._network.all_nodes():
+        for node in self.network.all_nodes():
             if node.time_of_reporting + node.testing_delay == time:
                 if node.received_positive_test_result:
                     if not node.household.isolated:
@@ -67,7 +59,7 @@ class UpdateIsolationIndividualTracingDailyTesting(UpdateIsolation):
     def update_isolation(self, time: int):
         self.update_all_households_contact_traced(time)
 
-        for node in self._network.all_nodes():
+        for node in self.network.all_nodes():
             if node.positive_test_time == time:
                 if node.avenue_of_testing == TestType.pcr:
                     if node.received_positive_test_result:
