@@ -1,4 +1,5 @@
 import os
+from typing import Callable
 from copy import deepcopy
 
 from household_contact_tracing.behaviours.contact_rate_reduction import \
@@ -98,7 +99,9 @@ class HouseholdLevelTracing(BranchingProcessModel):
         household_level_isolation.update_households_contact_traced(self.network, self.time)
         household_level_isolation.update_isolation(self.network, self.time)
         # propagate contact tracing
-        new_increment = increment.IncrementTracingHouseholdLevel(self.network, self.contact_tracing.prob_testing_positive_pcr_func, self.contact_tracing.LFA_testing_requires_confirmatory_PCR, self.params)
+        new_increment = increment.IncrementTracingHouseholdLevel(self.network,
+                                                                 self.contact_tracing.LFA_testing_requires_confirmatory_PCR,
+                                                                 self.params)
         for step in range(5):
             new_increment.increment_contact_tracing(self.time)
         # node recoveries
@@ -167,19 +170,46 @@ class HouseholdLevelTracing(BranchingProcessModel):
 class IndividualLevelTracing(HouseholdLevelTracing):
     """
         A class used to represent a simulation of contact tracing of households along with
-         contacting every individual and their contacts, whether they have tested positive or not.
-
-
-        Attributes
-        ----------
-        prob_testing_positive_pcr_func(self) -> Callable[[int], float]
-            function that calculates probability of positive PCR test result
-
-
-        Methods
-        -------
-
+        contacting every individual and their contacts, whether they have tested positive or not.
     """
+    def __init__(self, params: dict):
+        super().__init__(params)
+        # Set the test probabilities to default values - may be overridden by user later
+        self._prob_lfa_positive = self.default_prob_lfa_positive
+        self._prob_pcr_positive = self.default_prob_pcr_positive
+
+    @property
+    def prob_lfa_positive(self) -> Callable[[int], float]:
+        return self._prob_lfa_positive
+
+    @prob_lfa_positive.setter
+    def prob_lfa_positive(self, fn: Callable[[int], float]):
+        self._prob_lfa_positive = fn
+
+    @property
+    def prob_pcr_positive(self) -> Callable[[int], float]:
+        return self._prob_pcr_positive
+
+    @prob_pcr_positive.setter
+    def prob_pcr_positive(self, fn: Callable[[int], float]):
+        self._prob_pcr_positive = fn
+
+    @staticmethod
+    def default_prob_pcr_positive(infectious_age):
+        """Default PCR test result probability."""
+        if infectious_age in [4, 5, 6]:
+            return 0
+        else:
+            return 0
+
+    @staticmethod
+    def default_prob_lfa_positive(infectious_age):
+        """Default LFA test result probability."""
+        if infectious_age in [4, 5, 6]:
+            return 1
+        else:
+            return 0
+
     schema_path = "schemas/uk_model.json"
 
     def _initialise_infection(self, network: Network):
@@ -201,9 +231,9 @@ class IndividualLevelTracing(HouseholdLevelTracing):
         individual_level_isolation.update_isolation(self.network, self.time)
         # propagate contact tracing
         new_increment = increment.IncrementTracingIndividualLevel(self.network,
-                                                                  self.contact_tracing.prob_testing_positive_pcr_func,
                                                                   self.contact_tracing.LFA_testing_requires_confirmatory_PCR,
-                                                                  self.params)
+                                                                  self.params,
+                                                                  self.prob_pcr_positive)
         for step in range(5):
             new_increment.increment_contact_tracing(self.time)
         # node recoveries
@@ -229,11 +259,6 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
     """
     schema_path = "schemas/contact_model_test.json"
 
-    def __init__(self, params):
-
-        # Call superclass constructor (which overwrites defaults with new params if present)
-        super().__init__(params)
-
     def _initialise_infection(self, network: Network):
         return Infection(network,
                          NewHouseholdIndividualTracingDailyTesting,
@@ -251,7 +276,9 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
         daily_testing_isolation.update_isolation(self.network, self.time,
                                                  self.contact_tracing.household_positive_policy)
         # isolate self reporting nodes
-        self.contact_tracing.act_on_positive_LFA_tests(self.time)
+        self.contact_tracing.act_on_positive_LFA_tests(self.time,
+                                                       self.prob_pcr_positive,
+                                                       self.prob_lfa_positive)
         # if we require PCR tests, to confirm infection we act on those
         if self.contact_tracing.LFA_testing_requires_confirmatory_PCR:
             self.contact_tracing.act_on_confirmatory_pcr_results(self.time)
@@ -260,9 +287,9 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
 
         # propagate contact tracing
         new_increment = increment.IncrementTracingIndividualDailyTesting(self.network,
-                                                                         self.contact_tracing.prob_testing_positive_pcr_func,
                                                                          self.contact_tracing.LFA_testing_requires_confirmatory_PCR,
-                                                                         self.params)
+                                                                         self.params,
+                                                                         self.prob_pcr_positive)
         for _ in range(5):
             new_increment.increment_contact_tracing(self.time)
         # node recoveries

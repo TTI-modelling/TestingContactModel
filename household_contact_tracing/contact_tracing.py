@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from typing import List
-
-from collections.abc import Callable
+from typing import List, Callable
 
 from household_contact_tracing.network import Network, TestType, Node, PositivePolicy
 
@@ -19,42 +17,10 @@ class ContactTracing:
         self.LFA_testing_requires_confirmatory_PCR = False
         self.node_daily_prob_lfa_test = 1
 
-        # contact tracing functions (runtime updatable)
-        self.prob_testing_positive_lfa_func = self.prob_testing_positive_lfa
-        self.prob_testing_positive_pcr_func = self.prob_testing_positive_pcr
-
         # Update instance variables with anything in params
         for param_name in self.__dict__:
             if param_name in params:
                 self.__dict__[param_name] = params[param_name]
-
-    @property
-    def prob_testing_positive_lfa_func(self) -> Callable[[int], float]:
-        return self._prob_testing_positive_lfa_func
-
-    @prob_testing_positive_lfa_func.setter
-    def prob_testing_positive_lfa_func(self, fn: Callable[[int], float]):
-        self._prob_testing_positive_lfa_func = fn
-
-    @property
-    def prob_testing_positive_pcr_func(self) -> Callable[[int], float]:
-        return self._prob_testing_positive_pcr_func
-
-    @prob_testing_positive_pcr_func.setter
-    def prob_testing_positive_pcr_func(self, fn: Callable[[int], float]):
-        self._prob_testing_positive_pcr_func = fn
-
-    def prob_testing_positive_pcr(self, infectious_age):
-        if infectious_age in [4, 5, 6]:
-            return 0
-        else:
-            return 0
-
-    def prob_testing_positive_lfa(self, infectious_age):
-        if infectious_age in [4, 5, 6]:
-            return 1
-        else:
-            return 0
 
     def act_on_confirmatory_pcr_results(self, time: int):
         """Once on a individual receives a positive pcr result we need to act on it.
@@ -88,24 +54,26 @@ class ContactTracing:
                     not self.LFA_testing_requires_confirmatory_PCR:
                 node.household.apply_positive_policy(time, self.household_positive_policy)
 
-    def confirmatory_pcr_test_LFA_nodes(self, time: int, positive_nodes: List[Node]):
+    def confirmatory_pcr_test_LFA_nodes(self, time: int, positive_nodes: List[Node],
+                                        prob_pcr_positive: Callable):
         """Nodes who receive a positive LFA result will be tested using a PCR test."""
         for node in positive_nodes:
             if not node.taken_confirmatory_PCR_test:
-                node.take_confirmatory_pcr_test(time, self.prob_testing_positive_pcr)
+                node.take_confirmatory_pcr_test(time, prob_pcr_positive)
 
-    def act_on_positive_LFA_tests(self, time: int):
+    def act_on_positive_LFA_tests(self, time: int, prob_pcr_positive: Callable,
+                                  prob_lfa_positive: Callable):
         """For nodes who test positive on their LFA test, take the appropriate action depending
         on the policy
         """
-        positive_nodes = self.lft_nodes(time)
+        positive_nodes = self.lft_nodes(time, prob_lfa_positive)
 
         self.isolate_positive_lateral_flow_tests(time, positive_nodes)
 
         if self.LFA_testing_requires_confirmatory_PCR:
-            self.confirmatory_pcr_test_LFA_nodes(time, positive_nodes)
+            self.confirmatory_pcr_test_LFA_nodes(time, positive_nodes, prob_pcr_positive)
 
-    def lft_nodes(self, time: int) -> List[Node]:
+    def lft_nodes(self, time: int, prob_lfa_positive: Callable) -> List[Node]:
         """Performs a days worth of lateral flow testing.
 
         Returns:
@@ -116,6 +84,6 @@ class ContactTracing:
             if node.being_lateral_flow_tested:
                 if node.will_lfa_test_today(self.node_daily_prob_lfa_test):
                     if not node.received_positive_test_result:
-                        if node.lfa_test_node(time, self.prob_testing_positive_lfa_func):
+                        if node.lfa_test_node(time, prob_lfa_positive):
                             positive_nodes.append(node)
         return positive_nodes

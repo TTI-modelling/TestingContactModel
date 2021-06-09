@@ -31,8 +31,8 @@ params = {"outside_household_infectivity_scaling": 0.3,
 
 def main():
     model = IndividualTracingDailyTesting(params)
-    model.prob_testing_positive_lfa_func = prob_testing_positive_function
-    model.prob_testing_positive_pcr_func = prob_testing_positive_function
+    model.prob_lfa_positive = prob_testing_positive_function
+    model.prob_pcr_positive = prob_testing_positive_function
     controller = BranchingProcessController(model)
     controller.graph_pyvis_view.set_display(True)
     controller.graph_pyvis_view.open_in_browser = True
@@ -74,8 +74,8 @@ def recreate_pytest_1():
                       }
 
     model = IndividualTracingDailyTesting(default_params)
-    model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
-    model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
+    model.prob_lfa_positive = prob_testing_positive_lfa_func
+    model.prob_pcr_positive = prob_testing_positive_pcr_func
 
     model.contact_tracing.contact_tracing_success_prob = 1
 
@@ -125,8 +125,8 @@ def recreate_pytest_2():
               "household_positive_policy": PositivePolicy.lfa_testing_and_quarantine}
 
     model = IndividualTracingDailyTesting(params)
-    model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
-    model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
+    model.prob_lfa_positive = prob_testing_positive_lfa_func
+    model.prob_pcr_positive = prob_testing_positive_pcr_func
 
     model.time = 5
 
