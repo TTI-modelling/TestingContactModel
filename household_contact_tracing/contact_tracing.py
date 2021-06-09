@@ -22,16 +22,9 @@ class ContactTracing:
 
         # Parameter Inputs:
         # contact tracing parameters
-        self.contact_tracing_success_prob = 0.5
-        self.do_2_step = False
-        self.contact_trace_delay = 1
         self.policy_for_household_contacts_of_a_positive_case = 'lfa testing no quarantine'
         self.LFA_testing_requires_confirmatory_PCR = False
         self.node_daily_prob_lfa_test = 1
-        self.number_of_days_to_trace_backwards = 2
-        self.number_of_days_to_trace_forwards = 7
-        self.recall_probability_fall_off = 1
-        self.number_of_days_prior_to_LFA_result_to_trace: int = 2
 
         # isolation or quarantine parameters
         self.self_isolation_duration = 7
@@ -50,7 +43,9 @@ class ContactTracing:
                 self.__dict__[param_name] = params[param_name]
 
         # Declare behaviours
-        self.increment_behaviour = increment_tracing(self.network, self)
+        self.increment_behaviour = increment_tracing(self.network, self.receive_pcr_test_results,
+                                                     self.LFA_testing_requires_confirmatory_PCR,
+                                                     params)
         self.update_isolation_behaviour = update_isolation(self.network,
                                                            self.apply_policy_for_household_contacts_of_a_positive_case)
         if pcr_testing:
@@ -97,10 +92,6 @@ class ContactTracing:
     def receive_pcr_test_results(self, time: int):
         if self.pcr_testing_behaviour:
             self.pcr_testing_behaviour.receive_pcr_test_results(time)
-
-    def pcr_test_node(self, node: Node, time: int):
-        if self.pcr_testing_behaviour:
-            self.pcr_testing_behaviour.pcr_test_node(node, time)
 
     def apply_policy_for_household_contacts_of_a_positive_case(self, household: Household,
                                                                time: int):
