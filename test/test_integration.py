@@ -244,7 +244,7 @@ class TestSimpleHousehold:
         network = model.network
         node_imperfect = [node.propensity_imperfect_isolation for node in network.all_nodes()]
         assert any(node_imperfect)
-        node_contact_rate_reduction = [model.infection.contact_rate_reduction_behaviour.get_contact_rate_reduction(node) for node in network.all_nodes()]
+        node_contact_rate_reduction = [model.infection.contact_rate_reduction.get_contact_rate_reduction(node) for node in network.all_nodes()]
         # People who are isolating
         assert 1 in node_contact_rate_reduction
         # People who are imperfectly isolating

@@ -91,7 +91,7 @@ class Infection:
 
         self.new_infection_behaviour = new_infection(self.network, self.will_uptake_isolation,
                                                      params)
-        self.contact_rate_reduction_behaviour = contact_rate_reduction(params)
+        self.contact_rate_reduction = contact_rate_reduction(params)
 
         self.initialise()
 
@@ -104,10 +104,6 @@ class Infection:
     def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
         if self.new_infection_behaviour:
             self.new_infection_behaviour.new_infection(time, household_id, infecting_node)
-
-    def get_contact_rate_reduction(self, node: Node) -> int:
-        if self.contact_rate_reduction_behaviour:
-            return self.contact_rate_reduction_behaviour.get_contact_rate_reduction(node)
 
     def initialise(self):
         # Create the starting infectives
@@ -137,10 +133,10 @@ class Infection:
                 # How many of the contacts are outside household contacts
                 outside_household_contacts = contacts_made - local_contacts
 
-            if self.contact_rate_reduction_behaviour:
+            if self.contact_rate_reduction:
                 outside_household_contacts = npr.binomial(
                     outside_household_contacts,
-                    1 - self.get_contact_rate_reduction(node)
+                    1 - self.contact_rate_reduction.get_contact_rate_reduction(node)
                 )
 
             # Within household, how many of the infections would cause new infections
@@ -300,13 +296,3 @@ class Infection:
         # We record which edges are within this household for visualisation later on
         infecting_node_household.within_house_edges.append((infecting_node.id, node_count))
 
-    def perform_recoveries(self, time):
-        """
-        Loops over all nodes in the branching process and determine recoveries.
-
-        time - The current time of the process, if a nodes recovery time equals the current time, then it is set to the
-        recovered state
-        """
-        for node in self.network.all_nodes():
-            if node.recovery_time == time:
-                node.recovered = True
