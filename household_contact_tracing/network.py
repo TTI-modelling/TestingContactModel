@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from collections import Counter
 from typing import Optional, Iterator, List, Tuple, Dict
 from enum import Enum
-from abc import ABC, abstractmethod
 
 import networkx as nx
 
@@ -42,17 +40,12 @@ class TestType(Enum):
     pcr = 0
     lfa = 1
 
-class Network(ABC):
-    def __init__(self):
-        self.graph = nx.Graph()
 
-
-class ContactTracingNetwork(Network):
+class Network:
     def __init__(self):
         # Call superclass constructor
-        super().__init__()
+        self.graph = nx.Graph()
         self._house_dict: Dict[int, Household] = {}
-
 
     def add_household(self, house_size: int, time_infected: int,
                       infected_by: Optional[Household], propensity_trace_app: bool,
@@ -131,8 +124,7 @@ class ContactTracingNetwork(Network):
         new_node_id = self.node_count + 1
         self.graph.add_node(new_node_id)
         new_node_household = self.household(household_id)
-        node = ContactTracingNode(
-                    id=new_node_id, time_infected=time_infected,
+        node = Node(id=new_node_id, time_infected=time_infected,
                     household=new_node_household, isolated=isolated,
                     will_uptake_isolation=will_uptake_isolation,
                     propensity_imperfect_isolation=propensity_imperfect_isolation,
@@ -177,14 +169,7 @@ class ContactTracingNetwork(Network):
             self.graph.edges[edge[0], edge[1]].update({"edge_type": new_edge_type})
 
 
-class Node(ABC):
-
-    def __init__(self, id: int, time_infected: int):
-        self.id = id
-        self.time_infected = time_infected
-
-
-class ContactTracingNode(Node):
+class Node:
 
     def __init__(self, id: int, time_infected: int, household: Household, isolated: bool,
                  will_uptake_isolation: bool, propensity_imperfect_isolation: bool,
@@ -194,9 +179,8 @@ class ContactTracingNode(Node):
                  completed_isolation=False, outside_house_contacts_made=0, recovered=False,
                  infecting_node: Optional[Node] = None, additional_attributes: dict = None):
 
-        # Call superclass constructor
-        super().__init__(id, time_infected)
-
+        self.id = id
+        self.time_infected = time_infected
         self.household = household
         self.isolated = isolated
         self.will_uptake_isolation = will_uptake_isolation
@@ -306,7 +290,6 @@ class ContactTracingNode(Node):
 
 
 class Household:
-
     def __init__(self, network: Network, house_id: int,
                  house_size: int, time_infected: int, infected_by: Optional[Household],
                  propensity_trace_app: bool, additional_attributes: Optional[dict] = None):

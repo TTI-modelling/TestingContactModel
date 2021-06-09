@@ -8,14 +8,14 @@ from typing import Optional
 import sys
 
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
-from household_contact_tracing.network import ContactTracingNode, EdgeType, ContactTracingNetwork, Household
+from household_contact_tracing.network import EdgeType, Household, Network, Node
 import household_contact_tracing.behaviours.new_infection as new_infection
 
 
 class Infection:
     """ 'Context' class for infection processes/strategies (Strategy pattern) """
 
-    def __init__(self, network: ContactTracingNetwork, new_household: NewHouseholdBehaviour,
+    def __init__(self, network: Network, new_household: NewHouseholdBehaviour,
                  new_infection: new_infection.NewInfection,
                  contact_rate_reduction: ContactRateReductionBehaviour, params: dict):
         self._network = network
@@ -149,11 +149,11 @@ class Infection:
                                                                        additional_attributes)
             return new_household
 
-    def new_infection(self, time: int, household_id: int, infecting_node: Optional[ContactTracingNode] = None):
+    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
         if self.new_infection_behaviour:
             self.new_infection_behaviour.new_infection(time, household_id, infecting_node)
 
-    def get_contact_rate_reduction(self, node: ContactTracingNode) -> int:
+    def get_contact_rate_reduction(self, node: Node) -> int:
         if self.contact_rate_reduction_behaviour:
             return self.contact_rate_reduction_behaviour.get_contact_rate_reduction(node)
 
@@ -257,7 +257,6 @@ class Infection:
         """
         return npr.choice([1, 2, 3, 4, 5, 6], p=self.size_mean_contacts_biased_distribution)
 
-
     def contacts_made_today(self, household_size) -> int:
         """Generates the number of contacts made today by a node, given the house size of the node. Uses an
         overdispersed negative binomial distribution.
@@ -325,7 +324,7 @@ class Infection:
             else:
                 return self.symptomatic_global_infection_probs[infectious_age]
 
-    def new_outside_household_infection(self, time: int, infecting_node: ContactTracingNode):
+    def new_outside_household_infection(self, time: int, infecting_node: Node):
         # We assume all new outside household infections are in a new household
         # i.e: You do not infect 2 people in a new household
         # you do not spread the infection to a household that already has an infection
@@ -347,7 +346,7 @@ class Infection:
         self._network.graph.edges[infecting_node.id, node_count].update(
             {"edge_type": EdgeType.default})
 
-    def new_within_household_infection(self, time, infecting_node: ContactTracingNode):
+    def new_within_household_infection(self, time, infecting_node: Node):
         """Add a new node to the network.
 
         The new node will be a member of the same household as the infecting node.
@@ -419,7 +418,7 @@ class Infection:
 
 
 class NewHouseholdBehaviour(ABC):
-    def __init__(self, network: ContactTracingNetwork):
+    def __init__(self, network: Network):
         self._network = network
         self._infection = None
 

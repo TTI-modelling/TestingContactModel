@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional
 import numpy as np
 from collections.abc import Callable
 
-from household_contact_tracing.network import Network, Household, ContactTracingNode, TestType, InfectionStatus
+from household_contact_tracing.network import Network, Household, TestType, InfectionStatus, Node
 
 if TYPE_CHECKING:
     import household_contact_tracing.behaviours.isolation as isolation
@@ -148,7 +148,7 @@ class ContactTracing:
         if self.pcr_testing_behaviour:
             self.pcr_testing_behaviour.receive_pcr_test_results(time)
 
-    def pcr_test_node(self, node: ContactTracingNode, time: int):
+    def pcr_test_node(self, node: Node, time: int):
         if self.pcr_testing_behaviour:
             self.pcr_testing_behaviour.pcr_test_node(node, time)
 
@@ -219,7 +219,7 @@ class ContactTracing:
             if node.will_uptake_isolation:
                 node.isolated = True
 
-    def lfa_test_node(self, node: ContactTracingNode, time: int):
+    def lfa_test_node(self, node: Node, time: int):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
@@ -235,7 +235,7 @@ class ContactTracing:
         else:
             return False
 
-    def will_lfa_test_today(self, node: ContactTracingNode) -> bool:
+    def will_lfa_test_today(self, node: Node) -> bool:
 
         if node.propensity_to_miss_lfa_tests:
 
@@ -293,7 +293,7 @@ class ContactTracing:
                     not self.LFA_testing_requires_confirmatory_PCR:
                 self.apply_policy_for_household_contacts_of_a_positive_case(node.household, time)
 
-    def take_confirmatory_pcr_test(self, node: ContactTracingNode, time: int):
+    def take_confirmatory_pcr_test(self, node: Node, time: int):
         """Given a the time relative to a nodes symptom onset, will that node test positive
 
         Args:
@@ -329,16 +329,6 @@ class ContactTracing:
 
         if self.LFA_testing_requires_confirmatory_PCR:
             self.confirmatory_pcr_test_LFA_nodes(time)
-
-    def isolate_self_reporting_cases(self, time):
-        """Applies the isolation status to nodes who have reached their self-report time.
-        They may of course decide to not adhere to said isolation, or may be a member of a household
-        who will not uptake isolation
-        """
-        for node in self.network.all_nodes():
-            if node.will_uptake_isolation:
-                if node.time_of_reporting == time:
-                    node.isolated = True
 
     def release_nodes_from_quarantine_or_isolation(self, time):
         """If a node has completed the quarantine according to the following rules, they are

@@ -2,7 +2,8 @@ from typing import Callable
 import os
 from copy import deepcopy
 
-from household_contact_tracing.network import ContactTracingNetwork
+from household_contact_tracing.behaviours.isolate_self_reporting import isolate_self_reporting_cases
+from household_contact_tracing.network import Network
 from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.infection import Infection, \
@@ -14,7 +15,7 @@ import household_contact_tracing.behaviours.pcr_testing as pcr_testing
 import household_contact_tracing.behaviours.contact_trace_household as tracing
 import household_contact_tracing.behaviours.increment_tracing as increment
 import household_contact_tracing.behaviours.new_infection as new_infection
-from household_contact_tracing.simulation_states import ReadyState, RunningState, ExtinctState,\
+from household_contact_tracing.simulation_states import RunningState, ExtinctState,\
     MaxNodesInfectiousState, TimedOutState
 
 
@@ -26,7 +27,7 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
 
         Attributes
         ----------
-        network : ContactTracingNetwork
+        network : Network
             the persistent storage of model data
 
         infection: Infection
@@ -64,7 +65,7 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
         BranchingProcessModel.__init__(self)
 
         # Set network
-        self._network = ContactTracingNetwork()
+        self._network = Network()
 
         # Set strategies (Strategy pattern)
         self._infection = self._initialise_infection(self._network, params)
@@ -74,7 +75,7 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
         self.time = 0
 
     @property
-    def network(self) -> ContactTracingNetwork:
+    def network(self) -> Network:
         return self._network
 
     @property
@@ -93,14 +94,14 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
     def contact_tracing(self, contact_tracing: ContactTracing):
         self._contact_tracing = contact_tracing
 
-    def _initialise_infection(self, network: ContactTracingNetwork, params: dict):
+    def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
                          NewHouseholdLevel(network),
                          new_infection.NewInfectionHouseholdLevel(network),
                          ContactRateReductionHouseholdLevelContactTracing(),
                          params)
 
-    def _initialise_contact_tracing(self, network: ContactTracingNetwork, params: dict):
+    def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
                               tracing.ContactTraceHouseholdLevel(network),
                               increment.IncrementTracingHouseholdLevel(network),
@@ -115,7 +116,7 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
         # Perform one day of the infection
         self.infection.increment(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
-        self.contact_tracing.isolate_self_reporting_cases(self.time)
+        isolate_self_reporting_cases(self.network, self.time)
         # isolate self-reporting-nodes while they wait for tests
         self.contact_tracing.update_isolation(self.time)
         # propagate contact tracing
@@ -219,14 +220,14 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
     def prob_testing_positive_pcr_func(self, fn: Callable[[int], float]):
         self.contact_tracing.prob_testing_positive_pcr_func = fn
 
-    def _initialise_infection(self, network: ContactTracingNetwork, params: dict):
+    def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
                          NewHouseholdLevel(network),
                          new_infection.NewInfectionHouseholdLevel(network),
                          ContactRateReductionHouseholdLevelContactTracing(),
                          params)
 
-    def _initialise_contact_tracing(self, network: ContactTracingNetwork, params: dict):
+    def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
                               tracing.ContactTraceHouseholdIndividualLevel(network),
                               increment.IncrementTracingIndividualLevel(self.network),
@@ -254,14 +255,14 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
         # Call superclass constructor (which overwrites defaults with new params if present)
         super().__init__(params)
 
-    def _initialise_infection(self, network: ContactTracingNetwork, params: dict):
+    def _initialise_infection(self, network: Network, params: dict):
         return Infection(network,
                          NewHouseholdIndividualTracingDailyTesting(self.network),
                          new_infection.NewInfectionIndividualTracingDailyTesting(self.network),
                          ContactRateReductionIndividualTracingDaily(),
                          params)
 
-    def _initialise_contact_tracing(self, network: ContactTracingNetwork, params: dict):
+    def _initialise_contact_tracing(self, network: Network, params: dict):
         return ContactTracing(network,
                               tracing.ContactTraceHouseholdIndividualTracingDailyTest(self.network),
                               increment.IncrementTracingIndividualDailyTesting(self.network),
@@ -274,7 +275,7 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
         """
         self.contact_tracing.receive_pcr_test_results(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
-        self.contact_tracing.isolate_self_reporting_cases(self.time)
+        isolate_self_reporting_cases(self.network, self.time)
         # isolate self-reporting-nodes while they wait for tests
         self.contact_tracing.update_isolation(self.time)
         # isolate self reporting nodes
