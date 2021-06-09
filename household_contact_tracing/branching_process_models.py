@@ -17,7 +17,6 @@ from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.contact_tracing import ContactTracing
 import household_contact_tracing.behaviours.isolation as isolation
-import household_contact_tracing.behaviours.pcr_testing as pcr_testing
 import household_contact_tracing.behaviours.increment_tracing as increment
 import household_contact_tracing.behaviours.new_infection as new_infection
 from household_contact_tracing.simulation_states import RunningState, ExtinctState,\
@@ -89,7 +88,6 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
 
     def _initialise_contact_tracing(self, network: Network):
         return ContactTracing(network,
-                              None,
                               self.params)
 
     def simulate_one_step(self):
@@ -103,7 +101,7 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
         new_isolation = isolation.UpdateIsolationHouseholdLevel(self.network, self.contact_tracing.apply_policy_for_household_contacts_of_a_positive_case)
         new_isolation.update_isolation(self.time)
         # propagate contact tracing
-        new_increment = increment.IncrementTracingHouseholdLevel(self.network, self.contact_tracing.receive_pcr_test_results, self.contact_tracing.LFA_testing_requires_confirmatory_PCR, self.params)
+        new_increment = increment.IncrementTracingHouseholdLevel(self.network, self.contact_tracing.prob_testing_positive_pcr_func, self.contact_tracing.LFA_testing_requires_confirmatory_PCR, self.params)
         for step in range(5):
             new_increment.increment_contact_tracing(self.time)
         # node recoveries
@@ -213,9 +211,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
                          self.params)
 
     def _initialise_contact_tracing(self, network: Network):
-        return ContactTracing(network,
-                              pcr_testing.PCRTestingIndividualLevelTracing,
-                              self.params)
+        return ContactTracing(network, self.params)
 
     def simulate_one_step(self):
         """Simulates one day of the infection and contact tracing."""
@@ -229,7 +225,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
         new_isolation.update_isolation(self.time)
         # propagate contact tracing
         new_increment = increment.IncrementTracingIndividualLevel(self.network,
-                                                                  self.contact_tracing.receive_pcr_test_results,
+                                                                  self.contact_tracing.prob_testing_positive_pcr_func,
                                                                   self.contact_tracing.LFA_testing_requires_confirmatory_PCR,
                                                                   self.params)
         for step in range(5):
@@ -270,13 +266,11 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
 
     def _initialise_contact_tracing(self, network: Network):
         return ContactTracing(network,
-                              pcr_testing.PCRTestingIndividualDailyTesting,
                               self.params)
 
     def simulate_one_step(self):
         """ Simulates one day of the infection and contact tracing.
         """
-        self.contact_tracing.receive_pcr_test_results(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         isolate_self_reporting_cases(self.network, self.time)
         new_isolation = isolation.UpdateIsolationIndividualTracingDailyTesting(self.network,
@@ -290,9 +284,10 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
             self.contact_tracing.act_on_confirmatory_pcr_results(self.time)
         # Perform one day of the infection
         self.infection.increment(self.time)
+
         # propagate contact tracing
         new_increment = increment.IncrementTracingIndividualDailyTesting(self.network,
-                                                                         self.contact_tracing.receive_pcr_test_results,
+                                                                         self.contact_tracing.prob_testing_positive_pcr_func,
                                                                          self.contact_tracing.LFA_testing_requires_confirmatory_PCR,
                                                                          self.params)
         for _ in range(5):

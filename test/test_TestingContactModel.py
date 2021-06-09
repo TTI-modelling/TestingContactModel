@@ -239,7 +239,7 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
     model.infection.new_outside_household_infection(time=0, infecting_node=model.network.node(1))
 
     increment_tracing = IncrementTracingIndividualDailyTesting(model.network,
-                                                               model.contact_tracing.receive_pcr_test_results,
+                                                               model.contact_tracing.prob_testing_positive_pcr_func,
                                                                model.contact_tracing.LFA_testing_requires_confirmatory_PCR,
                                                                params)
     increment_tracing.attempt_contact_trace_of_household(

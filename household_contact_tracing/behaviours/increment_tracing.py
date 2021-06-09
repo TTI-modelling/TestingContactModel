@@ -10,7 +10,7 @@ from household_contact_tracing.utilities import update_params
 
 
 class IncrementTracing(ABC):
-    def __init__(self, network: Network, receive_pcr_test_results: Callable,
+    def __init__(self, network: Network, prob_testing_positive_pcr_func: Callable,
                  LFA_testing_requires_confirmatory_PCR: bool, params: dict):
         self.network = network
         self.do_2_step = False
@@ -20,15 +20,28 @@ class IncrementTracing(ABC):
         self.number_of_days_to_trace_forwards = 7
         self.recall_probability_fall_off = 1
         self.number_of_days_prior_to_LFA_result_to_trace: int = 2
+        self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
 
+        self.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
         self.LFA_testing_requires_confirmatory_PCR = LFA_testing_requires_confirmatory_PCR
-        self.receive_pcr_test_results = receive_pcr_test_results
 
         update_params(self, params)
 
     @abstractmethod
     def increment_contact_tracing(self, time: int):
         """Performs a days worth of contact tracing."""
+
+    def pcr_test_node(self, node: Node, time: int):
+        node.received_result = True
+        infectious_age_when_tested = time - node.testing_delay - node.time_infected
+        prob_positive_result = self.prob_testing_positive_pcr_func(infectious_age_when_tested)
+        node.avenue_of_testing = TestType.pcr
+
+        if np.random.binomial(1, prob_positive_result) == 1:
+            node.received_positive_test_result = True
+            node.positive_test_time = time
+        else:
+            node.received_positive_test_result = False
 
 
 class IncrementTracingHouseholdLevel(IncrementTracing):
@@ -166,6 +179,21 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
 
 class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
 
+    def receive_pcr_test_results(self, time: int):
+        # self reporting infections
+        for node in self.network.all_nodes():
+            if node.time_of_reporting + node.testing_delay == time:
+                if not node.contact_traced:
+                    if not node.received_result:
+                        self.pcr_test_node(node, time)
+
+        # contact traced nodes
+        for node in self.network.all_nodes():
+            if node.symptom_onset_time + node.testing_delay == time:
+                if node.contact_traced:
+                    if not node.received_result:
+                        self.pcr_test_node(node, time)
+
     def increment_contact_tracing(self, time: int):
 
         # TODO update the below - going to hospital is not included in the model
@@ -298,6 +326,19 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
 
 
 class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
+
+    def receive_pcr_test_results(self, time: int):
+        """For nodes who would receive a PCR test result today, update"""
+
+        if self.lfa_tested_nodes_book_pcr_on_symptom_onset:
+            super().receive_pcr_test_results(time)
+        else:
+            for node in self.network.all_nodes():
+                if node.time_of_reporting + node.testing_delay == time:
+                    if not node.contact_traced:
+                        if not node.received_result:
+                            if not node.being_lateral_flow_tested:
+                                self.pcr_test_node(node, time)
 
     def increment_contact_tracing(self, time: int):
         for node in self.network.all_nodes():

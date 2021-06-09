@@ -1,19 +1,15 @@
 from __future__ import annotations
 
-from typing import Optional, Type
-
 import numpy as np
 from collections.abc import Callable
 
-from household_contact_tracing.behaviours.pcr_testing import PCRTesting
-from household_contact_tracing.network import Network, Household, TestType, InfectionStatus, Node
+from household_contact_tracing.network import Network, Household, TestType, Node
 
 
 class ContactTracing:
     """ 'Context' class for contact tracing processes/strategies (Strategy pattern) """
 
-    def __init__(self, network: Network,
-                 pcr_testing: Optional[Type[PCRTesting]], params: dict):
+    def __init__(self, network: Network, params: dict):
         self.network = network
 
         # Parameter Inputs:
@@ -32,12 +28,6 @@ class ContactTracing:
         for param_name in self.__dict__:
             if param_name in params:
                 self.__dict__[param_name] = params[param_name]
-
-        # Declare behaviours
-        if pcr_testing:
-            self.pcr_testing_behaviour = pcr_testing(self.network,
-                                                     self.prob_testing_positive_pcr_func,
-                                                     params)
 
     @property
     def prob_testing_positive_lfa_func(self) -> Callable[[int], float]:
@@ -66,10 +56,6 @@ class ContactTracing:
             return 1
         else:
             return 0
-
-    def receive_pcr_test_results(self, time: int):
-        if self.pcr_testing_behaviour:
-            self.pcr_testing_behaviour.receive_pcr_test_results(time)
 
     def apply_policy_for_household_contacts_of_a_positive_case(self, household: Household,
                                                                time: int):
