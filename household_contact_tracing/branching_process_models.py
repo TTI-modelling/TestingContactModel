@@ -2,14 +2,15 @@ from typing import Callable
 import os
 from copy import deepcopy
 
+from household_contact_tracing.behaviours.contact_rate_reduction import \
+    ContactRateReductionHouseholdLevelContactTracing, ContactRateReductionIndividualTracingDaily
 from household_contact_tracing.behaviours.isolate_self_reporting import isolate_self_reporting_cases
 from household_contact_tracing.behaviours.new_household import NewHouseholdLevel, \
     NewHouseholdIndividualTracingDailyTesting
+from household_contact_tracing.infection import Infection
 from household_contact_tracing.network import Network
 from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.parameters import validate_parameters
-from household_contact_tracing.infection import Infection, \
-    ContactRateReductionHouseholdLevelContactTracing, ContactRateReductionIndividualTracingDaily
 from household_contact_tracing.contact_tracing import ContactTracing
 import household_contact_tracing.behaviours.isolation as isolation
 import household_contact_tracing.behaviours.pcr_testing as pcr_testing

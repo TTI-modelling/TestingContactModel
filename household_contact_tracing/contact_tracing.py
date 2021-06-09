@@ -5,7 +5,6 @@ from typing import Optional, Type
 import numpy as np
 from collections.abc import Callable
 
-from household_contact_tracing.behaviours.increment_tracing import IncrementTracing
 from household_contact_tracing.behaviours.pcr_testing import PCRTesting
 from household_contact_tracing.network import Network, Household, TestType, InfectionStatus, Node
 

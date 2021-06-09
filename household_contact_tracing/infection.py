@@ -4,6 +4,8 @@ import numpy as np
 import numpy.random as npr
 from typing import Optional, Type
 
+from household_contact_tracing.behaviours.contact_rate_reduction import \
+    ContactRateReductionBehaviour
 from household_contact_tracing.behaviours.new_household import NewHousehold
 from household_contact_tracing.behaviours.new_infection import NewInfection
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, \
@@ -34,14 +36,11 @@ class Infection:
         self.outside_household_infectivity_scaling = 1.0
         self.overdispersion = 0.32
         self.asymptomatic_relative_infectivity = 0.5
-        self.reduce_contacts_by = 0
         self.starting_infections = 1
-        self.global_contact_reduction_risky_behaviour = 0
         self.household_pairwise_survival_prob = 0.2
 
         # adherence parameters
         self.node_will_uptake_isolation_prob = 1
-        self.global_contact_reduction_imperfect_quarantine = 0
 
         self.hh_propensity_to_use_trace_app = 1
 
@@ -92,7 +91,7 @@ class Infection:
 
         self.new_infection_behaviour = new_infection(self.network, self.will_uptake_isolation,
                                                      params)
-        self.contact_rate_reduction_behaviour = contact_rate_reduction(self)
+        self.contact_rate_reduction_behaviour = contact_rate_reduction(params)
 
         self.initialise()
 
@@ -311,58 +310,3 @@ class Infection:
         for node in self.network.all_nodes():
             if node.recovery_time == time:
                 node.recovered = True
-
-
-class ContactRateReductionBehaviour:
-    def __init__(self, infection: Infection):
-        self.infection = infection
-
-    def get_contact_rate_reduction(self, node) -> int:
-        pass
-
-
-class ContactRateReductionHouseholdLevelContactTracing(ContactRateReductionBehaviour):
-
-    def get_contact_rate_reduction(self, node) -> int:
-        """Returns a contact rate reduction, depending upon a nodes current status and various
-        isolation parameters
-        """
-
-        if node.isolated and node.propensity_imperfect_isolation:
-            return self.infection.global_contact_reduction_imperfect_quarantine
-        elif node.isolated and not node.propensity_imperfect_isolation:
-            # return 1 means 100% of contacts are stopped
-            return 1
-        else:
-            return self.infection.reduce_contacts_by
-
-
-class ContactRateReductionIndividualTracingDaily (ContactRateReductionBehaviour):
-
-    def get_contact_rate_reduction(self, node) -> int:
-        """This method overrides the default behaviour. Previously the override behaviour allowed
-        he global contact reduction to vary by household size.
-
-        We override this behaviour, so that we can vary the global contact reduction by whether a
-        node is isolating or being lfa tested or whether they engage in risky behaviour while they
-         are being lfa tested.
-
-        Remember that a contact rate reduction of 1 implies that 100% of contacts are stopped.
-        """
-        # the isolated status should never apply to an individual who will not uptake isolation
-
-        if node.isolated and not node.propensity_imperfect_isolation:
-            # perfect isolation
-            return 1
-
-        elif node.isolated and node.propensity_imperfect_isolation:
-            # imperfect isolation
-            return self.infection.global_contact_reduction_imperfect_quarantine
-
-        elif node.being_lateral_flow_tested and node.propensity_risky_behaviour_lfa_testing:
-            # engaging in risky behaviour while testing negative
-            return self.infection.global_contact_reduction_risky_behaviour
-
-        else:
-            # normal levels of social distancing
-            return self.infection.reduce_contacts_by
