@@ -15,14 +15,17 @@ from household_contact_tracing.network import Network
 from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.parameters import validate_parameters
 from household_contact_tracing.contact_tracing import ContactTracing
-import household_contact_tracing.behaviours.isolation as isolation
 import household_contact_tracing.behaviours.increment_tracing as increment
+import household_contact_tracing.behaviours.household_level_isolation as household_level_isolation
+import household_contact_tracing.behaviours.individual_level_isolation as individual_level_isolation
+import household_contact_tracing.behaviours.daily_testing_isolation as daily_testing_isolation
+
 import household_contact_tracing.behaviours.new_infection as new_infection
 from household_contact_tracing.simulation_states import RunningState, ExtinctState,\
     MaxNodesInfectiousState, TimedOutState
 
 
-class HouseholdLevelContactTracing(BranchingProcessModel):
+class HouseholdLevelTracing(BranchingProcessModel):
     """
         A class used to represent a simulation of contact tracing of households only,
          (without contacting every individual and their contacts)
@@ -93,8 +96,8 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         isolate_self_reporting_cases(self.network, self.time)
         # isolate self-reporting-nodes while they wait for tests
-        new_isolation = isolation.UpdateIsolationHouseholdLevel(self.network, self.contact_tracing.household_positive_policy)
-        new_isolation.update_isolation(self.time)
+        household_level_isolation.update_households_contact_traced(self.network, self.time)
+        household_level_isolation.update_isolation(self.network, self.time)
         # propagate contact tracing
         new_increment = increment.IncrementTracingHouseholdLevel(self.network, self.contact_tracing.prob_testing_positive_pcr_func, self.contact_tracing.LFA_testing_requires_confirmatory_PCR, self.params)
         for step in range(5):
@@ -162,7 +165,7 @@ class HouseholdLevelContactTracing(BranchingProcessModel):
         super()._simulation_stopped()
 
 
-class IndividualLevelContactTracing(HouseholdLevelContactTracing):
+class IndividualLevelTracing(HouseholdLevelTracing):
     """
         A class used to represent a simulation of contact tracing of households along with
          contacting every individual and their contacts, whether they have tested positive or not.
@@ -195,8 +198,8 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         isolate_self_reporting_cases(self.network, self.time)
         # isolate self-reporting-nodes while they wait for tests
-        new_isolation = isolation.UpdateIsolationIndividualLevelTracing(self.network, self.contact_tracing.household_positive_policy)
-        new_isolation.update_isolation(self.time)
+        individual_level_isolation.update_households_contact_traced(self.network, self.time)
+        individual_level_isolation.update_isolation(self.network, self.time)
         # propagate contact tracing
         new_increment = increment.IncrementTracingIndividualLevel(self.network,
                                                                   self.contact_tracing.prob_testing_positive_pcr_func,
@@ -213,7 +216,7 @@ class IndividualLevelContactTracing(HouseholdLevelContactTracing):
         self.time += 1
 
 
-class IndividualTracingDailyTesting(IndividualLevelContactTracing):
+class IndividualTracingDailyTesting(IndividualLevelTracing):
     """A class used to represent a simulation of contact tracing of households along with
     contacting every individual and their contacts, whether they have tested positive or not, along
     with daily testing.
@@ -244,10 +247,10 @@ class IndividualTracingDailyTesting(IndividualLevelContactTracing):
         """
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         isolate_self_reporting_cases(self.network, self.time)
-        new_isolation = isolation.UpdateIsolationIndividualTracingDailyTesting(self.network,
-                                                                               self.contact_tracing.household_positive_policy)
         # isolate self-reporting-nodes while they wait for tests
-        new_isolation.update_isolation(self.time)
+        daily_testing_isolation.update_households_contact_traced(self.network, self.time)
+        daily_testing_isolation.update_isolation(self.network, self.time,
+                                                 self.contact_tracing.household_positive_policy)
         # isolate self reporting nodes
         self.contact_tracing.act_on_positive_LFA_tests(self.time)
         # if we require PCR tests, to confirm infection we act on those

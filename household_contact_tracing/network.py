@@ -344,7 +344,7 @@ class Household:
     def __init__(self, network: Network, house_id: int,
                  house_size: int, time_infected: int, infected_by: Optional[Household],
                  propensity_trace_app: bool, additional_attributes: Optional[dict] = None):
-        self._network = network
+        self.network = network
         self.house_id = house_id
         self.size = house_size                  # Size of the household
         self.time_infected = time_infected      # The time at which the infection entered the household
@@ -448,16 +448,16 @@ class Household:
 
             # Initially the edge is assigned the contact tracing label, may be updated if the
             # contact tracing does not succeed
-            edge = self._network.get_edge_between_household(self, self.being_contact_traced_from)
-            if self._network.is_edge_app_traced(edge):
-                self._network.label_edges_between_houses(self, self.being_contact_traced_from,
-                                                         EdgeType.app_traced)
+            edge = self.network.get_edge_between_household(self, self.being_contact_traced_from)
+            if self.network.is_edge_app_traced(edge):
+                self.network.label_edges_between_houses(self, self.being_contact_traced_from,
+                                                        EdgeType.app_traced)
             else:
-                self._network.label_edges_between_houses(self, self.being_contact_traced_from,
-                                                         EdgeType.between_house)
+                self.network.label_edges_between_houses(self, self.being_contact_traced_from,
+                                                        EdgeType.between_house)
 
         # Update edges within household
-        self._network.label_edges_inside_household(self, EdgeType.within_house)
+        self.network.label_edges_inside_household(self, EdgeType.within_house)
 
     def start_lateral_flow_testing_household(self, time: int):
         """Sets the household to the lateral flow testing status so that new within household
@@ -508,3 +508,31 @@ class Household:
             self.isolate_household(time)
         else:
             raise Exception("household_positive_policy not recognised.")
+
+    def find_traced_node(self):
+        """Work out which was the traced node."""
+        tracing_household = self.being_contact_traced_from
+        traced_node_id = self.network.get_edge_between_household(self, tracing_household)[0]
+        return self.network.node(traced_node_id)
+
+    def update_network(self):
+        """
+        When a house is contact traced, we need to place all the nodes under surveillance.
+        If any of the nodes are symptomatic, we need to isolate the household.
+        """
+        # Update the house to the contact traced status
+        self.contact_traced = True
+
+        # Update the nodes to the contact traced status
+        for node in self.nodes:
+            node.contact_traced = True
+
+        # Colour the edges within household
+        self.network.label_edges_inside_household(self, EdgeType.within_house)
+
+    def isolate_if_symptomatic_nodes(self, time: int):
+        """If there are any symptomatic nodes in the household then isolate the household."""
+        for node in self.nodes:
+            if node.symptom_onset_time <= time and not node.completed_isolation:
+                self.isolate_household(time)
+                break

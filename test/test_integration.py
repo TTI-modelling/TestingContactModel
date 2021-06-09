@@ -49,7 +49,7 @@ class TestSimpleHousehold:
     def run_simulation(params: dict, days=10) -> SimulationModel:
         """Run the Household model for 10 days with the given params and return the
         model."""
-        controller = BranchingProcessController(bpm.HouseholdLevelContactTracing(params))
+        controller = BranchingProcessController(bpm.HouseholdLevelTracing(params))
         controller.set_display(False)
         controller.run_simulation(days)
 
@@ -297,7 +297,7 @@ class TestIndividualTracing:
     def run_simulation(params: dict, days=10) -> SimulationModel:
         """Run the IndividualTracing model for 10 days with the given params and return the
         model."""
-        controller = BranchingProcessController(bpm.IndividualLevelContactTracing(params))
+        controller = BranchingProcessController(bpm.IndividualLevelTracing(params))
         controller.set_display(False)
         controller.run_simulation(days)
 

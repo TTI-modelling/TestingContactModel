@@ -21,7 +21,7 @@ default_params = {"outside_household_infectivity_scaling": 0.8,
 def test_asymptomatic_nodes_attributes():
 
     # everyone's asymptomatic
-    test_model = hct.HouseholdLevelContactTracing(default_params)
+    test_model = hct.HouseholdLevelTracing(default_params)
 
     lfa_test_node = test_model.network.node(1)
 
@@ -38,7 +38,7 @@ def test_symptomatic_nodes_attributes():
     params["infection_reporting_prob"] = 1
 
     # no asymptomatics
-    test_model = hct.HouseholdLevelContactTracing(params)
+    test_model = hct.HouseholdLevelTracing(params)
 
     lfa_test_node = test_model.network.node(1)
 
@@ -56,7 +56,7 @@ def simple_branching_process():
     params["asymptomatic_relative_infectivity"] = 0.5
 
     # 50% asymptomatic
-    test_model = hct.HouseholdLevelContactTracing(params)
+    test_model = hct.HouseholdLevelTracing(params)
     return test_model
 
 
