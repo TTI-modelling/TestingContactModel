@@ -1,6 +1,8 @@
 # TTI-modelling / TestingContactModel
 
-[![Build Status]()] # Todo complete this
+[![Build Status](https://github.com/TTI-modelling/TestingContactModel/actions/workflows/python-package.yml/badge.svg)](https://github.com/TTI-modelling/TestingContactModel/actions/workflows/python-package.yml)
+<!--
+[![Build Status](https://travis-ci.org/UoMResearchIT/UoM_AQ_Data_Tools.svg?branch=testing)](https://travis-ci.org/UoMResearchIT/UoM_AQ_Data_Tools) -->
 
 This repository contains tools to perform simulated infection and contact tracing using a branching process model
 
