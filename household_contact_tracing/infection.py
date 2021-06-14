@@ -72,8 +72,8 @@ class Infection:
     def initialise(self):
         # Create the starting infectives
         for households in range(self.starting_infections):
-            new_household = self.new_household.new_household(time=0, infected_by=None)
-            self.new_infection.new_infection(time=0, household_id=new_household.house_id)
+            new_household = self.new_household.new_household(0, None)
+            self.new_infection.new_infection(0, new_household)
 
     def increment(self, time):
         """Create a new days worth of infections."""
@@ -199,7 +199,6 @@ class Infection:
         # We assume all new outside household infections are in a new household
         # i.e: You do not infect 2 people in a new household
         # you do not spread the infection to a household that already has an infection
-        house_id = self.network.house_count + 1
         node_count = self.network.node_count + 1
         infecting_household = infecting_node.household
 
@@ -211,8 +210,7 @@ class Infection:
         infecting_household.spread_to.append(new_household)
 
         # add a new infection in the house just created
-        self.new_infection.new_infection(time=time, household_id=house_id,
-                                         infecting_node=infecting_node)
+        self.new_infection.new_infection(time, new_household, infecting_node)
 
         # Add the edge to the graph and give it the default label
         self.network.graph.add_edge(infecting_node.id, node_count)
@@ -229,7 +227,7 @@ class Infection:
         infecting_node_household = infecting_node.household
 
         # Adds the new infection to the network
-        self.new_infection.new_infection(time=time, household_id=infecting_node_household.house_id,
+        self.new_infection.new_infection(time, infecting_node_household,
                                          infecting_node=infecting_node)
 
         # Add the edge to the graph and give it the default label if the house is not

@@ -6,6 +6,8 @@ from enum import Enum
 import networkx as nx
 import numpy
 
+from household_contact_tracing.utilities import update_params
+
 
 class EdgeType(Enum):
     """Describes the source of infection between nodes."""
@@ -61,13 +63,13 @@ class Network:
         self.graph = nx.Graph()
         self._house_dict: Dict[int, Household] = {}
 
-    def add_household(self, house_size: int, time_infected: int,
-                      infected_by: Optional[Household], propensity_trace_app: bool,
+    def add_household(self, house_size: int, infected_by: Optional[Household],
+                      propensity_trace_app: bool,
                       additional_attributes: Optional[dict] = None) -> Household:
 
         new_house_id = self.house_count + 1
 
-        new_household = Household(self, new_house_id, house_size, time_infected,
+        new_household = Household(self, new_house_id, house_size,
                                   infected_by, propensity_trace_app, additional_attributes)
         self._house_dict[new_house_id] = new_household
         return new_household
@@ -138,7 +140,7 @@ class Network:
         new_node_id = self.node_count + 1
         self.graph.add_node(new_node_id)
         new_node_household = self.household(household_id)
-        node = Node(id=new_node_id, time_infected=time_infected,
+        node = Node(node_id=new_node_id, time_infected=time_infected,
                     household=new_node_household, isolated=isolated,
                     will_uptake_isolation=will_uptake_isolation,
                     propensity_imperfect_isolation=propensity_imperfect_isolation,
@@ -185,7 +187,7 @@ class Network:
 
 class Node:
 
-    def __init__(self, id: int, time_infected: int, household: Household, isolated: bool,
+    def __init__(self, node_id: int, time_infected: int, household: Household, isolated: bool,
                  will_uptake_isolation: bool, propensity_imperfect_isolation: bool,
                  asymptomatic: bool, symptom_onset_time: float, pseudo_symptom_onset_time: int,
                  recovery_time: int, will_report_infection: bool, time_of_reporting: int,
@@ -193,7 +195,7 @@ class Node:
                  completed_isolation=False, outside_house_contacts_made=0, recovered=False,
                  infecting_node: Optional[Node] = None, additional_attributes: dict = None):
 
-        self.id = id
+        self.id = node_id
         self.time_infected = time_infected
         self.household = household
         self.isolated = isolated
@@ -211,36 +213,25 @@ class Node:
         self.outside_house_contacts_made = outside_house_contacts_made
         self.spread_to_global_node_time_tuples = []
         self.recovered = recovered
-        self.time_propagated_tracing = None
         self.propagated_contact_tracing = False
         self.infecting_node = infecting_node if infecting_node else None
         self.completed_isolation = completed_isolation
-        self.completed_isolation_time = None
-        self.completed_isolation_reason = None
-        self.completed_traveller_quarantine = False
-        self.completed_traveller_lateral_flow_testing = False
         self.received_result = False
-        self.received_positive_test_result = None
+        self.received_positive_test_result = False
 
         self.being_lateral_flow_tested = None
         self.time_started_lfa_testing = None
-        self.received_positive_test_result = False
-        self.received_result = None
         self.avenue_of_testing: Optional[TestType] = None
         self.positive_test_time = None
         self.node_will_take_up_lfa_testing = None
         self.confirmatory_PCR_result_was_positive: Optional[bool] = None
         self.taken_confirmatory_PCR_test: Optional[bool] = None
-        self.confirmatory_PCR_test_time = None
         self.confirmatory_PCR_test_result_time = None
         self.propensity_risky_behaviour_lfa_testing = None
         self.propensity_to_miss_lfa_tests = None
 
-        # Update instance variables with anything in params
-        if additional_attributes:
-            for param_name in self.__dict__:
-                if param_name in additional_attributes:
-                    self.__dict__[param_name] = additional_attributes[param_name]
+        # Update instance variables with anything in `additional_attributes`
+        update_params(self, additional_attributes)
 
     def time_relative_to_symptom_onset(self, time: int) -> int:
         # asymptomatics do not have a symptom onset time
@@ -307,7 +298,6 @@ class Node:
 
         infectious_age_when_tested = time - self.time_infected
 
-        self.confirmatory_PCR_test_time = time
         self.confirmatory_PCR_test_result_time = time + self.testing_delay
         self.taken_confirmatory_PCR_test = True
 
@@ -341,12 +331,11 @@ class Node:
 
 class Household:
     def __init__(self, network: Network, house_id: int,
-                 house_size: int, time_infected: int, infected_by: Optional[Household],
+                 house_size: int, infected_by: Optional[Household],
                  propensity_trace_app: bool, additional_attributes: Optional[dict] = None):
         self.network = network
-        self.house_id = house_id
+        self.id = house_id
         self.size = house_size                  # Size of the household
-        self.time_infected = time_infected      # The time at which the infection entered the household
         self.susceptibles = house_size - 1      # How many susceptibles remain in the household
         self.isolated = False                   # Has the household been isolated, so there can be no more infections from this household
         self.isolated_time = float('inf')       # When the house was isolated
@@ -356,7 +345,6 @@ class Household:
         self.contact_traced_households: List[Household] = []  # The list of households contact traced from this one
         self.being_contact_traced_from: Optional[Household] = None   # If the house if being contact traced, this is the first Household that will get there
         self.propagated_contact_tracing = False  # The house has not yet propagated contact tracing
-        self.time_propagated_tracing: Optional[int] = None     # Time household propagated contact tracing
         self.contact_tracing_index = 0          # The house is which step of the contact tracing process
         self.infected_by = infected_by       # Which house infected the household
         self.spread_to: List[Household] = []          # Which households were infected by this household
@@ -373,7 +361,7 @@ class Household:
                 setattr(self, key, value)
 
     def __eq__(self, other: Household) -> bool:
-        if self.house_id == other.house_id:
+        if self.id == other.id:
             return True
         else:
             return False

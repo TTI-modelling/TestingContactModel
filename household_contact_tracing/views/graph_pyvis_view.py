@@ -104,7 +104,7 @@ class GraphPyvisView(SimulationView):
 
         for node in list(result.nodes(data=True)):
             # Add the required info to the graph for rendering
-            result.nodes[node[0]]['label'] = node[1]['node_obj'].household.house_id
+            result.nodes[node[0]]['label'] = node[1]['node_obj'].household.id
             result.nodes[node[0]]['group'] = node[1]['node_obj'].node_type().value
             result.nodes[node[0]]['color'] = node_colours[node[1]['node_obj'].node_type()].colour
             result.nodes[node[0]]['title'] = node_colours[node[1]['node_obj'].node_type()].label

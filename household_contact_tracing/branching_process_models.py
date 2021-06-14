@@ -2,25 +2,22 @@ import os
 from typing import Callable
 from copy import deepcopy
 
-from household_contact_tracing.behaviours.contact_rate_reduction import \
-    ContactRateReductionHouseholdLevelTracing, ContactRateReductionIndividualTracingDaily
-from household_contact_tracing.behaviours.lft_nodes import lft_nodes
-from household_contact_tracing.behaviours.new_household import NewHouseholdLevel, \
-    NewHouseholdIndividualTracingDailyTesting
-from household_contact_tracing.behaviours.perform_recoveries import perform_recoveries
-from household_contact_tracing.behaviours.release_nodes import \
-    release_nodes_who_completed_isolation, \
-    release_nodes_who_completed_quarantine, release_nodes_who_completed_lateral_flow_testing
 from household_contact_tracing.infection import Infection
 from household_contact_tracing.network import Network
 from household_contact_tracing.simulation_model import BranchingProcessModel
-from household_contact_tracing.parameters import validate_parameters
-import household_contact_tracing.behaviours.increment_tracing as increment
-import household_contact_tracing.behaviours.isolation as isolation
-
-import household_contact_tracing.behaviours.new_infection as new_infection
 from household_contact_tracing.simulation_states import RunningState, ExtinctState,\
     MaxNodesInfectiousState, TimedOutState
+from household_contact_tracing.parameters import validate_parameters
+from household_contact_tracing.behaviours.new_household import NewHouseholdLevel, \
+    NewHouseholdIndividualTracingDailyTesting
+from household_contact_tracing.behaviours.contact_rate_reduction import \
+    ContactRateReductionHouseholdLevelTracing, ContactRateReductionIndividualTracingDaily
+import household_contact_tracing.behaviours.recoveries as recoveries
+import household_contact_tracing.behaviours.release_nodes as release_nodes
+import household_contact_tracing.behaviours.increment_tracing as increment
+import household_contact_tracing.behaviours.isolation as isolation
+from household_contact_tracing.behaviours.lft_nodes import lft_nodes
+import household_contact_tracing.behaviours.new_infection as new_infection
 
 
 class HouseholdLevelTracing(BranchingProcessModel):
@@ -97,10 +94,10 @@ class HouseholdLevelTracing(BranchingProcessModel):
         for step in range(5):
             new_increment.increment_contact_tracing(self.time)
         # node recoveries
-        perform_recoveries(self.network, self.time)
+        recoveries.perform_recoveries(self.network, self.time)
         # release nodes from quarantine or isolation if the time has arrived
-        release_nodes_who_completed_isolation(self.network, self.time, self.params)
-        release_nodes_who_completed_quarantine(self.network, self.time, self.params)
+        release_nodes.completed_isolation(self.network, self.time, self.params)
+        release_nodes.completed_quarantine(self.network, self.time, self.params)
         # increment time
         self.time += 1
 
@@ -228,10 +225,10 @@ class IndividualLevelTracing(HouseholdLevelTracing):
         for step in range(5):
             new_increment.increment_contact_tracing(self.time)
         # node recoveries
-        perform_recoveries(self.network, self.time)
+        recoveries.perform_recoveries(self.network, self.time)
         # release nodes from quarantine or isolation if the time has arrived
-        release_nodes_who_completed_isolation(self.network, self.time, self.params)
-        release_nodes_who_completed_quarantine(self.network, self.time, self.params)
+        release_nodes.completed_isolation(self.network, self.time, self.params)
+        release_nodes.completed_quarantine(self.network, self.time, self.params)
         # increment time
         self.time += 1
 
@@ -284,10 +281,10 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
         for _ in range(5):
             new_increment.increment_contact_tracing(self.time)
         # node recoveries
-        perform_recoveries(self.network, self.time)
+        recoveries.perform_recoveries(self.network, self.time)
         # release nodes from quarantine or isolation if the time has arrived
-        release_nodes_who_completed_isolation(self.network, self.time, self.params)
-        release_nodes_who_completed_lateral_flow_testing(self.network, self.time, self.params)
+        release_nodes.completed_isolation(self.network, self.time, self.params)
+        release_nodes.completed_lateral_flow_testing(self.network, self.time, self.params)
 
         # increment time
         self.time += 1

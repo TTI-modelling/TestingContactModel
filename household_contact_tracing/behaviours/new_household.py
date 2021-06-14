@@ -61,7 +61,6 @@ class NewHouseholdLevel(NewHousehold):
         house_size = self.size_of_household()
 
         return self.network.add_household(house_size=house_size,
-                                          time_infected=time,
                                           infected_by=infected_by,
                                           propensity_trace_app=self.hh_propensity_use_trace_app(),
                                           additional_attributes=additional_attributes

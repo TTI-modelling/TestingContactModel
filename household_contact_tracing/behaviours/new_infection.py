@@ -10,7 +10,7 @@ import numpy as np
 from household_contact_tracing.utilities import update_params
 
 if TYPE_CHECKING:
-    from household_contact_tracing.network import Network, Node
+    from household_contact_tracing.network import Network, Node, Household
 
 
 class NewInfection(ABC):
@@ -32,10 +32,12 @@ class NewInfection(ABC):
         update_params(self, params)
 
     @abstractmethod
-    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
+    def new_infection(self, time: int, household: Household, infecting_node: Optional[Node] = None):
         """Add a new infected Node to the model.
         :param time: The current simulation time.
-        :param household_id: The id of the household to create the new infection in."""
+        :param household: The Household to create the new infection in.
+        :param infecting_node: The source of the new infection.
+        """
 
     def is_asymptomatic_infection(self) -> bool:
         """Determine whether a node"""
@@ -93,7 +95,7 @@ class NewInfection(ABC):
 
 class NewInfectionHouseholdLevel(NewInfection):
 
-    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
+    def new_infection(self, time: int, household: Household, infecting_node: Optional[Node] = None):
         """Add a new infected Node to the model."""
         asymptomatic = self.is_asymptomatic_infection()
 
@@ -118,8 +120,6 @@ class NewInfectionHouseholdLevel(NewInfection):
         # causing a new infections is 0, due to the generation time distribution
         recovery_time = time + 14
 
-        household = self.network.household(household_id)
-
         # If the household has the propensity to use the contact tracing app, decide
         # if the node uses the app.
         if household.propensity_trace_app:
@@ -135,7 +135,7 @@ class NewInfectionHouseholdLevel(NewInfection):
             node_is_isolated = False
 
         new_node = self.network.add_node(time_infected=time,
-                                         household_id=household_id, isolated=node_is_isolated,
+                                         household_id=household.id, isolated=node_is_isolated,
                                          will_uptake_isolation=isolation_uptake,
                                          propensity_imperfect_isolation=self.get_propensity_imperfect_isolation(),
                                          asymptomatic=asymptomatic, contact_traced=household.contact_traced,
@@ -155,18 +155,16 @@ class NewInfectionHouseholdLevel(NewInfection):
 
 class NewInfectionIndividualTracingDailyTesting(NewInfection):
 
-    def new_infection(self, time: int, household_id: int, infecting_node: Optional[Node] = None):
+    def new_infection(self, time: int, household: Household, infecting_node: Optional[Node] = None):
         """Add a new infection to the model and network. Attributes are randomly generated.
 
         This method passes additional attribute, relevant to the lateral flow testing.
 
         Args:
             time: The current simulation time.
-            household_id (int): The household id that the node is being added to
-            infecting_node: The id of the infecting node
+            household: The household that the node is being added to
+            infecting_node: The infecting node
         """
-
-        household = self.network.household(household_id)
 
         node_will_take_up_lfa_testing = self.will_take_up_lfa_testing()
 
@@ -224,8 +222,6 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
         # causing a new infections is 0, due to the generation time distribution
         recovery_time = time + 14
 
-        household = self.network.household(household_id)
-
         # If the household has the propensity to use the contact tracing app, decide
         # if the node uses the app.
         if household.propensity_trace_app:
@@ -241,7 +237,7 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
             node_is_isolated = False
 
         new_node = self.network.add_node(time_infected=time,
-                                         household_id=household_id,
+                                         household_id=household.id,
                                          isolated=node_is_isolated,
                                          will_uptake_isolation=isolation_uptake,
                                          propensity_imperfect_isolation=self.get_propensity_imperfect_isolation(),

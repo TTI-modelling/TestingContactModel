@@ -43,8 +43,8 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
         For each node that is contact traced
         """
 
-        # Isolate all households under observation that now display symptoms (excludes those who will not take up
-        # isolation if prob <1)
+        # Isolate all households under observation that now display symptoms (excludes those
+        # who will not take up isolation if prob <1)
         for node in self.network.all_nodes():
             if node.symptom_onset_time <= time:
                 if node.contact_traced:
@@ -82,12 +82,11 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
 
     def propagate_contact_tracing(self, household: Household, time: int):
         """
-        To be called after a node in a household either reports their symptoms, and gets tested, when a household
-        that is under surveillance develops symptoms + gets tested.
+        To be called after a node in a household either reports their symptoms, and gets tested,
+        when a household that is under surveillance develops symptoms + gets tested.
         """
         # update the propagation data
         household.propagated_contact_tracing = True
-        household.time_propagated_tracing = time
 
         # Contact tracing attempted for the household that infected the household currently
         # propagating the infection
@@ -141,9 +140,10 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
             self.network.label_edges_between_houses(house_to, house_from,
                                                     EdgeType.failed_contact_tracing)
 
-    def update_contact_tracing_index(self, time):
+    def update_contact_tracing_index(self, time: int):
         for household in self.network.all_households:
-            # loop over households with non-zero indexes, those that have been contact traced but with
+            # loop over households with non-zero indexes, those that have been contact traced but
+            # with
             if household.contact_tracing_index != 0:
                 for node in household.nodes:
 
@@ -235,7 +235,6 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
         """
         # update the propagation data
         node.propagated_contact_tracing = True
-        node.time_propagated_tracing = time
 
         # Contact tracing attempted for the household that infected the household currently
         # propagating the infection
@@ -298,7 +297,7 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
                            self.recall_probability_fall_off ** days_since_contact_occurred
 
         # is the trace successful
-        if (np.random.binomial(1, success_prob) == 1):
+        if np.random.binomial(1, success_prob) == 1:
             # Update the list of traced households from this one
             house_from.contact_traced_households.append(house_to)
 
@@ -308,8 +307,8 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
             # work out the time delay
             proposed_time_until_contact_trace = time + contact_trace_delay
 
-            # Get the current time until contact trace, and compare against the proposed time until contact trace
-            # Note this starts as infinity
+            # Get the current time until contact trace, and compare against the proposed time
+            # until contact trace. Note this starts as infinity.
             # If the new proposed time is quicker, change the route
             if proposed_time_until_contact_trace < house_to.time_until_contact_traced:
                 house_to.time_until_contact_traced = proposed_time_until_contact_trace
@@ -366,8 +365,8 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
 
     def propagate_contact_tracing(self, node: Node, time: int):
         """
-        To be called after a node in a household either reports their symptoms, and gets tested, when a household
-        that is under surveillance develops symptoms + gets tested.
+        To be called after a node in a household either reports their symptoms, and gets tested,
+        when a household that is under surveillance develops symptoms + gets tested.
         """
 
         # TODO: Refactor this monster
@@ -377,16 +376,18 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
 
         # update the propagation data
         node.propagated_contact_tracing = True
-        node.time_propagated_tracing = time
 
-        # Contact tracing attempted for the household that infected the household currently propagating the infection
+        # Contact tracing attempted for the household that infected the household currently
+        # propagating the infection
         infected_by_node = node.infecting_node
 
-        # If the node was globally infected, we are backwards tracing and the infecting node is not None
+        # If the node was globally infected, we are backwards tracing and the infecting node
+        # is not None
         if not node.locally_infected() and infected_by_node:
 
-            # if the infector is not already isolated and the time the node was infected captured by going backwards
-            # the node.time_infected is when they had a contact with their infector.
+            # if the infector is not already isolated and the time the node was infected captured
+            # by going backwards the node.time_infected is when they had a contact with their
+            # infector.
             if node.avenue_of_testing == TestType.pcr:
 
                 if not infected_by_node.isolated and \
@@ -414,8 +415,9 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
                             days_since_contact_occurred=time - node.time_infected,
                             time=time )
 
-        # spread_to_global_node_time_tuples stores a list of tuples, where the first element is the node_id
-        # of a node who was globally infected by the node, and the second element is the time of transmission
+        # spread_to_global_node_time_tuples stores a list of tuples, where the first element is
+        # the node_id of a node who was globally infected by the node, and the second element is
+        # the time of transmission
         for global_infection in node.spread_to_global_node_time_tuples:
 
             # Get the child node_id and the time of transmission/time of contact
@@ -425,22 +427,24 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
 
             if node.avenue_of_testing == TestType.pcr:
 
-                # If the node was infected 2 days prior to symptom onset, or 7 days post and is not already isolated
-                if time_t >= node.symptom_onset_time - self.number_of_days_to_trace_backwards and \
-                        time_t <= node.symptom_onset_time + self.number_of_days_to_trace_forwards and \
-                        not child_node.isolated:
+                # If the node was infected 2 days prior to symptom onset, or 7 days post and is
+                # not already isolated
+                if time_t >= node.symptom_onset_time - self.number_of_days_to_trace_backwards:
+                        if time_t <= node.symptom_onset_time + self.number_of_days_to_trace_forwards:
+                            if not child_node.isolated:
 
-                    self.attempt_contact_trace_of_household(
-                        house_to=child_node.household,
-                        house_from=node.household,
-                        days_since_contact_occurred=time - time_t,
-                        time=time)
+                                self.attempt_contact_trace_of_household(
+                                    house_to=child_node.household,
+                                    house_from=node.household,
+                                    days_since_contact_occurred=time - time_t,
+                                    time=time)
 
             elif node.avenue_of_testing == TestType.lfa:
 
                 if not self.LFA_testing_requires_confirmatory_PCR:
 
-                    # If the node was infected 2 days prior to symptom onset, or 7 days post and is not already isolated
+                    # If the node was infected 2 days prior to symptom onset, or 7 days post and
+                    # is not already isolated
                     if time_t >= node.positive_test_time - \
                             self.number_of_days_prior_to_LFA_result_to_trace:
 

@@ -1,6 +1,7 @@
 from household_contact_tracing.network import InfectionStatus, TestType, Network
 
-def release_nodes_who_completed_quarantine(network: Network, time: int, params: dict):
+
+def completed_quarantine(network: Network, time: int, params: dict):
     """If a node is currently in quarantine, and has completed the quarantine period then we
     release them from quarantine.
 
@@ -28,19 +29,15 @@ def release_nodes_who_completed_quarantine(network: Network, time: int, params: 
                                 + quarantine_duration):
                         node.isolated = False
                         node.completed_isolation = True
-                        node.completed_isolation_reason = 'completed_quarantine'
-                        node.completed_isolation_time = time
                 # For nodes who do not self-report, and are not in the same household as
                 # their infector (if they do not self-report they will not isolate; if contact
                 # traced, they will be quarantining for the quarantine duration)
                 elif node.contact_traced & (time >= node.time_infected + quarantine_duration):
                     node.isolated = False
                     node.completed_isolation = True
-                    node.completed_isolation_time = time
-                    node.completed_isolation_reason = 'completed_quarantine'
 
 
-def release_nodes_who_completed_isolation(network: Network, time: int, params: dict):
+def completed_isolation(network: Network, time: int, params: dict):
     """
     Nodes leave self-isolation, rather than quarantine, when their infection status is either known
     (ie tested) or when they are in a contact traced household and they develop symptoms (they
@@ -66,19 +63,15 @@ def release_nodes_who_completed_isolation(network: Network, time: int, params: d
                     if time >= node.positive_test_time + self_isolation_duration:
                         node.isolated = False
                         node.completed_isolation = True
-                        node.completed_isolation_time = time
-                        node.completed_isolation_reason = 'completed_isolation'
                 else:
                     if time >= node.symptom_onset_time + self_isolation_duration:
                         # this won't include nodes who tested positive due to LF tests who do not
                         # have symptoms
                         node.isolated = False
                         node.completed_isolation = True
-                        node.completed_isolation_time = time
-                        node.completed_isolation_reason = 'completed_isolation'
 
 
-def release_nodes_who_completed_lateral_flow_testing(network: Network, time: int, params: dict):
+def completed_lateral_flow_testing(network: Network, time: int, params: dict):
     """If a node is currently in lateral flow testing, and has completed this period then we
     release them from testing.
 
