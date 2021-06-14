@@ -151,7 +151,8 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
                     # The node must have onset of symptoms
                     # The node households must be isolated
                     # The testing delay must be passed
-                    # The testing delay starts when the house have been isolated and symptoms have onset
+                    # The testing delay starts when the house have been isolated and symptoms have
+                    # onset
                     critical_time = max(node.symptom_onset_time, household.isolated_time)
 
                     if critical_time + node.testing_delay <= time:
