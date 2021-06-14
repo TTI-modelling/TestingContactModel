@@ -10,9 +10,8 @@
       "description": "",
       "type": "boolean"
     },
-    "policy_for_household_contacts_of_a_positive_case": {
-      "description": "",
-      "enum": ["lfa testing no quarantine", "lfa testing and quarantine", "no lfa testing only quarantine"]
+    "household_positive_policy": {
+      "description": ""
     },
     "number_of_days_prior_to_LFA_result_to_trace": {
       "description": "",

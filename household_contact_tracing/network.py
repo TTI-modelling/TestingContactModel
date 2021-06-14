@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from collections import Counter
-from typing import Optional, Iterator, List, Tuple, Dict
+from typing import Optional, Iterator, List, Tuple, Dict, Callable
 from enum import Enum
-from abc import ABC, abstractmethod
 
 import networkx as nx
+import numpy
+
+from household_contact_tracing.utilities import update_params
 
 
 class EdgeType(Enum):
@@ -42,25 +43,33 @@ class TestType(Enum):
     pcr = 0
     lfa = 1
 
-class Network(ABC):
-    def __init__(self):
-        self.graph = nx.Graph()
+
+class PositivePolicy(Enum):
+    """What happens to the contacts of a Household if a Household member tests positive.
+    lfa_testing_no_quarantine: Household contacts start LFA testing, but do not quarantine
+      unless they develop symptoms
+    lfa_testing_and_quarantine: Household contacts start LFA testing, and quarantine.
+    only_quarantine: Household contacts do not start LFA testing, quarantine.
+      They will book a PCR test if they develop symptoms.
+    """
+    lfa_testing_no_quarantine = 1
+    lfa_testing_and_quarantine = 2
+    only_quarantine = 3
 
 
-class ContactTracingNetwork(Network):
+class Network:
     def __init__(self):
         # Call superclass constructor
-        super().__init__()
+        self.graph = nx.Graph()
         self._house_dict: Dict[int, Household] = {}
 
-
-    def add_household(self, house_size: int, time_infected: int,
-                      infected_by: Optional[Household], propensity_trace_app: bool,
+    def add_household(self, house_size: int, infected_by: Optional[Household],
+                      propensity_trace_app: bool,
                       additional_attributes: Optional[dict] = None) -> Household:
 
         new_house_id = self.house_count + 1
 
-        new_household = Household(self, new_house_id, house_size, time_infected,
+        new_household = Household(self, new_house_id, house_size,
                                   infected_by, propensity_trace_app, additional_attributes)
         self._house_dict[new_house_id] = new_household
         return new_household
@@ -131,8 +140,7 @@ class ContactTracingNetwork(Network):
         new_node_id = self.node_count + 1
         self.graph.add_node(new_node_id)
         new_node_household = self.household(household_id)
-        node = ContactTracingNode(
-                    id=new_node_id, time_infected=time_infected,
+        node = Node(node_id=new_node_id, time_infected=time_infected,
                     household=new_node_household, isolated=isolated,
                     will_uptake_isolation=will_uptake_isolation,
                     propensity_imperfect_isolation=propensity_imperfect_isolation,
@@ -177,16 +185,9 @@ class ContactTracingNetwork(Network):
             self.graph.edges[edge[0], edge[1]].update({"edge_type": new_edge_type})
 
 
-class Node(ABC):
+class Node:
 
-    def __init__(self, id: int, time_infected: int):
-        self.id = id
-        self.time_infected = time_infected
-
-
-class ContactTracingNode(Node):
-
-    def __init__(self, id: int, time_infected: int, household: Household, isolated: bool,
+    def __init__(self, node_id: int, time_infected: int, household: Household, isolated: bool,
                  will_uptake_isolation: bool, propensity_imperfect_isolation: bool,
                  asymptomatic: bool, symptom_onset_time: float, pseudo_symptom_onset_time: int,
                  recovery_time: int, will_report_infection: bool, time_of_reporting: int,
@@ -194,9 +195,8 @@ class ContactTracingNode(Node):
                  completed_isolation=False, outside_house_contacts_made=0, recovered=False,
                  infecting_node: Optional[Node] = None, additional_attributes: dict = None):
 
-        # Call superclass constructor
-        super().__init__(id, time_infected)
-
+        self.id = node_id
+        self.time_infected = time_infected
         self.household = household
         self.isolated = isolated
         self.will_uptake_isolation = will_uptake_isolation
@@ -213,36 +213,25 @@ class ContactTracingNode(Node):
         self.outside_house_contacts_made = outside_house_contacts_made
         self.spread_to_global_node_time_tuples = []
         self.recovered = recovered
-        self.time_propagated_tracing = None
         self.propagated_contact_tracing = False
         self.infecting_node = infecting_node if infecting_node else None
         self.completed_isolation = completed_isolation
-        self.completed_isolation_time = None
-        self.completed_isolation_reason = None
-        self.completed_traveller_quarantine = False
-        self.completed_traveller_lateral_flow_testing = False
         self.received_result = False
-        self.received_positive_test_result = None
+        self.received_positive_test_result = False
 
         self.being_lateral_flow_tested = None
         self.time_started_lfa_testing = None
-        self.received_positive_test_result = False
-        self.received_result = None
         self.avenue_of_testing: Optional[TestType] = None
         self.positive_test_time = None
         self.node_will_take_up_lfa_testing = None
         self.confirmatory_PCR_result_was_positive: Optional[bool] = None
         self.taken_confirmatory_PCR_test: Optional[bool] = None
-        self.confirmatory_PCR_test_time = None
         self.confirmatory_PCR_test_result_time = None
         self.propensity_risky_behaviour_lfa_testing = None
         self.propensity_to_miss_lfa_tests = None
 
-        # Update instance variables with anything in params
-        if additional_attributes:
-            for param_name in self.__dict__:
-                if param_name in additional_attributes:
-                    self.__dict__[param_name] = additional_attributes[param_name]
+        # Update instance variables with anything in `additional_attributes`
+        update_params(self, additional_attributes)
 
     def time_relative_to_symptom_onset(self, time: int) -> int:
         # asymptomatics do not have a symptom onset time
@@ -304,16 +293,49 @@ class ContactTracingNode(Node):
         else:
             return NodeType.default
 
+    def take_confirmatory_pcr_test(self, time: int, prob_pcr_positive: Callable):
+        """Given a the time relative to a nodes symptom onset, will that node test positive."""
+
+        infectious_age_when_tested = time - self.time_infected
+
+        self.confirmatory_PCR_test_result_time = time + self.testing_delay
+        self.taken_confirmatory_PCR_test = True
+
+        if numpy.random.binomial(1, prob_pcr_positive(infectious_age_when_tested)) == 1:
+            self.confirmatory_PCR_result_was_positive = True
+
+        else:
+            self.confirmatory_PCR_result_was_positive = False
+
+    def will_lfa_test_today(self, daily_prob_lfa_test: float) -> bool:
+        """Determine whether a node will do an LFT test today."""
+        if not self.propensity_to_miss_lfa_tests:
+            return True
+
+        if numpy.random.binomial(1, daily_prob_lfa_test) == 1:
+            return True
+        else:
+            return False
+
+    def lfa_test_node(self, time: int, prob_lfa_positive: Callable):
+        """Given a the time relative to a nodes symptom onset, will that node test positive"""
+        infectious_age = time - self.time_infected
+
+        prob_positive_result = prob_lfa_positive(infectious_age)
+
+        if numpy.random.binomial(1, prob_positive_result) == 1:
+            return True
+        else:
+            return False
+
 
 class Household:
-
     def __init__(self, network: Network, house_id: int,
-                 house_size: int, time_infected: int, infected_by: Optional[Household],
+                 house_size: int, infected_by: Optional[Household],
                  propensity_trace_app: bool, additional_attributes: Optional[dict] = None):
-        self._network = network
-        self.house_id = house_id
+        self.network = network
+        self.id = house_id
         self.size = house_size                  # Size of the household
-        self.time_infected = time_infected      # The time at which the infection entered the household
         self.susceptibles = house_size - 1      # How many susceptibles remain in the household
         self.isolated = False                   # Has the household been isolated, so there can be no more infections from this household
         self.isolated_time = float('inf')       # When the house was isolated
@@ -323,7 +345,6 @@ class Household:
         self.contact_traced_households: List[Household] = []  # The list of households contact traced from this one
         self.being_contact_traced_from: Optional[Household] = None   # If the house if being contact traced, this is the first Household that will get there
         self.propagated_contact_tracing = False  # The house has not yet propagated contact tracing
-        self.time_propagated_tracing: Optional[int] = None     # Time household propagated contact tracing
         self.contact_tracing_index = 0          # The house is which step of the contact tracing process
         self.infected_by = infected_by       # Which house infected the household
         self.spread_to: List[Household] = []          # Which households were infected by this household
@@ -332,7 +353,7 @@ class Household:
 
         self.being_lateral_flow_tested = False,
         self.being_lateral_flow_tested_start_time = None
-        self.applied_policy_for_household_contacts_of_a_positive_case = False
+        self.applied_household_positive_policy = False
 
         # add custom attributes
         if additional_attributes:
@@ -340,7 +361,7 @@ class Household:
                 setattr(self, key, value)
 
     def __eq__(self, other: Household) -> bool:
-        if self.house_id == other.house_id:
+        if self.id == other.id:
             return True
         else:
             return False
@@ -414,13 +435,98 @@ class Household:
 
             # Initially the edge is assigned the contact tracing label, may be updated if the
             # contact tracing does not succeed
-            edge = self._network.get_edge_between_household(self, self.being_contact_traced_from)
-            if self._network.is_edge_app_traced(edge):
-                self._network.label_edges_between_houses(self, self.being_contact_traced_from,
-                                                         EdgeType.app_traced)
+            edge = self.network.get_edge_between_household(self, self.being_contact_traced_from)
+            if self.network.is_edge_app_traced(edge):
+                self.network.label_edges_between_houses(self, self.being_contact_traced_from,
+                                                        EdgeType.app_traced)
             else:
-                self._network.label_edges_between_houses(self, self.being_contact_traced_from,
-                                                         EdgeType.between_house)
+                self.network.label_edges_between_houses(self, self.being_contact_traced_from,
+                                                        EdgeType.between_house)
 
         # Update edges within household
-        self._network.label_edges_inside_household(self, EdgeType.within_house)
+        self.network.label_edges_inside_household(self, EdgeType.within_house)
+
+    def start_lateral_flow_testing_household(self, time: int):
+        """Sets the household to the lateral flow testing status so that new within household
+        infections are tested. All nodes in the household start lateral flow testing
+        """
+        self.being_lateral_flow_tested = True
+        self.being_lateral_flow_tested_start_time = time
+
+        for node in self.nodes:
+            if node.node_will_take_up_lfa_testing:
+                if not node.received_positive_test_result:
+                    if not node.being_lateral_flow_tested:
+                        node.being_lateral_flow_tested = True
+                        node.time_started_lfa_testing = time
+
+    def start_lateral_flow_testing_household_and_quarantine(self, time):
+        """Sets the household to the lateral flow testing status so that new within household
+        infections are tested. All nodes in the household start lateral flow testing and
+        start quarantining
+        """
+        self.being_lateral_flow_tested = True
+        self.being_lateral_flow_tested_start_time = time
+        self.isolated = True
+        self.isolated_time = True
+        self.contact_traced = True
+
+        for node in self.nodes:
+            if node.node_will_take_up_lfa_testing:
+                if not node.received_positive_test_result:
+                    if not node.being_lateral_flow_tested:
+                        node.being_lateral_flow_tested = True
+                        node.time_started_lfa_testing = time
+
+            if node.will_uptake_isolation:
+                node.isolated = True
+
+    def apply_positive_policy(self, time: int, household_positive_policy: PositivePolicy):
+        """We apply different policies to the household contacts of a discovered case."""
+
+        # set the household attributes to declare that we have already applied the policy
+        self.applied_household_positive_policy = True
+
+        if household_positive_policy == PositivePolicy.lfa_testing_no_quarantine:
+            self.start_lateral_flow_testing_household(time)
+        elif household_positive_policy == PositivePolicy.lfa_testing_and_quarantine:
+            self.start_lateral_flow_testing_household_and_quarantine(time)
+        elif household_positive_policy == PositivePolicy.only_quarantine:
+            self.isolate_household(time)
+        else:
+            raise Exception("household_positive_policy not recognised.")
+
+    def find_traced_node(self):
+        """Work out which was the traced node."""
+        tracing_household = self.being_contact_traced_from
+        traced_node_id = self.network.get_edge_between_household(self, tracing_household)[0]
+        return self.network.node(traced_node_id)
+
+    def update_network(self):
+        """
+        When a house is contact traced, we need to place all the nodes under surveillance.
+        If any of the nodes are symptomatic, we need to isolate the household.
+        """
+        # Update the house to the contact traced status
+        self.contact_traced = True
+
+        # Update the nodes to the contact traced status
+        for node in self.nodes:
+            node.contact_traced = True
+
+        # Colour the edges within household
+        self.network.label_edges_inside_household(self, EdgeType.within_house)
+
+    def isolate_if_symptomatic_nodes(self, time: int):
+        """If there are any symptomatic nodes in the household then isolate the household."""
+        for node in self.nodes:
+            if node.symptom_onset_time <= time and not node.completed_isolation:
+                self.isolate_household(time)
+                break
+
+    def quarantine_traced_node(self):
+        traced_node = self.find_traced_node()
+
+        # the traced node should go into quarantine
+        if not traced_node.isolated and traced_node.will_uptake_isolation:
+            traced_node.isolated = True

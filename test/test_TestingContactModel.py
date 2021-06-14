@@ -1,7 +1,13 @@
 import copy
 
+from household_contact_tracing.behaviours.increment_tracing import \
+    IncrementTracingIndividualDailyTesting
+from household_contact_tracing.behaviours.isolation import DailyTestingIsolation
+from household_contact_tracing.behaviours.lft_nodes import lft_nodes
 from household_contact_tracing.branching_process_models import IndividualTracingDailyTesting
 import pytest
+
+from household_contact_tracing.network import PositivePolicy
 
 default_params = {"outside_household_infectivity_scaling": 0.3,
                   "contact_tracing_success_prob": 0.7,
@@ -17,7 +23,7 @@ default_params = {"outside_household_infectivity_scaling": 0.3,
                   "household_pairwise_survival_prob": 0.2,
                   "propensity_risky_behaviour_lfa_testing": 0,
                   "global_contact_reduction_risky_behaviour": 0,
-                  "policy_for_household_contacts_of_a_positive_case": 'lfa testing no quarantine'
+                  "household_positive_policy": PositivePolicy.lfa_testing_no_quarantine
                   }
 
 
@@ -37,8 +43,8 @@ def simple_model():
             return 0
 
     model = IndividualTracingDailyTesting(default_params)
-    model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
-    model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
+    model.prob_pcr_positive = prob_testing_positive_pcr_func
+    model.prob_lfa_positive = prob_testing_positive_lfa_func
 
     return model
 
@@ -61,8 +67,8 @@ def simple_model_high_test_prob():
             return 0
 
     model = IndividualTracingDailyTesting(default_params)
-    model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
-    model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
+    model.prob_pcr_positive = prob_testing_positive_pcr_func
+    model.prob_lfa_positive = prob_testing_positive_lfa_func
 
     return model
 
@@ -93,9 +99,8 @@ def simple_model_risky_behaviour():
     params["propensity_risky_behaviour_lfa_testing"] = 1
 
     model = IndividualTracingDailyTesting(params)
-    model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
-    model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
-
+    model.prob_pcr_positive = prob_testing_positive_pcr_func
+    model.prob_lfa_positive = prob_testing_positive_lfa_func
 
     return model
 
@@ -124,8 +129,8 @@ def test_pseudo_symptom_onset_asymptomatics():
     params["asymptomatic_prob"] = 1
 
     model = IndividualTracingDailyTesting(params)
-    model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
-    model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
+    model.prob_pcr_positive = prob_testing_positive_pcr_func
+    model.prob_lfa_positive = prob_testing_positive_lfa_func
 
     assert model.network.node(1).pseudo_symptom_onset_time == 5
 
@@ -151,14 +156,14 @@ def test_lfa_test_node(simple_model_high_test_prob):
 
     node_of_interest = model.network.node(1)
 
-    assert not model.contact_tracing.lfa_test_node(node_of_interest, model.time)
+    assert not node_of_interest.lfa_test_node(model.time, model.prob_lfa_positive)
 
     # set the model time to 5
     # the time relative to symptom onset should now be 0
     # the node should test positive as a result
     model.time = 5
 
-    assert model.contact_tracing.lfa_test_node(node_of_interest, model.time)
+    assert node_of_interest.lfa_test_node(model.time, model.prob_lfa_positive)
 
 
 def test_being_lateral_flow_tested_attribute(simple_model):
@@ -174,7 +179,7 @@ def test_get_positive_lateral_flow_nodes_default_exclusion(simple_model_high_tes
 
     model = simple_model_high_test_prob
 
-    assert model.contact_tracing.get_positive_lateral_flow_nodes(model.time) == []
+    assert lft_nodes(model.network, model.time, model.prob_lfa_positive, model.params) == []
 
 
 def test_get_positive_lateral_flow_nodes_timings(simple_model_high_test_prob):
@@ -187,7 +192,7 @@ def test_get_positive_lateral_flow_nodes_timings(simple_model_high_test_prob):
 
     node_of_interest.being_lateral_flow_tested = True
 
-    assert model.contact_tracing.get_positive_lateral_flow_nodes(model.time) == []
+    assert lft_nodes(model.network, model.time, model.prob_lfa_positive, model.params) == []
 
 
 def test_get_positive_lateral_flow_nodes(simple_model_high_test_prob):
@@ -202,7 +207,8 @@ def test_get_positive_lateral_flow_nodes(simple_model_high_test_prob):
 
     model.time = 5
 
-    assert model.contact_tracing.get_positive_lateral_flow_nodes(model.time) == [node_of_interest]
+    assert lft_nodes(model.network, model.time,
+                     model.prob_lfa_positive, model.params) == [node_of_interest]
 
 
 def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
@@ -215,14 +221,31 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
         * Simulate one day twice
 
     """
+    def prob_testing_positive_lfa_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 1
+        else:
+            return 0
 
-    model = simple_model_high_test_prob
+    def prob_testing_positive_pcr_func(infectious_age):
+        if infectious_age in [4, 5, 6]:
+            return 0
+        else:
+            return 0
 
-    model.contact_tracing.contact_tracing_success_prob = 1
+    params = copy.deepcopy(default_params)
+    params["contact_tracing_success_prob"] = 1
+
+    model = IndividualTracingDailyTesting(params)
+    model.prob_pcr_positive = prob_testing_positive_pcr_func
+    model.prob_lfa_positive = prob_testing_positive_lfa_func
 
     model.infection.new_outside_household_infection(time=0, infecting_node=model.network.node(1))
-    
-    model.contact_tracing.increment_behaviour.attempt_contact_trace_of_household(
+
+    increment_tracing = IncrementTracingIndividualDailyTesting(model.network,
+                                                               params,
+                                                               model.prob_pcr_positive)
+    increment_tracing.attempt_contact_trace_of_household(
         house_to=model.network.household(2),
         house_from=model.network.household(1),
         days_since_contact_occurred=0,
@@ -239,24 +262,22 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
 def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: IndividualTracingDailyTesting):
 
     model = simple_model_high_test_prob
-    model.policy_for_household_contacts_of_a_positive_case = 'lfa testing and quarantine'
+    model.household_positive_policy = PositivePolicy.lfa_testing_and_quarantine
 
     model.time = 5
 
     model.network.node(1).being_lateral_flow_tested = True
 
-    # this line is required before the isolate_positive_lateral_flow_tests func
-    # can work
-    model.contact_tracing.current_LFA_positive_nodes = model.contact_tracing.get_positive_lateral_flow_nodes(model.time)
-
-    model.contact_tracing.isolate_positive_lateral_flow_tests(model.time)
+    positive_nodes = lft_nodes(model.network, model.time, model.prob_lfa_positive, model.params)
+    new_isolation = DailyTestingIsolation(model.network, model.params)
+    new_isolation.isolate_positive_lateral_flow_tests(model.time, positive_nodes)
 
     # add another infection to the household, so we can check that they are not quarantining
     # but they are lfa testing
     model.infection.new_within_household_infection(time=model.time, infecting_node=model.network.node(1))
 
     assert model.network.node(1).isolated
-    assert model.network.household(1).applied_policy_for_household_contacts_of_a_positive_case
+    assert model.network.household(1).applied_household_positive_policy
     assert model.network.node(1).received_positive_test_result
     assert not model.network.node(2).isolated
     assert model.network.node(2).being_lateral_flow_tested
@@ -284,38 +305,37 @@ def simple_model_lfa_testing_and_quarantine():
             return 0
 
     params = copy.deepcopy(default_params)
-    params["policy_for_household_contacts_of_a_positive_case"] = 'lfa testing and quarantine'
+    params["household_positive_policy"] = PositivePolicy.lfa_testing_and_quarantine
 
     model = IndividualTracingDailyTesting(params)
-    model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
-    model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
+    model.prob_pcr_positive = prob_testing_positive_pcr_func
+    model.prob_lfa_positive = prob_testing_positive_lfa_func
 
     return model
 
 
 def test_start_lateral_flow_testing_household_and_quarantine(
-        simple_model_lfa_testing_and_quarantine: simple_model_lfa_testing_and_quarantine
-    ):
+        simple_model_lfa_testing_and_quarantine: simple_model_lfa_testing_and_quarantine):
     """Tests that setting the policy option to 'lfa testing no quarantine' changed the model
     behaviour so if a member of a household tests positive self isolate and start LFA testing.
     """
     model = simple_model_lfa_testing_and_quarantine
-    model.policy_for_household_contacts_of_a_positive_case = 'lfa testing and quarantine'
+    model.household_positive_policy = PositivePolicy.lfa_testing_and_quarantine
 
     model.time = 5
 
     model.network.node(1).being_lateral_flow_tested = True
 
-    # this line is required before the isolate_positive_lateral_flow_tests func can work
-    model.contact_tracing.current_LFA_positive_nodes = model.contact_tracing.get_positive_lateral_flow_nodes(model.time)
+    positive_nodes = lft_nodes(model.network, model.time, model.prob_lfa_positive, model.params)
 
-    model.contact_tracing.isolate_positive_lateral_flow_tests(model.time)
+    isolation = DailyTestingIsolation(model.network, model.params)
+    isolation.isolate_positive_lateral_flow_tests(model.time, positive_nodes)
 
     model.infection.new_within_household_infection(time=model.time,
                                                    infecting_node=model.network.node(1))
 
     assert model.network.node(1).isolated
-    assert model.network.household(1).applied_policy_for_household_contacts_of_a_positive_case
+    assert model.network.household(1).applied_household_positive_policy
     assert model.network.node(1).received_positive_test_result
     assert model.network.node(2).isolated
     assert model.network.node(2).being_lateral_flow_tested
@@ -344,11 +364,11 @@ def simple_model_no_lfa_testing_only_quarantine():
 
     params = copy.deepcopy(default_params)
 
-    params["policy_for_household_contacts_of_a_positive_case"] = 'no lfa testing only quarantine'
+    params["household_positive_policy"] = PositivePolicy.only_quarantine
 
     model = IndividualTracingDailyTesting(params)
-    model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
-    model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
+    model.prob_pcr_positive = prob_testing_positive_pcr_func
+    model.prob_lfa_positive = prob_testing_positive_lfa_func
 
     return model
 
@@ -360,22 +380,22 @@ def test_household_contacts_quarantine_only(
     behaviour so if a member of a household tests positive self isolate and start LFA testing.
     """
     model = simple_model_lfa_testing_and_quarantine
-    model.policy_for_household_contacts_of_a_positive_case = 'lfa testing and quarantine'
+    model.household_positive_policy = PositivePolicy.lfa_testing_and_quarantine
 
     model.time = 5
 
     model.network.node(1).being_lateral_flow_tested = True
 
     # this line is required before the isolate_positive_lateral_flow_tests func can work
-    model.contact_tracing.current_LFA_positive_nodes = model.contact_tracing.get_positive_lateral_flow_nodes(model.time)
-
-    model.contact_tracing.isolate_positive_lateral_flow_tests(model.time)
+    positive_nodes = lft_nodes(model.network, model.time, model.prob_lfa_positive, model.params)
+    isolation = DailyTestingIsolation(model.network, model.params)
+    isolation.isolate_positive_lateral_flow_tests(model.time, positive_nodes)
 
     model.infection.new_within_household_infection(time=model.time,
                                                    infecting_node=model.network.node(1))
 
     assert model.network.node(1).isolated
-    assert model.network.household(1).applied_policy_for_household_contacts_of_a_positive_case
+    assert model.network.household(1).applied_household_positive_policy
     assert model.network.node(1).received_positive_test_result
     assert model.network.node(2).isolated
     assert model.network.node(2).being_lateral_flow_tested
@@ -426,8 +446,8 @@ def simple_model_risky_behaviour_2_infections():
 
 
     model = IndividualTracingDailyTesting(params)
-    model.prob_testing_positive_pcr_func = prob_testing_positive_pcr_func
-    model.prob_testing_positive_lfa_func = prob_testing_positive_lfa_func
+    model.prob_pcr_positive = prob_testing_positive_pcr_func
+    model.prob_lfa_positive = prob_testing_positive_lfa_func
 
     return model
 

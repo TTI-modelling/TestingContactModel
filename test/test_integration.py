@@ -7,7 +7,7 @@ from collections import Counter
 
 import pytest
 
-from household_contact_tracing.network import EdgeType, NodeType, Network
+from household_contact_tracing.network import EdgeType, NodeType, Network, PositivePolicy
 from household_contact_tracing.simulation_controller import BranchingProcessController
 import household_contact_tracing.branching_process_models as bpm
 from household_contact_tracing.simulation_model import SimulationModel
@@ -49,7 +49,7 @@ class TestSimpleHousehold:
     def run_simulation(params: dict, days=10) -> SimulationModel:
         """Run the Household model for 10 days with the given params and return the
         model."""
-        controller = BranchingProcessController(bpm.HouseholdLevelContactTracing(params))
+        controller = BranchingProcessController(bpm.HouseholdLevelTracing(params))
         controller.set_display(False)
         controller.run_simulation(days)
 
@@ -244,7 +244,7 @@ class TestSimpleHousehold:
         network = model.network
         node_imperfect = [node.propensity_imperfect_isolation for node in network.all_nodes()]
         assert any(node_imperfect)
-        node_contact_rate_reduction = [model.infection.contact_rate_reduction_behaviour.get_contact_rate_reduction(node) for node in network.all_nodes()]
+        node_contact_rate_reduction = [model.infection.contact_rate_reduction.get_contact_rate_reduction(node) for node in network.all_nodes()]
         # People who are isolating
         assert 1 in node_contact_rate_reduction
         # People who are imperfectly isolating
@@ -297,7 +297,7 @@ class TestIndividualTracing:
     def run_simulation(params: dict, days=10) -> SimulationModel:
         """Run the IndividualTracing model for 10 days with the given params and return the
         model."""
-        controller = BranchingProcessController(bpm.IndividualLevelContactTracing(params))
+        controller = BranchingProcessController(bpm.IndividualLevelTracing(params))
         controller.set_display(False)
         controller.run_simulation(days)
 
@@ -376,6 +376,6 @@ class TestIndividualTracingDailyTesting:
         (if they are not already isolating).
         """
         numpy.random.seed(40)
-        daily_testing_params["policy_for_household_contacts_of_a_positive_case"] = "no lfa testing only quarantine"
+        daily_testing_params["household_positive_policy"] = PositivePolicy.only_quarantine
         model = self.run_simulation(daily_testing_params, 15)
         network = model.network
