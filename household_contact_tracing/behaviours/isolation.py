@@ -1,12 +1,18 @@
 from __future__ import annotations
 
-from household_contact_tracing.network import Network, TestType, PositivePolicy
+from typing import List, Callable
+
+from household_contact_tracing.network import Network, TestType, PositivePolicy, Node
+from household_contact_tracing.utilities import update_params
 
 
 class HouseholdIsolation:
-    def __init__(self, network: Network, household_positive_policy: PositivePolicy):
+    def __init__(self, network: Network, params: dict):
         self.network = network
-        self.household_positive_policy = household_positive_policy
+        self.household_positive_policy = PositivePolicy.lfa_testing_no_quarantine
+        self.LFA_testing_requires_confirmatory_PCR = False
+
+        update_params(self, params)
 
     def isolate_self_reporting_cases(self, time: int):
         """Applies the isolation status to nodes who have reached their self-report time.
@@ -78,3 +84,53 @@ class DailyTestingIsolation(HouseholdIsolation):
                         if not node.household.applied_household_positive_policy:
                             node.household.apply_positive_policy(time,
                                                                  self.household_positive_policy)
+
+    def act_on_confirmatory_pcr_results(self, time: int):
+        """Once on a individual receives a positive pcr result we need to act on it.
+
+        This takes the form of:
+        * Household members start lateral flow testing
+        * Contact tracing is propagated
+        """
+        for node in self.network.all_nodes():
+            if node.confirmatory_PCR_test_result_time == time:
+                node.household.apply_positive_policy(time, self.household_positive_policy)
+
+    def isolate_positive_lateral_flow_tests(self, time: int, positive_nodes: List[Node]):
+        """A if a node tests positive on LFA, we assume that they isolate and stop LFA testing
+
+        If confirmatory PCR testing is not required, then we do not start LFA testing the household at this point
+        in time.
+        """
+
+        for node in positive_nodes:
+            node.received_positive_test_result = True
+
+            if node.will_uptake_isolation:
+                node.isolated = True
+
+            node.avenue_of_testing = TestType.lfa
+            node.positive_test_time = time
+            node.being_lateral_flow_tested = False
+
+            if not node.household.applied_household_positive_policy and \
+                    not self.LFA_testing_requires_confirmatory_PCR:
+                node.household.apply_positive_policy(time, self.household_positive_policy)
+
+    def act_on_positive_LFA_tests(self, time: int, prob_pcr_positive: Callable,
+                                  positive_nodes: List[Node]):
+        """For nodes who test positive on their LFA test, take the appropriate action depending
+        on the policy
+        """
+        self.isolate_positive_lateral_flow_tests(time, positive_nodes)
+
+        if self.LFA_testing_requires_confirmatory_PCR:
+            self.confirmatory_pcr_test_LFA_nodes(time, positive_nodes, prob_pcr_positive)
+
+    @staticmethod
+    def confirmatory_pcr_test_LFA_nodes(time: int, positive_nodes: List[Node],
+                                        prob_pcr_positive: Callable):
+        """Nodes who receive a positive LFA result will be tested using a PCR test."""
+        for node in positive_nodes:
+            if not node.taken_confirmatory_PCR_test:
+                node.take_confirmatory_pcr_test(time, prob_pcr_positive)

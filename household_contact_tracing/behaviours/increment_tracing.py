@@ -10,7 +10,7 @@ from household_contact_tracing.utilities import update_params
 
 
 class IncrementTracing(ABC):
-    def __init__(self, network: Network, LFA_testing_requires_confirmatory_PCR: bool, params: dict):
+    def __init__(self, network: Network, params: dict):
         self.network = network
         self.do_2_step = False
         self.contact_tracing_success_prob = 0.5
@@ -20,8 +20,7 @@ class IncrementTracing(ABC):
         self.recall_probability_fall_off = 1
         self.number_of_days_prior_to_LFA_result_to_trace: int = 2
         self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
-
-        self.LFA_testing_requires_confirmatory_PCR = LFA_testing_requires_confirmatory_PCR
+        self.LFA_testing_requires_confirmatory_PCR = False
 
         update_params(self, params)
 
@@ -165,10 +164,9 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
 
 class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
 
-    def __init__(self, network: Network, LFA_testing_requires_confirmatory_PCR: bool, params: dict,
-                 prob_pcr_positive: Callable):
+    def __init__(self, network: Network, params: dict, prob_pcr_positive: Callable):
 
-        super().__init__(network, LFA_testing_requires_confirmatory_PCR, params)
+        super().__init__(network, params)
         self.prob_pcr_positive = prob_pcr_positive
 
     def pcr_test_node(self, node: Node, time: int, prob_pcr_positive: Callable):
