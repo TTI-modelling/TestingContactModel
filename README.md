@@ -21,11 +21,10 @@ The sections below are:
 
 ## Repository Structure
 
-Operational scripts are stored within the `scripts` directory. Each of the subdirectories 
-within this contains a README file guiding tool usage. The `environmental_data_modules` 
-directory contains the python modules used by the tools. The `station_data` directory 
-contains station specific metadata which has been collated for the datasets, these have 
-been gathered from the MEDMI and AURN sources.
+Example scripts are stored within the `examples` directory. The `household_contact_tracing` 
+directory contains the python package modules. The `schemas` directory 
+contains JSON schemas used to validate the JSON parameters, used to initialise each run.
+[Todo - still working on this.]
 
 ```
 .
