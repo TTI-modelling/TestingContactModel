@@ -43,7 +43,7 @@ been gathered from the MEDMI and AURN sources.
 ## Requirements
 
 The example scripts are written in jupyter notebook and are in the examples directory
-'''todo'''
+(Todo)
 
 ## Research
 
@@ -56,6 +56,7 @@ Martyn Fyles Elizabeth Fearon
 ## Testing
 
 ## Developers
+[Instructions for developers needing to extend application.]
 
 
 ## Copyright & Licensing
