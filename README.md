@@ -9,12 +9,13 @@ This repository contains tools to perform simulated infection and contact tracin
 The sections below are:
 - [Repository Structure](#repository-structure)
 - [Requirements](#requirements)
+- [Usage](#usage)
 - [Research](#research)
   - [Abstract](#abstract)
   - [Authors](#authors)
 - [Testing](#testing) 
   - [Unit testing](#unit-testing)  
-- [Developers](#developers)
+- [Contributing](#contributing)
 - [Copyright and Licensing](#copyright--licensing)
 
 <!-- toc -->
@@ -24,7 +25,7 @@ The sections below are:
 Example scripts are stored within the `examples` directory. The `household_contact_tracing` 
 directory contains the python package modules. The `schemas` directory 
 contains JSON schemas used to validate the JSON parameters, used to initialise each run.
-[Todo - still working on this.]
+[Todo - in progress.]
 
 ```
 .
@@ -41,8 +42,18 @@ contains JSON schemas used to validate the JSON parameters, used to initialise e
 
 ## Requirements
 
-The example scripts are written in jupyter notebook and are in the examples directory
-(Todo)
+The processing scripts in this repository are written in python, tested on unix and [Todo] systems.
+
+We recommend using conda to import the required python libraries. Using standalone pip is untested.
+
+The processing scripts are written in python3. To install the packages needed for these 
+(using conda and pip) use this script: `conda env create -f env_household_contact_tracing.yml`. 
+To activate this environment use `conda activate household-contact-tracing`.
+
+## Usage
+
+The example scripts are in the examples directory and are written in jupyter notebook.
+
 
 ## Research
 
@@ -53,9 +64,17 @@ We explore strategies of contact tracing, isolation of infected individuals and 
 Martyn Fyles Elizabeth Fearon
 
 ## Testing
+A set of python pytest test files can be found in the `test` directory, and can be run from the shell 
+(once the necessary requirements are installed) with the command: `pytest`
 
-## Developers
-[Instructions for developers needing to extend application.]
+## Contributing
+
+### Extending functionality
+
+* 
+  
+### Improvements to code
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 
 ## Copyright & Licensing
