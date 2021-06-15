@@ -1,9 +1,7 @@
 from __future__ import annotations
-
 import sys
 from abc import ABC, abstractmethod
 from typing import Optional, TYPE_CHECKING
-
 import numpy
 import numpy as np
 
@@ -14,6 +12,45 @@ if TYPE_CHECKING:
 
 
 class NewInfection(ABC):
+    """
+        An abstract base class used to represent the highest level 'new infection' behaviour.
+
+        Note:   This class forms part of a 'Strategy' pattern. All child classes implement a family of possible
+                behaviours or strategies (ways of adding a new infection).
+                Add further child classes to add new behaviour types (strategies) that can be selected and updated at
+                design or run-time.
+
+        Attributes
+        ----------
+        network: ContactTracingNetwork
+            The store of Nodes and households used in the simulation
+        symptom_reporting_delay (int todo?)
+            Delay in symptom reporting
+        Todo: descriptions of each attribute
+        incubation_period_delay
+        asymptomatic_prob
+        infection_reporting_prob
+        test_delay
+        test_before_propagate_tracing
+        prob_has_trace_app
+        propensity_imperfect_quarantine
+        node_prob_will_take_up_lfa_testing
+        propensity_risky_behaviour_lfa_testing
+        proportion_with_propensity_miss_lfa_tests
+        node_will_uptake_isolation_prob
+
+
+        Methods
+        -------
+
+        new_infection(self, time: int, household: Household, infecting_node: Optional[Node] = None)
+            Add a new infected Node to the model.
+            :param time: The current simulation time.
+            :param household: The Household to create the new infection in.
+            :param infecting_node: The source of the new infection.
+
+    """
+
     def __init__(self, network: Network, params: dict):
         self.network = network
         self.symptom_reporting_delay = 1

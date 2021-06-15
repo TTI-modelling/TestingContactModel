@@ -8,6 +8,35 @@ from household_contact_tracing.utilities import update_params
 
 
 class NewHousehold(ABC):
+    """
+        An abstract base class used to represent the highest level 'new household' behaviour.
+
+        Note:   This class forms part of a 'Strategy' pattern. All child classes implement a family of possible
+                behaviours or strategies (ways of adding a new household).
+                Add further child classes to add new behaviour types (strategies) that can be selected and updated at
+                design or run-time.
+
+        Attributes
+        ----------
+        network: ContactTracingNetwork
+            The store of Nodes and households used in the simulation
+        local_contact_probs: List[float]
+            todo
+        total_contact_means: List[float]
+            todo
+        hh_propensity_to_use_trace_app: float
+            todo
+        house_size_probs: List[float]
+            todo
+
+        Methods
+        -------
+
+        new_household(self, time: int, infected_by: Optional[Household], additional_attributes: Optional[dict] = None)
+            -> Household:
+            Add a new Household to the model.
+
+    """
     def __init__(self, network: Network, params: dict, local_contact_probs: List[float],
                  total_contact_means: List[float]):
         self.network = network
@@ -35,7 +64,16 @@ class NewHousehold(ABC):
     @abstractmethod
     def new_household(self, time: int, infected_by: Optional[Household],
                       additional_attributes: Optional[dict] = None) -> Household:
-        """Add a new Household to the model."""
+        """
+        Add a new Household to the model.
+
+        paramaters
+        ----------
+        time (int): the current increment step number (e.g. day number)
+        infected_by (Household) (optional): the household that caused the infection
+        additional_attributes (dict) (optionsl): any additional useful attributes relating to the infection.
+
+        """
 
     def size_of_household(self) -> int:
         """Generates a random household size
