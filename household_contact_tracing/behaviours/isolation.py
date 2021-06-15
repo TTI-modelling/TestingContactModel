@@ -1,18 +1,87 @@
 from __future__ import annotations
-
+from abc import ABC, abstractmethod
 from typing import List, Callable
 
 from household_contact_tracing.network import Network, TestType, PositivePolicy, Node
 from household_contact_tracing.utilities import update_params
 
 
-class HouseholdIsolation:
+class Isolation(ABC):
+    """
+        An abstract base class used to represent the highest level Isolation behaviour.
+
+        Note:   This class forms part of a 'Strategy' pattern. All child classes implement a family of possible
+                behaviours or strategies (ways of isolating).
+                Add further child classes to add new behaviour types (strategies) that can be selected and updated at
+                design or run-time.
+
+        Attributes
+        ----------
+        network: ContactTracingNetwork
+            The store of Nodes and households used in the simulation
+        household_positive_policy = PositivePolicy.lfa_testing_no_quarantine
+            The policy on positive nodes
+        LFA_testing_requires_confirmatory_PCR = False
+            Whether or not the testing requires a confirmatory PCR
+
+        Methods
+        -------
+
+        update_isolation(self, time: int)
+            Increments the isolation process by one step, performing any steps required due to the current step
+            number (time)
+
+        isolate_self_reporting_cases(self, time: int)
+            Applies the isolation status to nodes who have reached their self-report time.
+
+        update_households_contact_traced(self, time: int)
+            Update the contact traced status for all households that have had the contact tracing process get there.
+
+    """
+
     def __init__(self, network: Network, params: dict):
         self.network = network
         self.household_positive_policy = PositivePolicy.lfa_testing_no_quarantine
         self.LFA_testing_requires_confirmatory_PCR = False
 
         update_params(self, params)
+
+    @abstractmethod
+    def isolate_self_reporting_cases(self, time: int):
+        """Applies the isolation status to nodes who have reached their self-report time.
+
+        Arguments:
+            time -- The current step number (e.g. day) of the simulation
+
+        Returns:
+            None
+        """
+
+    @abstractmethod
+    def update_households_contact_traced(self, time: int):
+        """Update the contact traced status for all households that have had the contact tracing process get there.
+
+         Arguments:
+            time -- The current step number (e.g. day) of the simulation
+
+        Returns:
+            None
+        """
+
+    @abstractmethod
+    def update_isolation(self, time: int):
+        """ Increments the isolation process by one step, performing any steps required due to the current step
+            number (time)
+
+        Arguments:
+            time -- The current step number (e.g. day) of the simulation
+
+        Returns:
+            None
+        """
+
+
+class HouseholdIsolation(Isolation):
 
     def isolate_self_reporting_cases(self, time: int):
         """Applies the isolation status to nodes who have reached their self-report time.

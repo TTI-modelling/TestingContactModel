@@ -4,8 +4,33 @@ from household_contact_tracing.utilities import update_params
 
 
 class ContactRateReduction(ABC):
-    def __init__(self, params: dict):
+    """
+        An abstract base class used to represent the highest level 'Contact Rate Reduction' behaviour.
 
+        Note:   This class forms part of a 'Strategy' pattern. All child classes implement a family of possible
+                behaviours or strategies (ways of obtaining a contact rate reduction).
+                Add further child classes to add new behaviour types (strategies) that can be selected and updated at
+                design or run-time.
+
+        Attributes
+        ----------
+        reduce_contacts_by
+            Todo
+        global_contact_reduction_imperfect_quarantine
+            Todo
+        global_contact_reduction_risky_behaviour
+            todo
+
+        Methods
+        -------
+
+        get_contact_rate_reduction(self, node) -> int
+            Returns a contact rate reduction, depending upon a nodes current status and various
+            isolation parameters
+
+    """
+
+    def __init__(self, params: dict):
         self.reduce_contacts_by = 0
         self.global_contact_reduction_imperfect_quarantine = 0
         self.global_contact_reduction_risky_behaviour = 0
@@ -14,8 +39,18 @@ class ContactRateReduction(ABC):
 
     @abstractmethod
     def get_contact_rate_reduction(self, node) -> int:
-        """Returns a contact rate reduction, depending upon a nodes current status and various
-        isolation parameters"""
+        """
+        Returns a contact rate reduction, depending upon a nodes current status and various
+        isolation parameters
+
+        Parameters
+        -------
+        :param node (ContactTracingNode)
+            The node that is having its contact rate reduction calculated
+
+
+
+        """
 
 
 class ContactRateReductionHouseholdLevelTracing(ContactRateReduction):
