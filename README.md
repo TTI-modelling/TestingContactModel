@@ -1,30 +1,34 @@
 # TTI-modelling / TestingContactModel
 
 [![Build Status](https://github.com/TTI-modelling/TestingContactModel/actions/workflows/python-package.yml/badge.svg)](https://github.com/TTI-modelling/TestingContactModel/actions/workflows/python-package.yml)
-<!--
-[![Build Status](https://travis-ci.org/UoMResearchIT/UoM_AQ_Data_Tools.svg?branch=testing)](https://travis-ci.org/UoMResearchIT/UoM_AQ_Data_Tools) -->
 
 This repository contains tools to perform simulated infection and contact tracing using a branching process model
 
 The sections below are:
 - [Repository Structure](#repository-structure)
 - [Requirements](#requirements)
+- [Usage](#usage)
 - [Research](#research)
   - [Abstract](#abstract)
   - [Authors](#authors)
 - [Testing](#testing) 
-  - [Unit testing](#unit-testing)  
-- [Developers](#developers)
+  - [Unit testing](#unit-testing)
+- [Logging](#logging)
+- [Contributing](#contributing)
 - [Copyright and Licensing](#copyright--licensing)
 
 <!-- toc -->
 
 ## Repository Structure
 
-Example scripts are stored within the `examples` directory. The `household_contact_tracing` 
-directory contains the python package modules. The `schemas` directory 
-contains JSON schemas used to validate the JSON parameters, used to initialise each run.
-[Todo - still working on this.]
+Example scripts are stored within the `examples` directory, see Requirements and Usage to get these working. 
+The `household_contact_tracing` directory contains the python package modules.
+The `behaviours` directory stores the different behaviours classes, each containing the various strategies used to 
+implement detailed processes such as `contact_rate_reduction` and `isolation'.
+The `schemas` directory contains JSON schemas used to validate the JSON parameters, used to initialise each simulation 
+run.
+The `views` directory contains classes representing the different outputs available, such as graph or textual views.
+[Todo - in progress.]
 
 ```
 .
@@ -32,8 +36,8 @@ contains JSON schemas used to validate the JSON parameters, used to initialise e
 ├── household_contact_tracing
 │   ├── behaviours
 │   ├── schemas
-│   ├── temp
 │   ├── views
+├── temp
 ├── test
 
 ```
@@ -41,8 +45,21 @@ contains JSON schemas used to validate the JSON parameters, used to initialise e
 
 ## Requirements
 
-The example scripts are written in jupyter notebook and are in the examples directory
-(Todo)
+The processing scripts in this repository are written in python, tested on unix and [Todo] systems.
+
+We recommend using conda to import the required python libraries. Using standalone pip is untested.
+
+The processing scripts are written in python3. To install the packages needed for these 
+(using conda and pip) use this script: `conda env create -f env_household_contact_tracing.yml`. 
+To activate this environment use `conda activate household-contact-tracing`.
+
+## Usage
+
+The example scripts are in the examples directory and are written in jupyter notebook.
+
+[Todo Lots more here including sample code to get a simple simulation running. 
+Copied from the simplest example script.]
+
 
 ## Research
 
@@ -53,9 +70,20 @@ We explore strategies of contact tracing, isolation of infected individuals and 
 Martyn Fyles Elizabeth Fearon
 
 ## Testing
+A set of python pytest test files can be found in the `test` directory, and can be run from the shell 
+(once the necessary requirements are installed) with the command: `pytest`
 
-## Developers
-[Instructions for developers needing to extend application.]
+
+## Logging
+
+## Contributing
+
+### Extending functionality
+
+* 
+  
+### Improvements to code
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 
 ## Copyright & Licensing

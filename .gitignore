@@ -146,4 +146,4 @@ Notebooks/Dev/CapacityTesting.ipynb
 /.idea/*
 
 # Temp files
-*/temp/*
+temp/*
