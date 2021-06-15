@@ -76,7 +76,7 @@ class GraphPyvisView(SimulationView):
 
         nt = pvNetwork('1000px', '1000px')
 
-        self.filename = os.path.join(self.model.root_dir,
+        self.filename = os.path.join(os.path.dirname(self.model.root_dir),
                                      'temp',
                                      'pyvis_graph_{}.html'.format(datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
 
