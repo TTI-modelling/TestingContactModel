@@ -18,7 +18,7 @@ from household_contact_tracing.utilities import update_params
 class Infection:
     """Logic for creation of infectives and daily increment of infection."""
 
-    def __init__(self, network: Network, new_household: Type[NewHousehold],
+    def __init__(self, network: ContactTracingNetwork, new_household: Type[NewHousehold],
                  new_infection: Type[NewInfection],
                  contact_rate_reduction: Type[ContactRateReduction], params: dict):
         self.network = network
@@ -196,7 +196,7 @@ class Infection:
             else:
                 return self.symptomatic_global_infection_probs[infectious_age]
 
-    def new_outside_household_infection(self, time: int, infecting_node: Node):
+    def new_outside_household_infection(self, time: int, infecting_node: ContactTracingNode):
         # We assume all new outside household infections are in a new household
         # i.e: You do not infect 2 people in a new household
         # you do not spread the infection to a household that already has an infection
@@ -218,7 +218,7 @@ class Infection:
         self.network.graph.edges[infecting_node.id, node_count].update(
             {"edge_type": EdgeType.default})
 
-    def new_within_household_infection(self, time, infecting_node: Node):
+    def new_within_household_infection(self, time, infecting_node: ContactTracingNode):
         """Add a new node to the network.
 
         The new node will be a member of the same household as the infecting node.
