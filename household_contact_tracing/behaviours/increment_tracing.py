@@ -10,6 +10,38 @@ from household_contact_tracing.utilities import update_params
 
 
 class IncrementTracing(ABC):
+    """
+        An abstract base class used to represent the highest level 'increment tracing' behaviour.
+
+        Note:   This class forms part of a 'Strategy' pattern. All child classes implement a family of possible
+                behaviours or strategies (ways of incrementing contact tracing).
+                Add further child classes to add new behaviour types (strategies) that can be selected and updated at
+                design or run-time.
+
+        Attributes
+        ----------
+        network: ContactTracingNetwork
+            The store of Nodes and households used in the simulation
+
+        Todo descriptions for all attributes below
+        do_2_step
+        contact_tracing_success_prob
+        contact_trace_delay
+        number_of_days_to_trace_backwards
+        number_of_days_to_trace_forwards
+        recall_probability_fall_off
+        number_of_days_prior_to_LFA_result_to_trace: int
+        lfa_tested_nodes_book_pcr_on_symptom_onset
+        LFA_testing_requires_confirmatory_PCR
+
+        Methods
+        -------
+
+        increment_contact_tracing(self, time: int)
+            Performs a days worth of contact tracing.
+
+    """
+
     def __init__(self, network: Network, params: dict):
         self.network = network
         self.do_2_step = False

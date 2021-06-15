@@ -47,9 +47,6 @@ class ContactRateReduction(ABC):
         -------
         :param node (ContactTracingNode)
             The node that is having its contact rate reduction calculated
-
-
-
         """
 
 
