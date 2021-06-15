@@ -1,8 +1,6 @@
 # TTI-modelling / TestingContactModel
 
 [![Build Status](https://github.com/TTI-modelling/TestingContactModel/actions/workflows/python-package.yml/badge.svg)](https://github.com/TTI-modelling/TestingContactModel/actions/workflows/python-package.yml)
-<!--
-[![Build Status](https://travis-ci.org/UoMResearchIT/UoM_AQ_Data_Tools.svg?branch=testing)](https://travis-ci.org/UoMResearchIT/UoM_AQ_Data_Tools) -->
 
 This repository contains tools to perform simulated infection and contact tracing using a branching process model
 
@@ -14,7 +12,8 @@ The sections below are:
   - [Abstract](#abstract)
   - [Authors](#authors)
 - [Testing](#testing) 
-  - [Unit testing](#unit-testing)  
+  - [Unit testing](#unit-testing)
+- [Logging](#logging)
 - [Contributing](#contributing)
 - [Copyright and Licensing](#copyright--licensing)
 
@@ -22,9 +21,13 @@ The sections below are:
 
 ## Repository Structure
 
-Example scripts are stored within the `examples` directory. The `household_contact_tracing` 
-directory contains the python package modules. The `schemas` directory 
-contains JSON schemas used to validate the JSON parameters, used to initialise each run.
+Example scripts are stored within the `examples` directory, see Requirements and Usage to get these working. 
+The `household_contact_tracing` directory contains the python package modules.
+The `behaviours` directory stores the different behaviours classes, each containing the various strategies used to 
+implement detailed processes such as `contact_rate_reduction` and `isolation'.
+The `schemas` directory contains JSON schemas used to validate the JSON parameters, used to initialise each simulation 
+run.
+The `views` directory contains classes representing the different outputs available, such as graph or textual views.
 [Todo - in progress.]
 
 ```
@@ -33,8 +36,8 @@ contains JSON schemas used to validate the JSON parameters, used to initialise e
 ├── household_contact_tracing
 │   ├── behaviours
 │   ├── schemas
-│   ├── temp
 │   ├── views
+├── temp
 ├── test
 
 ```
@@ -54,6 +57,9 @@ To activate this environment use `conda activate household-contact-tracing`.
 
 The example scripts are in the examples directory and are written in jupyter notebook.
 
+[Todo Lots more here including sample code to get a simple simulation running. 
+Copied from the simplest example script.]
+
 
 ## Research
 
@@ -66,6 +72,9 @@ Martyn Fyles Elizabeth Fearon
 ## Testing
 A set of python pytest test files can be found in the `test` directory, and can be run from the shell 
 (once the necessary requirements are installed) with the command: `pytest`
+
+
+## Logging
 
 ## Contributing
 
