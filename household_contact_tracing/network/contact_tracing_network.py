@@ -1,12 +1,12 @@
 from __future__ import annotations
-
+from abc import ABC, abstractmethod
 from typing import Optional, Iterator, List, Tuple, Dict, Callable
 from enum import Enum
-
 import networkx as nx
 import numpy
 
 from household_contact_tracing.utilities import update_params
+from household_contact_tracing.network.network import Network, Node
 
 
 class EdgeType(Enum):
@@ -57,10 +57,11 @@ class PositivePolicy(Enum):
     only_quarantine = 3
 
 
-class Network:
+class ContactTracingNetwork(Network):
+
     def __init__(self):
         # Call superclass constructor
-        self.graph = nx.Graph()
+        super().__init__()
         self._house_dict: Dict[int, Household] = {}
 
     def add_household(self, house_size: int, infected_by: Optional[Household],
@@ -140,7 +141,7 @@ class Network:
         new_node_id = self.node_count + 1
         self.graph.add_node(new_node_id)
         new_node_household = self.household(household_id)
-        node = Node(node_id=new_node_id, time_infected=time_infected,
+        node = ContactTracingNode(node_id=new_node_id, time_infected=time_infected,
                     household=new_node_household, isolated=isolated,
                     will_uptake_isolation=will_uptake_isolation,
                     propensity_imperfect_isolation=propensity_imperfect_isolation,
@@ -185,8 +186,7 @@ class Network:
             self.graph.edges[edge[0], edge[1]].update({"edge_type": new_edge_type})
 
 
-class Node:
-
+class ContactTracingNode(Node):
     def __init__(self, node_id: int, time_infected: int, household: Household, isolated: bool,
                  will_uptake_isolation: bool, propensity_imperfect_isolation: bool,
                  asymptomatic: bool, symptom_onset_time: float, pseudo_symptom_onset_time: int,
@@ -194,6 +194,8 @@ class Node:
                  has_contact_tracing_app: bool, contact_traced: bool, testing_delay: int = 0,
                  completed_isolation=False, outside_house_contacts_made=0, recovered=False,
                  infecting_node: Optional[Node] = None, additional_attributes: dict = None):
+        # Call superclass constructor
+        super().__init__(node_id)
 
         self.id = node_id
         self.time_infected = time_infected

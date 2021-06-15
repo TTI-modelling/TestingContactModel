@@ -2,7 +2,7 @@ from household_contact_tracing.behaviours.increment_tracing import \
     IncrementTracingIndividualDailyTesting
 from household_contact_tracing.behaviours.isolation import DailyTestingIsolation
 from household_contact_tracing.behaviours.lft_nodes import lft_nodes
-from household_contact_tracing.network import PositivePolicy
+from household_contact_tracing.network.contact_tracing_network import PositivePolicy
 from household_contact_tracing.simulation_controller import BranchingProcessController
 from household_contact_tracing.branching_process_models import IndividualTracingDailyTesting
 

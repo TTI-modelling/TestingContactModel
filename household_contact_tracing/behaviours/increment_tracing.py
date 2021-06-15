@@ -5,7 +5,7 @@ from typing import Callable
 
 import numpy as np
 
-from household_contact_tracing.network import Network, Household, EdgeType, Node, TestType
+from household_contact_tracing.network.contact_tracing_network import Network, Household, EdgeType, Node, TestType
 from household_contact_tracing.utilities import update_params
 
 

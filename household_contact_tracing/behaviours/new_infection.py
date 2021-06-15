@@ -8,7 +8,7 @@ import numpy as np
 from household_contact_tracing.utilities import update_params
 
 if TYPE_CHECKING:
-    from household_contact_tracing.network import Network, Node, Household
+    from household_contact_tracing.network.network import Network, Node, Household
 
 
 class NewInfection(ABC):

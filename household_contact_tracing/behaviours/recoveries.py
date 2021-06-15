@@ -1,4 +1,4 @@
-from household_contact_tracing.network import Network
+from household_contact_tracing.network.network import Network
 
 
 def perform_recoveries(network: Network, time: int):

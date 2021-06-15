@@ -6,7 +6,7 @@ from matplotlib.lines import Line2D
 import networkx as nx
 
 from household_contact_tracing.views.simulation_view import SimulationView
-from household_contact_tracing.network import Network
+from household_contact_tracing.network.network import Network
 from household_contact_tracing.simulation_model import SimulationModel
 from household_contact_tracing.views.colors import node_colours, edge_colours
 
