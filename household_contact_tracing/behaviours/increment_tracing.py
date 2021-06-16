@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Callable
 import numpy as np
 
-from household_contact_tracing.network import Network, Household, EdgeType, TestType
+from household_contact_tracing.network import Network, Node, Household, EdgeType, TestType
 from household_contact_tracing.parameterised import Parameterised
 
 
