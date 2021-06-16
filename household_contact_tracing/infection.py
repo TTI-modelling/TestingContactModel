@@ -4,14 +4,11 @@ import numpy as np
 import numpy.random as npr
 from typing import Type
 
-from household_contact_tracing.behaviours.contact_rate_reduction import \
-    ContactRateReduction
+from household_contact_tracing.behaviours.contact_rate_reduction import ContactRateReduction
 from household_contact_tracing.behaviours.new_household import NewHousehold
 from household_contact_tracing.behaviours.new_infection import NewInfection
-from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, \
-    compute_negbin_cdf
-from household_contact_tracing.network.contact_tracing_network import ContactTracingEdgeType, ContactTracingNetwork, \
-    ContactTracingNode
+from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
+from household_contact_tracing.network.network import EdgeType, Network, Node
 from household_contact_tracing.parameterised import Parameterised
 
 
@@ -21,7 +18,7 @@ class Infection(Parameterised):
 
         Attributes
         ----------
-        network : ContactTracingNetwork
+        network : Network
             the persistent storage of model data
 
         Methods
@@ -33,7 +30,7 @@ class Infection(Parameterised):
 
     """
 
-    def __init__(self, network: ContactTracingNetwork, new_household: Type[NewHousehold],
+    def __init__(self, network: Network, new_household: Type[NewHousehold],
                  new_infection: Type[NewInfection],
                  contact_rate_reduction: Type[ContactRateReduction], params: dict):
         self.network = network
@@ -211,7 +208,7 @@ class Infection(Parameterised):
             else:
                 return self.symptomatic_global_infection_probs[infectious_age]
 
-    def new_outside_household_infection(self, time: int, infecting_node: ContactTracingNode):
+    def new_outside_household_infection(self, time: int, infecting_node: Node):
         # We assume all new outside household infections are in a new household
         # i.e: You do not infect 2 people in a new household
         # you do not spread the infection to a household that already has an infection
@@ -231,9 +228,9 @@ class Infection(Parameterised):
         # Add the edge to the graph and give it the default label
         self.network.graph.add_edge(infecting_node.id, node_count)
         self.network.graph.edges[infecting_node.id, node_count].update(
-            {"edge_type": ContactTracingEdgeType.default})
+            {"edge_type": EdgeType.default})
 
-    def new_within_household_infection(self, time, infecting_node: ContactTracingNode):
+    def new_within_household_infection(self, time, infecting_node: Node):
         """Add a new node to the network.
 
         The new node will be a member of the same household as the infecting node.
@@ -252,10 +249,10 @@ class Infection(Parameterised):
 
         if self.network.node(node_count).household.isolated:
             self.network.graph.edges[infecting_node.id, node_count].update(
-                {"edge_type": ContactTracingEdgeType.within_house})
+                {"edge_type": EdgeType.within_house})
         else:
             self.network.graph.edges[infecting_node.id, node_count].update(
-                {"edge_type": ContactTracingEdgeType.default})
+                {"edge_type": EdgeType.default})
 
         # Decrease the number of susceptibles in that house by 1
         infecting_node_household.susceptibles -= 1

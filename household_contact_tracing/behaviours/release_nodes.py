@@ -1,4 +1,4 @@
-from household_contact_tracing.network.contact_tracing_network import InfectionStatus, TestType, Network
+from household_contact_tracing.network.network import InfectionStatus, TestType, Network
 
 
 def completed_quarantine(network: Network, time: int, params: dict):

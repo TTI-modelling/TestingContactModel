@@ -5,7 +5,7 @@ from typing import Callable
 
 import numpy as np
 
-from household_contact_tracing.network.contact_tracing_network import Network, Household, ContactTracingEdgeType, Node, TestType
+from household_contact_tracing.network.network import Network, Household, EdgeType, Node, TestType
 from household_contact_tracing.parameterised import Parameterised
 
 
@@ -20,7 +20,7 @@ class IncrementTracing(ABC, Parameterised):
 
         Attributes
         ----------
-        network: ContactTracingNetwork
+        network: Network
             The store of Nodes and households used in the simulation
 
         Todo descriptions for all attributes below
@@ -164,13 +164,11 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
 
             # Edge labelling
             if app_traced:
-                self.network.label_edges_between_houses(house_to, house_from, ContactTracingEdgeType.app_traced)
+                self.network.label_edges_between_houses(house_to, house_from, EdgeType.app_traced)
             else:
-                self.network.label_edges_between_houses(house_to, house_from,
-                                                        ContactTracingEdgeType.between_house)
+                self.network.label_edges_between_houses(house_to, house_from, EdgeType.between_house)
         else:
-            self.network.label_edges_between_houses(house_to, house_from,
-                                                    ContactTracingEdgeType.failed_contact_tracing)
+            self.network.label_edges_between_houses(house_to, house_from, EdgeType.failed_contact_tracing)
 
     def update_contact_tracing_index(self, time: int):
         for household in self.network.all_households:
@@ -349,14 +347,11 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
 
             # Edge labelling
             if app_traced:
-                self.network.label_edges_between_houses(house_to, house_from,
-                                                        ContactTracingEdgeType.app_traced)
+                self.network.label_edges_between_houses(house_to, house_from, EdgeType.app_traced)
             else:
-                self.network.label_edges_between_houses(house_to, house_from,
-                                                        ContactTracingEdgeType.between_house)
+                self.network.label_edges_between_houses(house_to, house_from, EdgeType.between_house)
         else:
-            self.network.label_edges_between_houses(house_to, house_from,
-                                                    ContactTracingEdgeType.failed_contact_tracing)
+            self.network.label_edges_between_houses(house_to, house_from, EdgeType.failed_contact_tracing)
 
 
 class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):

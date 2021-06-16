@@ -1,7 +1,7 @@
 """Mappings of colors to node and edge types to be used in views."""
 from dataclasses import dataclass
 
-from household_contact_tracing.network.contact_tracing_network import ContactTracingEdgeType, ContactTracingNodeType
+from household_contact_tracing.network.network import EdgeType, NodeType
 
 
 @dataclass
@@ -16,30 +16,30 @@ class NodeColour:
     label: str
 
 
-edge_colours = {ContactTracingEdgeType.default: EdgeColour("black", "Transmission, yet to be traced"),
-                ContactTracingEdgeType.within_house: EdgeColour("blue", "Within household contact tracing"),
-                ContactTracingEdgeType.between_house: EdgeColour("magenta",
+edge_colours = {EdgeType.default: EdgeColour("black", "Transmission, yet to be traced"),
+                EdgeType.within_house: EdgeColour("blue", "Within household contact tracing"),
+                EdgeType.between_house: EdgeColour("magenta",
                                                    "Between household contact tracing"),
-                ContactTracingEdgeType.failed_contact_tracing: EdgeColour("red", "Failed contact trace"),
-                ContactTracingEdgeType.app_traced: EdgeColour("green", "App traced edge")
+                EdgeType.failed_contact_tracing: EdgeColour("red", "Failed contact trace"),
+                EdgeType.app_traced: EdgeColour("green", "App traced edge")
                 }
 
-node_colours = {ContactTracingNodeType.default: NodeColour("lightgrey", "Default"),
-                ContactTracingNodeType.isolated: NodeColour('yellow', "Isolating"),
-                ContactTracingNodeType.symptomatic_will_report_infection: NodeColour('lime',
+node_colours = {NodeType.default: NodeColour("lightgrey", "Default"),
+                NodeType.isolated: NodeColour('yellow', "Isolating"),
+                NodeType.symptomatic_will_report_infection: NodeColour('lime',
                                                                        "Symptomatic, will report"),
-                ContactTracingNodeType.symptomatic_will_not_report_infection: NodeColour('green',
+                NodeType.symptomatic_will_not_report_infection: NodeColour('green',
                                                                            "Symptomatic, will not report"),
-                ContactTracingNodeType.received_pos_test_pcr: NodeColour('grey', "Received positive PCR"),
-                ContactTracingNodeType.received_neg_test_pcr: NodeColour('deeppink', "Received negative PCR"),
-                ContactTracingNodeType.confirmatory_pos_pcr_test: NodeColour('turquoise',
+                NodeType.received_pos_test_pcr: NodeColour('grey', "Received positive PCR"),
+                NodeType.received_neg_test_pcr: NodeColour('deeppink', "Received negative PCR"),
+                NodeType.confirmatory_pos_pcr_test: NodeColour('turquoise',
                                                                "Positive confirmatory PCR"),
-                ContactTracingNodeType.confirmatory_neg_pcr_test: NodeColour('tomato',
+                NodeType.confirmatory_neg_pcr_test: NodeColour('tomato',
                                                                "Negative confirmatory PCR"),
-                ContactTracingNodeType.received_pos_test_lfa: NodeColour('pink', "Positive LFA"),
-                ContactTracingNodeType.being_lateral_flow_tested_isolated: NodeColour('blue',
+                NodeType.received_pos_test_lfa: NodeColour('pink', "Positive LFA"),
+                NodeType.being_lateral_flow_tested_isolated: NodeColour('blue',
                                                                         "Being LFT and isolating"),
-                ContactTracingNodeType.being_lateral_flow_tested_not_isolated: NodeColour('orange',
+                NodeType.being_lateral_flow_tested_not_isolated: NodeColour('orange',
                                                                             "Being LFT and not isolating"),
-                ContactTracingNodeType.asymptomatic: NodeColour('olive', 'Asymptomatic')
+                NodeType.asymptomatic: NodeColour('olive', 'Asymptomatic')
                 }

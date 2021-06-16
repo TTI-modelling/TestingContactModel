@@ -3,7 +3,7 @@ from typing import Optional, List
 
 import numpy
 
-from household_contact_tracing.network.contact_tracing_network import ContactTracingNetwork, Household
+from household_contact_tracing.network.network import Network, Household
 from household_contact_tracing.parameterised import Parameterised
 
 
@@ -37,7 +37,7 @@ class NewHousehold(ABC, Parameterised):
             Add a new Household to the model.
 
     """
-    def __init__(self, network: ContactTracingNetwork, params: dict, local_contact_probs: List[float],
+    def __init__(self, network: Network, params: dict, local_contact_probs: List[float],
                  total_contact_means: List[float]):
         self.network = network
         self.local_contact_probs = local_contact_probs

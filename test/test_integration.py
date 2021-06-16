@@ -7,7 +7,7 @@ from collections import Counter
 
 import pytest
 
-from household_contact_tracing.network.contact_tracing_network import ContactTracingEdgeType, ContactTracingNodeType, Network, PositivePolicy
+from household_contact_tracing.network.network import EdgeType, NodeType, Network, PositivePolicy
 from household_contact_tracing.simulation_controller import BranchingProcessController
 import household_contact_tracing.branching_process_models as bpm
 from household_contact_tracing.simulation_model import SimulationModel
@@ -89,11 +89,11 @@ class TestSimpleHousehold:
         network = self.run_simulation(household_params).network
         node_counts, edge_counts = count_network(network)
         # There should be some symptomatic nodes and some asymptomatic but no others.
-        assert node_counts[ContactTracingNodeType.symptomatic_will_not_report_infection] > 0
-        assert node_counts[ContactTracingNodeType.asymptomatic] > 0
+        assert node_counts[NodeType.symptomatic_will_not_report_infection] > 0
+        assert node_counts[NodeType.asymptomatic] > 0
         assert len(node_counts) == 2
         # There is no reporting so there can be no tracing, so all edges have the default type
-        assert edge_counts[ContactTracingEdgeType.default] > 0
+        assert edge_counts[EdgeType.default] > 0
         assert len(edge_counts) == 1
 
     def test_reporting_and_isolation(self, household_params):
@@ -111,16 +111,16 @@ class TestSimpleHousehold:
         node_counts, edge_counts = count_network(network)
         # Some should be asymptomatic, some should isolating, some should not report infection and
         # some should intend to report but not yet be isolating.
-        assert node_counts[ContactTracingNodeType.isolated] > 0
-        assert node_counts[ContactTracingNodeType.asymptomatic] > 0
-        assert node_counts[ContactTracingNodeType.symptomatic_will_not_report_infection] > 0
-        assert node_counts[ContactTracingNodeType.symptomatic_will_report_infection] > 0
+        assert node_counts[NodeType.isolated] > 0
+        assert node_counts[NodeType.asymptomatic] > 0
+        assert node_counts[NodeType.symptomatic_will_not_report_infection] > 0
+        assert node_counts[NodeType.symptomatic_will_report_infection] > 0
         assert len(node_counts) == 4
         # There is reporting but all tracing fails. Now household members are created, infections
         # can be spread within households.
-        assert edge_counts[ContactTracingEdgeType.default] > 0
-        assert edge_counts[ContactTracingEdgeType.within_house] > 0
-        assert edge_counts[ContactTracingEdgeType.failed_contact_tracing] > 0
+        assert edge_counts[EdgeType.default] > 0
+        assert edge_counts[EdgeType.within_house] > 0
+        assert edge_counts[EdgeType.failed_contact_tracing] > 0
         assert len(edge_counts) == 3
 
     def test_basic_tracing(self, household_params):
@@ -140,15 +140,15 @@ class TestSimpleHousehold:
         network = self.run_simulation(household_params).network
         node_counts, edge_counts = count_network(network)
         # As before there are 4 possible node states
-        assert node_counts[ContactTracingNodeType.isolated] > 0
-        assert node_counts[ContactTracingNodeType.asymptomatic] > 0
-        assert node_counts[ContactTracingNodeType.symptomatic_will_not_report_infection] > 0
-        assert node_counts[ContactTracingNodeType.symptomatic_will_report_infection] > 0
+        assert node_counts[NodeType.isolated] > 0
+        assert node_counts[NodeType.asymptomatic] > 0
+        assert node_counts[NodeType.symptomatic_will_not_report_infection] > 0
+        assert node_counts[NodeType.symptomatic_will_report_infection] > 0
         assert len(node_counts) == 4
         # The between house edge type is a result of successful contact tracing.
-        assert edge_counts[ContactTracingEdgeType.default] > 0
-        assert edge_counts[ContactTracingEdgeType.within_house] > 0
-        assert edge_counts[ContactTracingEdgeType.between_house] > 0
+        assert edge_counts[EdgeType.default] > 0
+        assert edge_counts[EdgeType.within_house] > 0
+        assert edge_counts[EdgeType.between_house] > 0
         assert len(edge_counts) == 3
 
         # No isolation should expire by day 10 so all whose household is isolated should
@@ -193,16 +193,16 @@ class TestSimpleHousehold:
         numpy.random.seed(39)
         network = self.run_simulation(household_params).network
         node_counts, edge_counts = count_network(network)
-        assert node_counts[ContactTracingNodeType.isolated] > 0
-        assert node_counts[ContactTracingNodeType.asymptomatic] > 0
-        assert node_counts[ContactTracingNodeType.symptomatic_will_not_report_infection] > 0
-        assert node_counts[ContactTracingNodeType.symptomatic_will_report_infection] > 0
+        assert node_counts[NodeType.isolated] > 0
+        assert node_counts[NodeType.asymptomatic] > 0
+        assert node_counts[NodeType.symptomatic_will_not_report_infection] > 0
+        assert node_counts[NodeType.symptomatic_will_report_infection] > 0
         assert len(node_counts) == 4
         # The app_traced edge type is a result of app tracing.
-        assert edge_counts[ContactTracingEdgeType.default] > 0
-        assert edge_counts[ContactTracingEdgeType.within_house] > 0
-        assert edge_counts[ContactTracingEdgeType.between_house] > 0
-        assert edge_counts[ContactTracingEdgeType.app_traced] > 0
+        assert edge_counts[EdgeType.default] > 0
+        assert edge_counts[EdgeType.within_house] > 0
+        assert edge_counts[EdgeType.between_house] > 0
+        assert edge_counts[EdgeType.app_traced] > 0
         assert len(edge_counts) == 4
         # No isolation should expire by day 10 so all whose household is isolated should
         # be isolating.
@@ -311,16 +311,16 @@ class TestIndividualTracing:
         node_counts, edge_counts = count_network(network)
         # Some should be asymptomatic, some should isolating, some should not report infection and
         # some should intend to report but not yet be isolating.
-        assert node_counts[ContactTracingNodeType.isolated] > 0
-        assert node_counts[ContactTracingNodeType.asymptomatic] > 0
-        assert node_counts[ContactTracingNodeType.symptomatic_will_not_report_infection] > 0
-        assert node_counts[ContactTracingNodeType.symptomatic_will_report_infection] > 0
+        assert node_counts[NodeType.isolated] > 0
+        assert node_counts[NodeType.asymptomatic] > 0
+        assert node_counts[NodeType.symptomatic_will_not_report_infection] > 0
+        assert node_counts[NodeType.symptomatic_will_report_infection] > 0
         assert len(node_counts) == 4
         # There is reporting and the default is that tracing always succeeds. Infections
         # can be spread within households.
-        assert edge_counts[ContactTracingEdgeType.default] > 0
-        assert edge_counts[ContactTracingEdgeType.within_house] > 0
-        assert edge_counts[ContactTracingEdgeType.between_house] > 0
+        assert edge_counts[EdgeType.default] > 0
+        assert edge_counts[EdgeType.within_house] > 0
+        assert edge_counts[EdgeType.between_house] > 0
         assert len(edge_counts) == 3
 
 

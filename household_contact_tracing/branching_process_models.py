@@ -3,7 +3,7 @@ from typing import Callable
 from copy import deepcopy
 
 from household_contact_tracing.infection import Infection
-from household_contact_tracing.network.contact_tracing_network import ContactTracingNetwork
+from household_contact_tracing.network.network import Network
 from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.simulation_states import RunningState, ExtinctState,\
     MaxNodesInfectiousState, TimedOutState
@@ -28,7 +28,7 @@ class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
 
         Attributes
         ----------
-        network : ContactTracingNetwork
+        network : Network
             the persistent storage of model data
 
         infection: Infection
@@ -63,7 +63,7 @@ class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
         BranchingProcessModel.__init__(self)
 
         # Set network
-        self.network = ContactTracingNetwork()
+        self.network = Network()
 
         # Set strategies (Strategy pattern)
         self.infection = self._initialise_infection(self.network)
@@ -71,7 +71,7 @@ class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
         # Set the simulated time to the start (days)
         self.time = 0
 
-    def _initialise_infection(self, network: ContactTracingNetwork):
+    def _initialise_infection(self, network: Network):
         return Infection(network,
                          NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel,
@@ -201,7 +201,7 @@ class IndividualLevelTracing(HouseholdLevelTracing):
 
     schema_path = "schemas/uk_model.json"
 
-    def _initialise_infection(self, network: ContactTracingNetwork):
+    def _initialise_infection(self, network: Network):
         return Infection(network,
                          NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel,
@@ -247,7 +247,7 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
     """
     schema_path = "schemas/contact_model_test.json"
 
-    def _initialise_infection(self, network: ContactTracingNetwork):
+    def _initialise_infection(self, network: Network):
         return Infection(network,
                          NewHouseholdIndividualTracingDailyTesting,
                          new_infection.NewInfectionIndividualTracingDailyTesting,

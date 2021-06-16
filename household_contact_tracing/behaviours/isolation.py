@@ -2,7 +2,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import List, Callable
 
-from household_contact_tracing.network.contact_tracing_network import ContactTracingNetwork, TestType, PositivePolicy, Node
+from household_contact_tracing.network.network import Network, TestType, PositivePolicy, Node
 from household_contact_tracing.parameterised import Parameterised
 
 
@@ -39,7 +39,7 @@ class Isolation(ABC, Parameterised):
 
     """
 
-    def __init__(self, network: ContactTracingNetwork, params: dict):
+    def __init__(self, network: Network, params: dict):
         self.network = network
         self.household_positive_policy = PositivePolicy.lfa_testing_no_quarantine
         self.LFA_testing_requires_confirmatory_PCR = False
