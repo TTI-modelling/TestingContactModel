@@ -10,7 +10,7 @@ from household_contact_tracing.behaviours.new_household import NewHousehold
 from household_contact_tracing.behaviours.new_infection import NewInfection
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, \
     compute_negbin_cdf
-from household_contact_tracing.network.contact_tracing_network import EdgeType, ContactTracingNetwork, \
+from household_contact_tracing.network.contact_tracing_network import ContactTracingEdgeType, ContactTracingNetwork, \
     ContactTracingNode
 from household_contact_tracing.utilities import update_params
 
@@ -216,7 +216,7 @@ class Infection:
         # Add the edge to the graph and give it the default label
         self.network.graph.add_edge(infecting_node.id, node_count)
         self.network.graph.edges[infecting_node.id, node_count].update(
-            {"edge_type": EdgeType.default})
+            {"edge_type": ContactTracingEdgeType.default})
 
     def new_within_household_infection(self, time, infecting_node: ContactTracingNode):
         """Add a new node to the network.
@@ -237,10 +237,10 @@ class Infection:
 
         if self.network.node(node_count).household.isolated:
             self.network.graph.edges[infecting_node.id, node_count].update(
-                {"edge_type": EdgeType.within_house})
+                {"edge_type": ContactTracingEdgeType.within_house})
         else:
             self.network.graph.edges[infecting_node.id, node_count].update(
-                {"edge_type": EdgeType.default})
+                {"edge_type": ContactTracingEdgeType.default})
 
         # Decrease the number of susceptibles in that house by 1
         infecting_node_household.susceptibles -= 1

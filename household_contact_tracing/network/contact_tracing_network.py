@@ -1,15 +1,13 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
 from typing import Optional, Iterator, List, Tuple, Dict, Callable
 from enum import Enum
-import networkx as nx
 import numpy
 
 from household_contact_tracing.utilities import update_params
-from household_contact_tracing.network.network import Network, Node
+from household_contact_tracing.network.network import Network, Node, NodeType, EdgeType
 
 
-class EdgeType(Enum):
+class ContactTracingEdgeType(EdgeType):
     """Describes the source of infection between nodes."""
     default = 0
     within_house = 1
@@ -18,7 +16,7 @@ class EdgeType(Enum):
     app_traced = 4
 
 
-class NodeType(Enum):
+class ContactTracingNodeType(NodeType):
     default = 0
     isolated = 1
     received_pos_test_pcr = 3
@@ -83,10 +81,6 @@ class ContactTracingNetwork(Network):
         return len(self._house_dict)
 
     @property
-    def node_count(self):
-        return nx.number_of_nodes(self.graph)
-
-    @property
     def all_households(self) -> Iterator[Household]:
         return (self.household(hid) for hid in self._house_dict)
 
@@ -101,23 +95,9 @@ class ContactTracingNetwork(Network):
         """
         return [node for node in self.all_nodes() if not node.recovered]
 
-    def is_isomorphic(self, network: Network) -> bool:
-        """ Determine whether graphs have identical network structures."""
-        return nx.is_isomorphic(self.graph, network.graph)
-
-    def __eq__(self, other):
-        """ Currently only determines whether graphs have identical network structures,
-            but we may want to compare more details.
-        """
-        return self.is_isomorphic(other)
-
     def count_non_recovered_nodes(self) -> int:
         """Returns the number of nodes not in the recovered state."""
         return len([node for node in self.all_nodes() if not node.recovered])
-
-    def count_nodes(self, node_type: NodeType) -> int:
-        """Returns the number of nodes of type `node_type`."""
-        return sum([node.node_type() == node_type for node in self.all_nodes()])
 
     def get_edge_between_household(self, house1: Household, house2: Household) -> Tuple[int, int]:
         """Get the id's of the two nodes that connect households."""
@@ -159,20 +139,12 @@ class ContactTracingNetwork(Network):
         self.graph.nodes[new_node_id]['node_obj'] = node
         return node
 
-    def node(self, node_id: int) -> Node:
-        """Return the Node from the Network with `node_id`."""
-        return self.graph.nodes[node_id]['node_obj']
-
-    def all_nodes(self) -> Iterator[Node]:
-        """Return a list of all nodes in the Network"""
-        return (self.node(n) for n in self.graph)
-
-    def edge_types(self) -> List[EdgeType]:
+    def edge_types(self) -> List[ContactTracingEdgeType]:
         """Return a list of edge types in the network."""
         return [self.graph.edges[edge]["edge_type"] for edge in self.graph.edges]
 
     def label_edges_between_houses(self, house_to: Household, house_from: Household,
-                                   new_edge_type: EdgeType):
+                                   new_edge_type: ContactTracingEdgeType):
         """Given two Households, label any edges between the households with `new_edge_type`."""
         for node_1 in house_to.nodes:
             for node_2 in house_from.nodes:
@@ -180,7 +152,7 @@ class ContactTracingNetwork(Network):
                     self.graph.edges[node_1.id,
                                      node_2.id].update({"edge_type": new_edge_type})
 
-    def label_edges_inside_household(self, household: Household, new_edge_type: EdgeType):
+    def label_edges_inside_household(self, household: Household, new_edge_type: ContactTracingEdgeType):
         """Label all edges within a household with `new_edge_type`."""
         for edge in household.within_house_edges:
             self.graph.edges[edge[0], edge[1]].update({"edge_type": new_edge_type})
@@ -197,7 +169,6 @@ class ContactTracingNode(Node):
         # Call superclass constructor
         super().__init__(node_id)
 
-        self.id = node_id
         self.time_infected = time_infected
         self.household = household
         self.isolated = isolated
@@ -262,38 +233,43 @@ class ContactTracingNode(Node):
         return InfectionStatus.unknown_infection
 
     def node_type(self, time=None) -> NodeType:
-        """Returns a node type, given the current status of the node."""
+        '''
+            Returns a node type, given the current status of the node.
+
+            params
+                time (int): The current increment / step number (e.g. day number) of the simulation
+        '''
         if self.being_lateral_flow_tested:
             if self.isolated:
-                return NodeType.being_lateral_flow_tested_isolated
+                return ContactTracingNodeType.being_lateral_flow_tested_isolated
             else:
-                return NodeType.being_lateral_flow_tested_not_isolated
+                return ContactTracingNodeType.being_lateral_flow_tested_not_isolated
         elif self.isolated:
-            return NodeType.isolated
+            return ContactTracingNodeType.isolated
         elif not self.asymptomatic:
             if self.will_report_infection:
-                return NodeType.symptomatic_will_report_infection
+                return ContactTracingNodeType.symptomatic_will_report_infection
             else:
-                return NodeType.symptomatic_will_not_report_infection
+                return ContactTracingNodeType.symptomatic_will_not_report_infection
         elif self.received_positive_test_result:
             if self.avenue_of_testing == TestType.pcr:
-                return NodeType.received_pos_test_pcr
+                return ContactTracingNodeType.received_pos_test_pcr
             else:
-                return NodeType.received_pos_test_lfa
+                return ContactTracingNodeType.received_pos_test_lfa
         elif self.received_result and self.avenue_of_testing == TestType.pcr:
-            return NodeType.received_neg_test_pcr
+            return ContactTracingNodeType.received_neg_test_pcr
         elif self.taken_confirmatory_PCR_test:
             # Todo: This may need more correcting, added time=None parameter to get it running.
             #       Was self.time but network/nodes should not need to know about time
             if time and time >= self.confirmatory_PCR_test_result_time:
                 if self.confirmatory_PCR_result_was_positive:
-                    return NodeType.confirmatory_pos_pcr_test
+                    return ContactTracingNodeType.confirmatory_pos_pcr_test
                 else:
-                    return NodeType.confirmatory_neg_pcr_test
+                    return ContactTracingNodeType.confirmatory_neg_pcr_test
         elif self.asymptomatic:
-            return NodeType.asymptomatic
+            return ContactTracingNodeType.asymptomatic
         else:
-            return NodeType.default
+            return ContactTracingNodeType.default
 
     def take_confirmatory_pcr_test(self, time: int, prob_pcr_positive: Callable):
         """Given a the time relative to a nodes symptom onset, will that node test positive."""
@@ -440,13 +416,13 @@ class Household:
             edge = self.network.get_edge_between_household(self, self.being_contact_traced_from)
             if self.network.is_edge_app_traced(edge):
                 self.network.label_edges_between_houses(self, self.being_contact_traced_from,
-                                                        EdgeType.app_traced)
+                                                        ContactTracingEdgeType.app_traced)
             else:
                 self.network.label_edges_between_houses(self, self.being_contact_traced_from,
-                                                        EdgeType.between_house)
+                                                        ContactTracingEdgeType.between_house)
 
         # Update edges within household
-        self.network.label_edges_inside_household(self, EdgeType.within_house)
+        self.network.label_edges_inside_household(self, ContactTracingEdgeType.within_house)
 
     def start_lateral_flow_testing_household(self, time: int):
         """Sets the household to the lateral flow testing status so that new within household
@@ -517,7 +493,7 @@ class Household:
             node.contact_traced = True
 
         # Colour the edges within household
-        self.network.label_edges_inside_household(self, EdgeType.within_house)
+        self.network.label_edges_inside_household(self, ContactTracingEdgeType.within_house)
 
     def isolate_if_symptomatic_nodes(self, time: int):
         """If there are any symptomatic nodes in the household then isolate the household."""

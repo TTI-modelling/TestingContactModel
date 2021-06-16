@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from household_contact_tracing.views.simulation_view import SimulationView
-from household_contact_tracing.network.contact_tracing_network import NodeType
+from household_contact_tracing.network.contact_tracing_network import ContactTracingNodeType
 from household_contact_tracing.simulation_model import SimulationModel
 from household_contact_tracing.views.colors import node_colours
 
@@ -20,7 +20,7 @@ class TimelineGraphView(SimulationView):
         # self.controller = controller
         self.model = model
 
-        self.node_type_counts = pd.DataFrame(columns=[node.name for node in NodeType])
+        self.node_type_counts = pd.DataFrame(columns=[node.name for node in ContactTracingNodeType])
 
         # Register as observer
         self.model.register_observer_simulation_stopped(self)
@@ -62,11 +62,11 @@ class TimelineGraphView(SimulationView):
                                               layout=(math.ceil(len(colours)/2), 2),
                                               ylim=(0, self.node_type_counts.to_numpy().max()))
             for index, label in enumerate(self.node_type_counts.columns):
-                title = node_colours[NodeType[label]].label
+                title = node_colours[ContactTracingNodeType[label]].label
                 axes[index // 2][index % 2].set_title(title)
             plt.tight_layout()
             plt.show()
 
     def increment_timeline(self, network):
-        node_counts = {node.name: network.count_nodes(node) for node in NodeType}
+        node_counts = {node.name: network.count_nodes(node) for node in ContactTracingNodeType}
         self.node_type_counts = self.node_type_counts.append(node_counts, ignore_index=True)
