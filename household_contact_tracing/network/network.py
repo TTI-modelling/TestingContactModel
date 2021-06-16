@@ -4,8 +4,6 @@ from typing import Optional, Iterator, List, Tuple, Dict, Callable
 import networkx as nx
 from enum import Enum
 
-from household_contact_tracing.utilities import update_params
-
 
 class EdgeType(Enum):
     pass

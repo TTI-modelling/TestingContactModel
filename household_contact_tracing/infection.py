@@ -16,7 +16,22 @@ from household_contact_tracing.utilities import update_params
 
 
 class Infection:
-    """Logic for creation of infectives and daily increment of infection."""
+    """
+        Logic for creation of infectives and daily increment of infection.
+
+        Attributes
+        ----------
+        network : ContactTracingNetwork
+            the persistent storage of model data
+
+        Methods
+        -------
+            initialise(self):
+                # Create the starting infectives
+            increment(self, time):
+                Create a new days worth of infections.
+
+    """
 
     def __init__(self, network: ContactTracingNetwork, new_household: Type[NewHousehold],
                  new_infection: Type[NewInfection],
