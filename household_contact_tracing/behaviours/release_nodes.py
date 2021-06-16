@@ -1,7 +1,8 @@
-from household_contact_tracing.network.contact_tracing_network import InfectionStatus, TestType, Network
+from household_contact_tracing.network.contact_tracing_network import InfectionStatus, TestType, \
+    Network, ContactTracingNetwork
 
 
-def completed_quarantine(network: Network, time: int, params: dict):
+def completed_quarantine(network: ContactTracingNetwork, time: int, params: dict):
     """If a node is currently in quarantine, and has completed the quarantine period then we
     release them from quarantine.
 
@@ -37,7 +38,7 @@ def completed_quarantine(network: Network, time: int, params: dict):
                     node.completed_isolation = True
 
 
-def completed_isolation(network: Network, time: int, params: dict):
+def completed_isolation(network: ContactTracingNetwork, time: int, params: dict):
     """
     Nodes leave self-isolation, rather than quarantine, when their infection status is either known
     (ie tested) or when they are in a contact traced household and they develop symptoms (they
@@ -71,7 +72,7 @@ def completed_isolation(network: Network, time: int, params: dict):
                         node.completed_isolation = True
 
 
-def completed_lateral_flow_testing(network: Network, time: int, params: dict):
+def completed_lateral_flow_testing(network: ContactTracingNetwork, time: int, params: dict):
     """If a node is currently in lateral flow testing, and has completed this period then we
     release them from testing.
 

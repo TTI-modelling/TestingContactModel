@@ -5,10 +5,9 @@ from typing import Optional, TYPE_CHECKING
 import numpy
 import numpy as np
 
+from household_contact_tracing.network.contact_tracing_network import ContactTracingNetwork, \
+    Household, ContactTracingNode
 from household_contact_tracing.parameterised import Parameterised
-
-if TYPE_CHECKING:
-    from household_contact_tracing.network.network import Network, Node, Household
 
 
 class NewInfection(ABC, Parameterised):
@@ -51,7 +50,7 @@ class NewInfection(ABC, Parameterised):
 
     """
 
-    def __init__(self, network: Network, params: dict):
+    def __init__(self, network: ContactTracingNetwork, params: dict):
         self.network = network
         self.symptom_reporting_delay = 1
         self.incubation_period_delay = 5
@@ -69,7 +68,7 @@ class NewInfection(ABC, Parameterised):
         self.update_params(params)
 
     @abstractmethod
-    def new_infection(self, time: int, household: Household, infecting_node: Optional[Node] = None):
+    def new_infection(self, time: int, household: Household, infecting_node: Optional[ContactTracingNode] = None):
         """Add a new infected Node to the model.
         :param time: The current simulation time.
         :param household: The Household to create the new infection in.
@@ -132,7 +131,7 @@ class NewInfection(ABC, Parameterised):
 
 class NewInfectionHouseholdLevel(NewInfection):
 
-    def new_infection(self, time: int, household: Household, infecting_node: Optional[Node] = None):
+    def new_infection(self, time: int, household: Household, infecting_node: Optional[ContactTracingNode] = None):
         """Add a new infected Node to the model."""
         asymptomatic = self.is_asymptomatic_infection()
 
@@ -192,7 +191,7 @@ class NewInfectionHouseholdLevel(NewInfection):
 
 class NewInfectionIndividualTracingDailyTesting(NewInfection):
 
-    def new_infection(self, time: int, household: Household, infecting_node: Optional[Node] = None):
+    def new_infection(self, time: int, household: Household, infecting_node: Optional[ContactTracingNode] = None):
         """Add a new infection to the model and network. Attributes are randomly generated.
 
         This method passes additional attribute, relevant to the lateral flow testing.

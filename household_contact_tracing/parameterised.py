@@ -6,7 +6,8 @@ from loguru import logger
 
 class Parameterised:
     """
-        Base class containing logic for loading, checking and assignment of parameters using JSON schema validation
+        Base class containing logic for loading, checking and assignment of parameters using
+        JSON schema validation
         Inherit from this base class if parameter checking and loading is required.
 
         Methods

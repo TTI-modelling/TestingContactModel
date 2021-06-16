@@ -85,6 +85,14 @@ class ContactTracingNetwork(Network):
         super().__init__()
         self._house_dict: Dict[int, Household] = {}
 
+    def all_nodes(self) -> Iterator[ContactTracingNode]:
+        """Return a list of all nodes in the Network"""
+        return (self.node(n) for n in self.graph)
+
+    def node(self, node_id: int) -> ContactTracingNode:
+        """Return the Node from the Network with `node_id`."""
+        return self.graph.nodes[node_id]['node_obj']
+
     def add_household(self, house_size: int, infected_by: Optional[Household],
                       propensity_trace_app: bool,
                       additional_attributes: Optional[dict] = None) -> Household:
@@ -140,7 +148,7 @@ class ContactTracingNetwork(Network):
                  pseudo_symptom_onset_time, recovery_time, will_report_infection,
                  time_of_reporting, has_contact_tracing_app, contact_traced, testing_delay=0,
                  additional_attributes: Optional[dict] = None,
-                 infecting_node: Optional[Node] = None, completed_isolation=False) -> Node:
+                 infecting_node: Optional[ContactTracingNode] = None, completed_isolation=False) -> ContactTracingNode:
         new_node_id = self.node_count + 1
         self.graph.add_node(new_node_id)
         new_node_household = self.household(household_id)
@@ -200,7 +208,8 @@ class ContactTracingNode(Node, Parameterised):
                  recovery_time: int, will_report_infection: bool, time_of_reporting: int,
                  has_contact_tracing_app: bool, contact_traced: bool, testing_delay: int = 0,
                  completed_isolation=False, outside_house_contacts_made=0, recovered=False,
-                 infecting_node: Optional[Node] = None, additional_attributes: dict = None):
+                 infecting_node: Optional[ContactTracingNode] = None,
+                 additional_attributes: dict = None):
         # Call superclass constructor
         super().__init__(node_id)
 
@@ -268,12 +277,12 @@ class ContactTracingNode(Node, Parameterised):
         return InfectionStatus.unknown_infection
 
     def node_type(self, time=None) -> NodeType:
-        '''
+        """
             Returns a node type, given the current status of the node.
 
             params
                 time (int): The current increment / step number (e.g. day number) of the simulation
-        '''
+        """
         if self.being_lateral_flow_tested:
             if self.isolated:
                 return ContactTracingNodeType.being_lateral_flow_tested_isolated
@@ -362,7 +371,7 @@ class Household:
         node_type(self, time=None) -> NodeType:
             Get the NodeType of the node
     """
-    def __init__(self, network: Network, house_id: int,
+    def __init__(self, network: ContactTracingNetwork, house_id: int,
                  house_size: int, infected_by: Optional[Household],
                  propensity_trace_app: bool, additional_attributes: Optional[dict] = None):
         self.network = network
@@ -380,7 +389,7 @@ class Household:
         self.contact_tracing_index = 0          # The house is which step of the contact tracing process
         self.infected_by = infected_by       # Which house infected the household
         self.spread_to: List[Household] = []          # Which households were infected by this household
-        self.nodes: List[Node] = []           # The ID of currently infected nodes in the household
+        self.nodes: List[ContactTracingNode] = []           # The ID of currently infected nodes in the household
         self.within_house_edges: List[Tuple[int, int]] = []  # Which edges are contained within the household
 
         self.being_lateral_flow_tested = False,

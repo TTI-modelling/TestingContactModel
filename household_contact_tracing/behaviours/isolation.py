@@ -2,7 +2,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import List, Callable
 
-from household_contact_tracing.network.contact_tracing_network import ContactTracingNetwork, TestType, PositivePolicy, Node
+from household_contact_tracing.network.contact_tracing_network import ContactTracingNetwork, \
+    TestType, PositivePolicy, ContactTracingNode
 from household_contact_tracing.parameterised import Parameterised
 
 
@@ -165,7 +166,7 @@ class DailyTestingIsolation(HouseholdIsolation):
             if node.confirmatory_PCR_test_result_time == time:
                 node.household.apply_positive_policy(time, self.household_positive_policy)
 
-    def isolate_positive_lateral_flow_tests(self, time: int, positive_nodes: List[Node]):
+    def isolate_positive_lateral_flow_tests(self, time: int, positive_nodes: List[ContactTracingNode]):
         """A if a node tests positive on LFA, we assume that they isolate and stop LFA testing
 
         If confirmatory PCR testing is not required, then we do not start LFA testing the household at this point
@@ -187,7 +188,7 @@ class DailyTestingIsolation(HouseholdIsolation):
                 node.household.apply_positive_policy(time, self.household_positive_policy)
 
     def act_on_positive_LFA_tests(self, time: int, prob_pcr_positive: Callable,
-                                  positive_nodes: List[Node]):
+                                  positive_nodes: List[ContactTracingNode]):
         """For nodes who test positive on their LFA test, take the appropriate action depending
         on the policy
         """
@@ -197,7 +198,7 @@ class DailyTestingIsolation(HouseholdIsolation):
             self.confirmatory_pcr_test_LFA_nodes(time, positive_nodes, prob_pcr_positive)
 
     @staticmethod
-    def confirmatory_pcr_test_LFA_nodes(time: int, positive_nodes: List[Node],
+    def confirmatory_pcr_test_LFA_nodes(time: int, positive_nodes: List[ContactTracingNode],
                                         prob_pcr_positive: Callable):
         """Nodes who receive a positive LFA result will be tested using a PCR test."""
         for node in positive_nodes:

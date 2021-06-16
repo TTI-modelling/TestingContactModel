@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Optional, Iterator, List, Tuple, Dict, Callable
+from typing import Iterator
 import networkx as nx
 from enum import Enum
 
@@ -42,17 +42,18 @@ class Network(ABC):
         """
         return self.is_isomorphic(other)
 
+    @abstractmethod
     def node(self, node_id: int) -> Node:
         """Return the Node from the Network with `node_id`."""
-        return self.graph.nodes[node_id]['node_obj']
 
+    @abstractmethod
     def all_nodes(self) -> Iterator[Node]:
         """Return a list of all nodes in the Network"""
-        return (self.node(n) for n in self.graph)
 
     def count_nodes(self, node_type: NodeType) -> int:
         """Returns the number of nodes of type `node_type`."""
         return sum([node.node_type() == node_type for node in self.all_nodes()])
+
 
 class Node(ABC):
     """
@@ -75,9 +76,8 @@ class Node(ABC):
 
     @abstractmethod
     def node_type(self, time=None) -> NodeType:
-        '''
-            Returns a node type, given the current status of the node.
+        """Returns a node type, given the current status of the node.
 
             params
                 time (int): The current increment / step number (e.g. day number) of the simulation
-        '''
+        """

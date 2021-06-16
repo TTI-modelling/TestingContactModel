@@ -1,7 +1,7 @@
-from household_contact_tracing.network.network import Network
+from household_contact_tracing.network.contact_tracing_network import ContactTracingNetwork
 
 
-def perform_recoveries(network: Network, time: int):
+def perform_recoveries(network: ContactTracingNetwork, time: int):
     """
     Loops over all nodes in the branching process and determine recoveries.
 
