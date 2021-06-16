@@ -3,7 +3,7 @@ from typing import Optional, Iterator, List, Tuple, Dict, Callable
 from enum import Enum
 import numpy
 
-from household_contact_tracing.utilities import update_params
+from household_contact_tracing.parameterised import Parameterised
 from household_contact_tracing.network.network import Network, Node, NodeType, EdgeType
 
 
@@ -55,7 +55,7 @@ class PositivePolicy(Enum):
     only_quarantine = 3
 
 
-class ContactTracingNetwork(Network):
+class ContactTracingNetwork(Network, Parameterised):
 
     def __init__(self):
         # Call superclass constructor
@@ -158,7 +158,7 @@ class ContactTracingNetwork(Network):
             self.graph.edges[edge[0], edge[1]].update({"edge_type": new_edge_type})
 
 
-class ContactTracingNode(Node):
+class ContactTracingNode(Node, Parameterised):
     def __init__(self, node_id: int, time_infected: int, household: Household, isolated: bool,
                  will_uptake_isolation: bool, propensity_imperfect_isolation: bool,
                  asymptomatic: bool, symptom_onset_time: float, pseudo_symptom_onset_time: int,
@@ -204,7 +204,7 @@ class ContactTracingNode(Node):
         self.propensity_to_miss_lfa_tests = None
 
         # Update instance variables with anything in `additional_attributes`
-        update_params(self, additional_attributes)
+        self.update_params(additional_attributes)
 
     def time_relative_to_symptom_onset(self, time: int) -> int:
         # asymptomatics do not have a symptom onset time

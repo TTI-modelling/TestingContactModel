@@ -6,10 +6,10 @@ from typing import Callable
 import numpy as np
 
 from household_contact_tracing.network.contact_tracing_network import Network, Household, ContactTracingEdgeType, Node, TestType
-from household_contact_tracing.utilities import update_params
+from household_contact_tracing.parameterised import Parameterised
 
 
-class IncrementTracing(ABC):
+class IncrementTracing(ABC, Parameterised):
     """
         An abstract base class used to represent the highest level 'increment tracing' behaviour.
 
@@ -54,7 +54,7 @@ class IncrementTracing(ABC):
         self.lfa_tested_nodes_book_pcr_on_symptom_onset = True
         self.LFA_testing_requires_confirmatory_PCR = False
 
-        update_params(self, params)
+        self.update_params(params)
 
     @abstractmethod
     def increment_contact_tracing(self, time: int):

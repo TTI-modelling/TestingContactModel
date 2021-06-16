@@ -12,10 +12,10 @@ from household_contact_tracing.distributions import current_hazard_rate, current
     compute_negbin_cdf
 from household_contact_tracing.network.contact_tracing_network import ContactTracingEdgeType, ContactTracingNetwork, \
     ContactTracingNode
-from household_contact_tracing.utilities import update_params
+from household_contact_tracing.parameterised import Parameterised
 
 
-class Infection:
+class Infection(Parameterised):
     """
         Logic for creation of infectives and daily increment of infection.
 
@@ -51,7 +51,7 @@ class Infection:
         self.starting_infections = 1
         self.household_pairwise_survival_prob = 0.2
 
-        update_params(self, params)
+        self.update_params(params)
 
         household_size = len(self.total_contact_means)
 

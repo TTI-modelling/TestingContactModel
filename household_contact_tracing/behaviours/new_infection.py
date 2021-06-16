@@ -5,13 +5,13 @@ from typing import Optional, TYPE_CHECKING
 import numpy
 import numpy as np
 
-from household_contact_tracing.utilities import update_params
+from household_contact_tracing.parameterised import Parameterised
 
 if TYPE_CHECKING:
     from household_contact_tracing.network.network import Network, Node, Household
 
 
-class NewInfection(ABC):
+class NewInfection(ABC, Parameterised):
     """
         An abstract base class used to represent the highest level 'new infection' behaviour.
 
@@ -66,7 +66,7 @@ class NewInfection(ABC):
         self.proportion_with_propensity_miss_lfa_tests = 0.
         self.node_will_uptake_isolation_prob = 1
 
-        update_params(self, params)
+        self.update_params(params)
 
     @abstractmethod
     def new_infection(self, time: int, household: Household, infecting_node: Optional[Node] = None):

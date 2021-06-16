@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 
-from household_contact_tracing.utilities import update_params
+from household_contact_tracing.parameterised import Parameterised
 
 
-class ContactRateReduction(ABC):
+class ContactRateReduction(ABC, Parameterised):
     """
         An abstract base class used to represent the highest level 'Contact Rate Reduction' behaviour.
 
@@ -35,7 +35,7 @@ class ContactRateReduction(ABC):
         self.global_contact_reduction_imperfect_quarantine = 0
         self.global_contact_reduction_risky_behaviour = 0
 
-        update_params(self, params)
+        self.update_params(params)
 
     @abstractmethod
     def get_contact_rate_reduction(self, node) -> int:
