@@ -3,7 +3,7 @@ from typing import Optional, List
 
 import numpy
 
-from household_contact_tracing.network.network import Network, Household
+from household_contact_tracing.network import Network, Household
 from household_contact_tracing.parameterised import Parameterised
 
 

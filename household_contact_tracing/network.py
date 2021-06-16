@@ -1,8 +1,9 @@
 from __future__ import annotations
 from typing import Optional, Iterator, List, Tuple, Dict, Callable
+from typing import Iterator
+import networkx as nx
 from enum import Enum
 import numpy
-import networkx as nx
 
 from household_contact_tracing.parameterised import Parameterised
 
@@ -17,6 +18,7 @@ class EdgeType(Enum):
 
 
 class NodeType(Enum):
+    """Describes the status of node infection/testing."""
     default = 0
     isolated = 1
     received_pos_test_pcr = 3
@@ -300,12 +302,11 @@ class Node(Parameterised):
         return InfectionStatus.unknown_infection
 
     def node_type(self, time=None) -> NodeType:
-        '''
-            Returns a node type, given the current status of the node.
+        """Returns a node type, given the current status of the node.
 
             params
                 time (int): The current increment / step number (e.g. day number) of the simulation
-        '''
+        """
         if self.being_lateral_flow_tested:
             if self.isolated:
                 return NodeType.being_lateral_flow_tested_isolated

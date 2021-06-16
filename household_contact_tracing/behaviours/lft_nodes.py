@@ -1,6 +1,6 @@
 from typing import Callable, List
 
-from household_contact_tracing.network.network import Node, Network
+from household_contact_tracing.network import Node, Network
 
 
 def lft_nodes(network: Network, time: int, prob_lfa_positive: Callable, params: dict) -> List[Node]:

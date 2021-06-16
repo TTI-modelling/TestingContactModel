@@ -3,7 +3,7 @@ from typing import Callable
 from copy import deepcopy
 
 from household_contact_tracing.infection import Infection
-from household_contact_tracing.network.network import Network
+from household_contact_tracing.network import Network
 from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.simulation_states import RunningState, ExtinctState,\
     MaxNodesInfectiousState, TimedOutState

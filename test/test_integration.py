@@ -7,7 +7,7 @@ from collections import Counter
 
 import pytest
 
-from household_contact_tracing.network.network import EdgeType, NodeType, Network, PositivePolicy
+from household_contact_tracing.network import EdgeType, NodeType, Network, PositivePolicy
 from household_contact_tracing.simulation_controller import BranchingProcessController
 import household_contact_tracing.branching_process_models as bpm
 from household_contact_tracing.simulation_model import SimulationModel

@@ -1,14 +1,12 @@
 from __future__ import annotations
 import sys
 from abc import ABC, abstractmethod
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 import numpy
 import numpy as np
 
+from household_contact_tracing.network import Network, Household, Node
 from household_contact_tracing.parameterised import Parameterised
-
-if TYPE_CHECKING:
-    from household_contact_tracing.network.network import Network, Node, Household
 
 
 class NewInfection(ABC, Parameterised):

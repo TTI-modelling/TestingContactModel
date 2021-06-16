@@ -1,11 +1,15 @@
 import math
+from typing import Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from household_contact_tracing.branching_process_models import HouseholdLevelTracing, \
+    IndividualLevelTracing, IndividualTracingDailyTesting
 from household_contact_tracing.views.simulation_view import SimulationView
-from household_contact_tracing.network.network import NodeType
-from household_contact_tracing.simulation_model import SimulationModel
+
+from household_contact_tracing.network import NodeType
+from household_contact_tracing.simulation_model import SimulationModel, BranchingProcessModel
 from household_contact_tracing.views.colors import node_colours
 
 
@@ -14,7 +18,7 @@ class TimelineGraphView(SimulationView):
         Shows how views are now decoupled from model code and each other.
     """
 
-    def __init__(self, controller, model: SimulationModel):
+    def __init__(self, controller, model: BranchingProcessModel):
         # Viewers own copies of controller and model (MVC pattern)
         # ... but controller not required yet (no input collected from view)
         # self.controller = controller
@@ -46,7 +50,9 @@ class TimelineGraphView(SimulationView):
         """ Respond to changes in graph (nodes/households network) """
         pass
 
-    def model_step_increment(self, subject: SimulationModel):
+    def model_step_increment(self, subject: Union[HouseholdLevelTracing,
+                                                  IndividualLevelTracing,
+                                                  IndividualTracingDailyTesting]):
         """ Respond to single step increment in simulation """
         self.increment_timeline(subject.network)
 

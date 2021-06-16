@@ -2,7 +2,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import List, Callable
 
-from household_contact_tracing.network.network import Network, TestType, PositivePolicy, Node
+from household_contact_tracing.network import Network, TestType, PositivePolicy, Node
 from household_contact_tracing.parameterised import Parameterised
 
 

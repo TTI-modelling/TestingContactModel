@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from household_contact_tracing.network import Node
 from household_contact_tracing.parameterised import Parameterised
 
 
@@ -38,7 +39,7 @@ class ContactRateReduction(ABC, Parameterised):
         self.update_params(params)
 
     @abstractmethod
-    def get_contact_rate_reduction(self, node) -> int:
+    def get_contact_rate_reduction(self, node: Node) -> int:
         """
         Returns a contact rate reduction, depending upon a nodes current status and various
         isolation parameters
@@ -52,7 +53,7 @@ class ContactRateReduction(ABC, Parameterised):
 
 class ContactRateReductionHouseholdLevelTracing(ContactRateReduction):
 
-    def get_contact_rate_reduction(self, node) -> int:
+    def get_contact_rate_reduction(self, node: Node) -> int:
         """Returns a contact rate reduction, depending upon a nodes current status and various
         isolation parameters
         """
@@ -68,7 +69,7 @@ class ContactRateReductionHouseholdLevelTracing(ContactRateReduction):
 
 class ContactRateReductionIndividualTracingDaily(ContactRateReduction):
 
-    def get_contact_rate_reduction(self, node) -> int:
+    def get_contact_rate_reduction(self, node: Node) -> int:
         """This method overrides the default behaviour. Previously the override behaviour allowed
         he global contact reduction to vary by household size.
 

@@ -2,10 +2,9 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Callable
-
 import numpy as np
 
-from household_contact_tracing.network.network import Network, Household, EdgeType, Node, TestType
+from household_contact_tracing.network import Network, Household, EdgeType, TestType
 from household_contact_tracing.parameterised import Parameterised
 
 
@@ -42,7 +41,7 @@ class IncrementTracing(ABC, Parameterised):
 
     """
 
-    def __init__(self, network: Network, params: dict):
+    def __init__(self, network: ContactTracingNetwork, params: dict):
         self.network = network
         self.do_2_step = False
         self.contact_tracing_success_prob = 0.5
@@ -195,12 +194,12 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
 
 class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
 
-    def __init__(self, network: Network, params: dict, prob_pcr_positive: Callable):
+    def __init__(self, network: ContactTracingNetwork, params: dict, prob_pcr_positive: Callable):
 
         super().__init__(network, params)
         self.prob_pcr_positive = prob_pcr_positive
 
-    def pcr_test_node(self, node: Node, time: int, prob_pcr_positive: Callable):
+    def pcr_test_node(self, node: ContactTracingNode, time: int, prob_pcr_positive: Callable):
         node.received_result = True
         infectious_age_when_tested = time - node.testing_delay - node.time_infected
         prob_positive_result = prob_pcr_positive(infectious_age_when_tested)
@@ -259,7 +258,7 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
                 if not node.propagated_contact_tracing:
                     self.propagate_contact_tracing(node, time)
 
-    def propagate_contact_tracing(self, node: Node, time: int):
+    def propagate_contact_tracing(self, node: ContactTracingNode, time: int):
         """
         To be called after a node in a household either reports their symptoms, and gets tested,
         when a household that is under surveillance develops symptoms + gets tested.
@@ -391,7 +390,7 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
                             if not node.propagated_contact_tracing:
                                 self.propagate_contact_tracing(node, time)
 
-    def propagate_contact_tracing(self, node: Node, time: int):
+    def propagate_contact_tracing(self, node: ContactTracingNode, time: int):
         """
         To be called after a node in a household either reports their symptoms, and gets tested,
         when a household that is under surveillance develops symptoms + gets tested.
