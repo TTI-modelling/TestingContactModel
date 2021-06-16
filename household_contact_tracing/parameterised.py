@@ -1,5 +1,4 @@
 import pathlib
-
 import jsonschema
 import yaml
 from loguru import logger
@@ -7,15 +6,17 @@ from loguru import logger
 
 class Parameterised:
     """
-        Base class containing logic for loading, checking and assignment of parameters
+        Base class containing logic for loading, checking and assignment of parameters using JSON schema validation
+        Inherit from this base class if parameter checking and loading is required.
 
         Methods
         -------
-            load_yaml(path: pathlib.Path) -> dict:
-                Open the yaml file for checking parameters
-            validate_parameters(params: dict, schema_path: str)
-                Create the starting infectives
-            .
+            load_yaml(path: pathlib.Path) -> dict
+                Static method: Open the yaml file for checking parameters
+            validate_parameters(cls, params: dict, schema_path: str)
+                Class method: Create the starting infectives
+            update_params(self, params: dict):
+                Update instance variables with anything in params.
 
     """
 
