@@ -15,7 +15,7 @@ class NodeType(Enum):
 
 class Network(ABC):
     """
-        A class used to store data in a graph/network format with nodes and their connecting edges.
+        A base-class used to store data in a graph/network format with nodes and their connecting edges.
         Uses networkx as storage tool.
 
         Attributes
@@ -54,9 +54,9 @@ class Network(ABC):
         """Returns the number of nodes of type `node_type`."""
         return sum([node.node_type() == node_type for node in self.all_nodes()])
 
-class Node:
+class Node(ABC):
     """
-        A class used to store the nodes of a graph/network format.
+        A base class used to store the nodes of a graph/network format.
         Uses networkx as storage tool.
 
         Attributes
