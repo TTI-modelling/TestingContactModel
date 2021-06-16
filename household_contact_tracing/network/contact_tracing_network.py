@@ -55,7 +55,30 @@ class PositivePolicy(Enum):
     only_quarantine = 3
 
 
-class ContactTracingNetwork(Network, Parameterised):
+class ContactTracingNetwork(Network):
+    """
+        A class used to store contact tracing data in a graph/network format with nodes and their connecting edges.
+        Inherits from Network, and therefore uses networkx as storage tool.
+
+        Attributes
+        ----------
+        _house_dict (Dict[int, Household])
+            list of households with associated ids
+
+        Methods
+        -------
+        add_household(self, house_size: int, infected_by: Optional[Household],
+                      propensity_trace_app: bool,
+                      additional_attributes: Optional[dict] = None) -> Household:
+
+        add_node(self, time_infected, household_id, isolated, will_uptake_isolation,
+                 propensity_imperfect_isolation, asymptomatic, symptom_onset_time,
+                 pseudo_symptom_onset_time, recovery_time, will_report_infection,
+                 time_of_reporting, has_contact_tracing_app, contact_traced, testing_delay=0,
+                 additional_attributes: Optional[dict] = None,
+                 infecting_node: Optional[Node] = None, completed_isolation=False) -> Node:
+
+    """
 
     def __init__(self):
         # Call superclass constructor
@@ -159,6 +182,18 @@ class ContactTracingNetwork(Network, Parameterised):
 
 
 class ContactTracingNode(Node, Parameterised):
+    """
+        A class used to store contact tracing node data.
+        Inherits from Node
+        Inherits from Parameterised to handle validation and updating of large number of parameters
+
+        Methods
+        -------
+        node_type(self, time=None) -> NodeType:
+            Get the NodeType of the node
+
+
+    """
     def __init__(self, node_id: int, time_infected: int, household: Household, isolated: bool,
                  will_uptake_isolation: bool, propensity_imperfect_isolation: bool,
                  asymptomatic: bool, symptom_onset_time: float, pseudo_symptom_onset_time: int,
@@ -308,6 +343,25 @@ class ContactTracingNode(Node, Parameterised):
 
 
 class Household:
+    """
+        A class used to store contact tracing household data.
+        Inherits from Node
+        Inherits from Parameterised to handle validation and updating of large number of parameters
+
+        Attributes
+        ----------
+        network (Network)
+            The network that this household is a member of
+        id (int)
+            ID of the household
+        size (int)
+            The number of nodes contained within the household
+
+        Methods
+        -------
+        node_type(self, time=None) -> NodeType:
+            Get the NodeType of the node
+    """
     def __init__(self, network: Network, house_id: int,
                  house_size: int, infected_by: Optional[Household],
                  propensity_trace_app: bool, additional_attributes: Optional[dict] = None):
