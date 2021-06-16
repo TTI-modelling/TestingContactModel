@@ -3,10 +3,10 @@ from abc import ABC, abstractmethod
 from typing import List, Callable
 
 from household_contact_tracing.network import Network, TestType, PositivePolicy, Node
-from household_contact_tracing.utilities import update_params
+from household_contact_tracing.parameterised import Parameterised
 
 
-class Isolation(ABC):
+class Isolation(ABC, Parameterised):
     """
         An abstract base class used to represent the highest level Isolation behaviour.
 
@@ -44,7 +44,7 @@ class Isolation(ABC):
         self.household_positive_policy = PositivePolicy.lfa_testing_no_quarantine
         self.LFA_testing_requires_confirmatory_PCR = False
 
-        update_params(self, params)
+        self.update_params(params)
 
     @abstractmethod
     def isolate_self_reporting_cases(self, time: int):

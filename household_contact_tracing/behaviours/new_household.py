@@ -4,10 +4,10 @@ from typing import Optional, List
 import numpy
 
 from household_contact_tracing.network import Network, Household
-from household_contact_tracing.utilities import update_params
+from household_contact_tracing.parameterised import Parameterised
 
 
-class NewHousehold(ABC):
+class NewHousehold(ABC, Parameterised):
     """
         An abstract base class used to represent the highest level 'new household' behaviour.
 
@@ -46,7 +46,7 @@ class NewHousehold(ABC):
         self.house_size_probs = [0.294591195, 0.345336927, 0.154070081, 0.139478886,
                                  0.045067385, 0.021455526]
 
-        update_params(self, params)
+        self.update_params(params)
 
         # Calculate the expected local contacts
         expected_local_contacts = [self.local_contact_probs[i] * i for i in range(6)]

@@ -1,12 +1,11 @@
 from __future__ import annotations
-
 from typing import Optional, Iterator, List, Tuple, Dict, Callable
-from enum import Enum
-
+from typing import Iterator
 import networkx as nx
+from enum import Enum
 import numpy
 
-from household_contact_tracing.utilities import update_params
+from household_contact_tracing.parameterised import Parameterised
 
 
 class EdgeType(Enum):
@@ -19,6 +18,7 @@ class EdgeType(Enum):
 
 
 class NodeType(Enum):
+    """Describes the status of node infection/testing."""
     default = 0
     isolated = 1
     received_pos_test_pcr = 3
@@ -58,32 +58,44 @@ class PositivePolicy(Enum):
 
 
 class Network:
-    def __init__(self):
-        # Call superclass constructor
-        self.graph = nx.Graph()
-        self._house_dict: Dict[int, Household] = {}
+    """
+        A class used to store contact tracing data in a graph/network format with nodes and their connecting edges.
+        Uses networkx as storage tool.
 
-    def add_household(self, house_size: int, infected_by: Optional[Household],
+        Attributes
+        ----------
+        graph (nx.Graph)
+            the persistent storage of graph data
+
+        _house_dict (Dict[int, Household])
+            list of households with associated ids
+
+        Methods
+        -------
+        add_household(self, house_size: int, infected_by: Optional[Household],
                       propensity_trace_app: bool,
                       additional_attributes: Optional[dict] = None) -> Household:
 
-        new_house_id = self.house_count + 1
+        add_node(self, time_infected, household_id, isolated, will_uptake_isolation,
+                 propensity_imperfect_isolation, asymptomatic, symptom_onset_time,
+                 pseudo_symptom_onset_time, recovery_time, will_report_infection,
+                 time_of_reporting, has_contact_tracing_app, contact_traced, testing_delay=0,
+                 additional_attributes: Optional[dict] = None,
+                 infecting_node: Optional[Node] = None, completed_isolation=False) -> Node:
 
-        new_household = Household(self, new_house_id, house_size,
-                                  infected_by, propensity_trace_app, additional_attributes)
-        self._house_dict[new_house_id] = new_household
-        return new_household
+    """
 
-    def household(self, house_id: int) -> Household:
-        return self._house_dict[house_id]
-
-    @property
-    def house_count(self):
-        return len(self._house_dict)
+    def __init__(self):
+        self.graph = nx.Graph()
+        self._house_dict: Dict[int, Household] = {}
 
     @property
     def node_count(self):
         return nx.number_of_nodes(self.graph)
+
+    @property
+    def house_count(self):
+        return len(self._house_dict)
 
     @property
     def all_households(self) -> Iterator[Household]:
@@ -110,13 +122,35 @@ class Network:
         """
         return self.is_isomorphic(other)
 
-    def count_non_recovered_nodes(self) -> int:
-        """Returns the number of nodes not in the recovered state."""
-        return len([node for node in self.all_nodes() if not node.recovered])
+    def node(self, node_id: int) -> Node:
+        """Return the Node from the Network with `node_id`."""
+        return self.graph.nodes[node_id]['node_obj']
+
+    def all_nodes(self) -> Iterator[Node]:
+        """Return a list of all nodes in the Network"""
+        return (self.node(n) for n in self.graph)
 
     def count_nodes(self, node_type: NodeType) -> int:
         """Returns the number of nodes of type `node_type`."""
         return sum([node.node_type() == node_type for node in self.all_nodes()])
+
+    def add_household(self, house_size: int, infected_by: Optional[Household],
+                      propensity_trace_app: bool,
+                      additional_attributes: Optional[dict] = None) -> Household:
+
+        new_house_id = self.house_count + 1
+
+        new_household = Household(self, new_house_id, house_size,
+                                  infected_by, propensity_trace_app, additional_attributes)
+        self._house_dict[new_house_id] = new_household
+        return new_household
+
+    def household(self, house_id: int) -> Household:
+        return self._house_dict[house_id]
+
+    def count_non_recovered_nodes(self) -> int:
+        """Returns the number of nodes not in the recovered state."""
+        return len([node for node in self.all_nodes() if not node.recovered])
 
     def get_edge_between_household(self, house1: Household, house2: Household) -> Tuple[int, int]:
         """Get the id's of the two nodes that connect households."""
@@ -158,14 +192,6 @@ class Network:
         self.graph.nodes[new_node_id]['node_obj'] = node
         return node
 
-    def node(self, node_id: int) -> Node:
-        """Return the Node from the Network with `node_id`."""
-        return self.graph.nodes[node_id]['node_obj']
-
-    def all_nodes(self) -> Iterator[Node]:
-        """Return a list of all nodes in the Network"""
-        return (self.node(n) for n in self.graph)
-
     def edge_types(self) -> List[EdgeType]:
         """Return a list of edge types in the network."""
         return [self.graph.edges[edge]["edge_type"] for edge in self.graph.edges]
@@ -185,8 +211,24 @@ class Network:
             self.graph.edges[edge[0], edge[1]].update({"edge_type": new_edge_type})
 
 
-class Node:
+class Node(Parameterised):
+    """
+        A class used to store contact tracing node data.
+        Uses networkx as storage tool.
+        Inherits from Parameterised to handle validation and updating of large number of parameters
 
+        Attributes
+        ----------
+        id (int)
+            the id of the node
+
+        Methods
+        -------
+        node_type(self, time=None) -> NodeType:
+            Get the NodeType of the node
+
+
+    """
     def __init__(self, node_id: int, time_infected: int, household: Household, isolated: bool,
                  will_uptake_isolation: bool, propensity_imperfect_isolation: bool,
                  asymptomatic: bool, symptom_onset_time: float, pseudo_symptom_onset_time: int,
@@ -231,7 +273,7 @@ class Node:
         self.propensity_to_miss_lfa_tests = None
 
         # Update instance variables with anything in `additional_attributes`
-        update_params(self, additional_attributes)
+        self.update_params(additional_attributes)
 
     def time_relative_to_symptom_onset(self, time: int) -> int:
         # asymptomatics do not have a symptom onset time
@@ -260,7 +302,11 @@ class Node:
         return InfectionStatus.unknown_infection
 
     def node_type(self, time=None) -> NodeType:
-        """Returns a node type, given the current status of the node."""
+        """Returns a node type, given the current status of the node.
+
+            params
+                time (int): The current increment / step number (e.g. day number) of the simulation
+        """
         if self.being_lateral_flow_tested:
             if self.isolated:
                 return NodeType.being_lateral_flow_tested_isolated
@@ -330,6 +376,25 @@ class Node:
 
 
 class Household:
+    """
+        A class used to store contact tracing household data.
+        Inherits from Node
+        Inherits from Parameterised to handle validation and updating of large number of parameters
+
+        Attributes
+        ----------
+        network (Network)
+            The network that this household is a member of
+        id (int)
+            ID of the household
+        size (int)
+            The number of nodes contained within the household
+
+        Methods
+        -------
+        node_type(self, time=None) -> NodeType:
+            Get the NodeType of the node
+    """
     def __init__(self, network: Network, house_id: int,
                  house_size: int, infected_by: Optional[Household],
                  propensity_trace_app: bool, additional_attributes: Optional[dict] = None):

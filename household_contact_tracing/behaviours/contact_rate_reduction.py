@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 
-from household_contact_tracing.utilities import update_params
+from household_contact_tracing.network import Node
+from household_contact_tracing.parameterised import Parameterised
 
 
-class ContactRateReduction(ABC):
+class ContactRateReduction(ABC, Parameterised):
     """
         An abstract base class used to represent the highest level 'Contact Rate Reduction' behaviour.
 
@@ -35,10 +36,10 @@ class ContactRateReduction(ABC):
         self.global_contact_reduction_imperfect_quarantine = 0
         self.global_contact_reduction_risky_behaviour = 0
 
-        update_params(self, params)
+        self.update_params(params)
 
     @abstractmethod
-    def get_contact_rate_reduction(self, node) -> int:
+    def get_contact_rate_reduction(self, node: Node) -> int:
         """
         Returns a contact rate reduction, depending upon a nodes current status and various
         isolation parameters
@@ -52,7 +53,7 @@ class ContactRateReduction(ABC):
 
 class ContactRateReductionHouseholdLevelTracing(ContactRateReduction):
 
-    def get_contact_rate_reduction(self, node) -> int:
+    def get_contact_rate_reduction(self, node: Node) -> int:
         """Returns a contact rate reduction, depending upon a nodes current status and various
         isolation parameters
         """
@@ -68,7 +69,7 @@ class ContactRateReductionHouseholdLevelTracing(ContactRateReduction):
 
 class ContactRateReductionIndividualTracingDaily(ContactRateReduction):
 
-    def get_contact_rate_reduction(self, node) -> int:
+    def get_contact_rate_reduction(self, node: Node) -> int:
         """This method overrides the default behaviour. Previously the override behaviour allowed
         he global contact reduction to vary by household size.
 

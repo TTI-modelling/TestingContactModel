@@ -1,12 +1,11 @@
 import copy
+import pytest
 
 from household_contact_tracing.behaviours.increment_tracing import \
     IncrementTracingIndividualDailyTesting
 from household_contact_tracing.behaviours.isolation import DailyTestingIsolation
 from household_contact_tracing.behaviours.lft_nodes import lft_nodes
 from household_contact_tracing.branching_process_models import IndividualTracingDailyTesting
-import pytest
-
 from household_contact_tracing.network import PositivePolicy
 
 default_params = {"outside_household_infectivity_scaling": 0.3,

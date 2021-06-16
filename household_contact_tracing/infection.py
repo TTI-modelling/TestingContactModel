@@ -4,18 +4,31 @@ import numpy as np
 import numpy.random as npr
 from typing import Type
 
-from household_contact_tracing.behaviours.contact_rate_reduction import \
-    ContactRateReduction
+from household_contact_tracing.behaviours.contact_rate_reduction import ContactRateReduction
 from household_contact_tracing.behaviours.new_household import NewHousehold
 from household_contact_tracing.behaviours.new_infection import NewInfection
-from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, \
-    compute_negbin_cdf
+from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
 from household_contact_tracing.network import EdgeType, Network, Node
-from household_contact_tracing.utilities import update_params
+from household_contact_tracing.parameterised import Parameterised
 
 
-class Infection:
-    """Logic for creation of infectives and daily increment of infection."""
+class Infection(Parameterised):
+    """
+        Logic for creation of infectives and daily increment of infection.
+
+        Attributes
+        ----------
+        network : Network
+            the persistent storage of model data
+
+        Methods
+        -------
+            initialise(self):
+                # Create the starting infectives
+            increment(self, time):
+                Create a new days worth of infections.
+
+    """
 
     def __init__(self, network: Network, new_household: Type[NewHousehold],
                  new_infection: Type[NewInfection],
@@ -35,7 +48,7 @@ class Infection:
         self.starting_infections = 1
         self.household_pairwise_survival_prob = 0.2
 
-        update_params(self, params)
+        self.update_params(params)
 
         household_size = len(self.total_contact_means)
 

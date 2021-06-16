@@ -7,7 +7,7 @@ from household_contact_tracing.network import Network
 from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.simulation_states import RunningState, ExtinctState,\
     MaxNodesInfectiousState, TimedOutState
-from household_contact_tracing.parameters import validate_parameters
+from household_contact_tracing.parameterised import Parameterised
 from household_contact_tracing.behaviours.new_household import NewHouseholdLevel, \
     NewHouseholdIndividualTracingDailyTesting
 from household_contact_tracing.behaviours.contact_rate_reduction import \
@@ -20,7 +20,7 @@ from household_contact_tracing.behaviours.lft_nodes import lft_nodes
 import household_contact_tracing.behaviours.new_infection as new_infection
 
 
-class HouseholdLevelTracing(BranchingProcessModel):
+class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
     """
         A class used to represent a simulation of contact tracing of households only,
          (without contacting every individual and their contacts)
@@ -58,7 +58,7 @@ class HouseholdLevelTracing(BranchingProcessModel):
 
         self.params = params
         # Parse parameters against schema to check they are valid
-        validate_parameters(params, os.path.join(self.root_dir, self.schema_path))
+        self.validate_parameters(params, os.path.join(self.root_dir, self.schema_path))
         # Call parent init
         BranchingProcessModel.__init__(self)
 

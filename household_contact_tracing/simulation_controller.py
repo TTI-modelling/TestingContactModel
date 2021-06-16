@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.views.shell_view import ShellView
