@@ -14,6 +14,16 @@ class NodeType(Enum):
 
 
 class Network(ABC):
+    """
+        A class used to store data in a graph/network format with nodes and their connecting edges.
+        Uses networkx as storage tool.
+
+        Attributes
+        ----------
+        graph (nx.Graph)
+            the persistent storage of graph data
+
+    """
     def __init__(self):
         # Call superclass constructor
         self.graph = nx.Graph()
@@ -45,6 +55,21 @@ class Network(ABC):
         return sum([node.node_type() == node_type for node in self.all_nodes()])
 
 class Node:
+    """
+        A class used to store the nodes of a graph/network format.
+        Uses networkx as storage tool.
+
+        Attributes
+        ----------
+        id (int)
+            the id of the node
+
+        Methods
+        -------
+        node_type(self, time=None) -> NodeType:
+            Returns a node type, given the current status of the node.
+
+    """
     def __init__(self, node_id: int):
         self.id = node_id
 
