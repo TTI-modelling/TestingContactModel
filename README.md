@@ -14,6 +14,7 @@ The sections below are:
 - [Testing](#testing) 
   - [Unit testing](#unit-testing)
 - [Logging](#logging)
+- [Design](#design)  
 - [Contributing](#contributing)
 - [Copyright and Licensing](#copyright--licensing)
 
@@ -142,6 +143,10 @@ A set of python pytest test files can be found in the `test` directory, and can 
 
 ## Logging
 [Todo]
+
+## UML Design
+
+![Current UML design](./docs/current_uml.png "Current UML: Last updated 17/06/2021")
 
 ## Contributing
 
