@@ -144,9 +144,10 @@ A set of python pytest test files can be found in the `test` directory, and can 
 ## Logging
 [Todo]
 
-## UML Design
+## Software Design
 
-![Current UML design](../docs/current_uml.png "Current UML: Last updated 17/06/2021")
+A UML diagram is included in the `docs` folder, which gives a high level view of the classes and patterns used to 
+build the simulation code.
 
 ## Contributing
 
