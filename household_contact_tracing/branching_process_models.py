@@ -71,6 +71,7 @@ class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
         self.time = 0
 
     def _initialise_infection(self):
+        """ Initialise an Infection class, passing in the required behaviours into its constructor """
         return Infection(self.network,
                          NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel,
@@ -78,6 +79,7 @@ class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
                          self.params)
 
     def _initialise_intervention(self):
+        """ Initialise an Intervention class, passing in the required behaviours into its constructor """
         return Intervention(self.network,
                             isolation.HouseholdIsolation,
                             increment.IncrementTracingHouseholdLevel,
@@ -206,6 +208,7 @@ class IndividualLevelTracing(HouseholdLevelTracing):
     schema_path = "schemas/uk_model.json"
 
     def _initialise_infection(self):
+        """ Initialise an Infection class, passing in the required behaviours into its constructor """
         return Infection(self.network,
                          NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel,
@@ -213,6 +216,7 @@ class IndividualLevelTracing(HouseholdLevelTracing):
                          self.params)
 
     def _initialise_intervention(self):
+        """ Initialise an Intervention class, passing in the required behaviours into its constructor """
         return Intervention(self.network,
                             isolation.IndividualIsolation,
                             increment.IncrementTracingIndividualLevel,
@@ -256,12 +260,14 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
     schema_path = "schemas/contact_model_test.json"
 
     def _initialise_infection(self):
+        """ Initialise an Infection class, passing in the required behaviours into its constructor """
         return Infection(self.network,
                          NewHouseholdIndividualTracingDailyTesting,
                          new_infection.NewInfectionIndividualTracingDailyTesting,
                          ContactRateReductionIndividualTracingDaily,
                          self.params)
     def _initialise_intervention(self):
+        """ Initialise an Intervention class, passing in the required behaviours into its constructor """
         return Intervention(self.network,
                             isolation.DailyTestingIsolation,
                             increment.IncrementTracingIndividualDailyTesting,

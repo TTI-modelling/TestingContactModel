@@ -10,6 +10,7 @@ from household_contact_tracing.views.timeline_graph_view import TimelineGraphVie
 class SimulationController(ABC):
     """
         Simulation Controller (MVC pattern)
+        This controller owns both the model and the views, and is the mediator
         Sub-class if a need for different controllers  arises.
 
         Attributes
