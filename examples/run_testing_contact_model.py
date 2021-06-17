@@ -1,7 +1,7 @@
 from household_contact_tracing.behaviours.increment_tracing import \
     IncrementTracingIndividualDailyTesting
 from household_contact_tracing.behaviours.isolation import DailyTestingIsolation
-from household_contact_tracing.behaviours.lft_nodes import lft_nodes
+from household_contact_tracing.intervention import Intervention
 from household_contact_tracing.network import PositivePolicy
 from household_contact_tracing.simulation_controller import BranchingProcessController
 from household_contact_tracing.branching_process_models import IndividualTracingDailyTesting
@@ -147,7 +147,7 @@ def recreate_pytest_2():
 
     model.network.node(1).being_lateral_flow_tested = True
 
-    positive_nodes = lft_nodes(model.network, model.time, prob_lfa_positive, params)
+    positive_nodes = model.intervention.lft_nodes(model.time, prob_lfa_positive)
     new_isolation = DailyTestingIsolation(model.network, params)
 
     new_isolation.isolate_positive_lateral_flow_tests(model.time, positive_nodes)

@@ -3,6 +3,7 @@ from typing import Callable
 from copy import deepcopy
 
 from household_contact_tracing.infection import Infection
+from household_contact_tracing.intervention import Intervention
 from household_contact_tracing.network import Network
 from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.simulation_states import RunningState, ExtinctState,\
@@ -12,10 +13,8 @@ from household_contact_tracing.behaviours.new_household import NewHouseholdLevel
     NewHouseholdIndividualTracingDailyTesting
 from household_contact_tracing.behaviours.contact_rate_reduction import \
     ContactRateReductionHouseholdLevelTracing, ContactRateReductionIndividualTracingDaily
-import household_contact_tracing.behaviours.release_nodes as release_nodes
 import household_contact_tracing.behaviours.increment_tracing as increment
 import household_contact_tracing.behaviours.isolation as isolation
-from household_contact_tracing.behaviours.lft_nodes import lft_nodes
 import household_contact_tracing.behaviours.new_infection as new_infection
 
 
@@ -65,17 +64,22 @@ class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
         self.network = Network()
 
         # Set strategies (Strategy pattern)
-        self.infection = self._initialise_infection(self.network)
+        self.infection = self._initialise_infection()
+        self.intervention = self._initialise_intervention()
 
         # Set the simulated time to the start (days)
         self.time = 0
 
-    def _initialise_infection(self, network: Network):
-        return Infection(network,
+    def _initialise_infection(self):
+        return Infection(self.network,
                          NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel,
                          ContactRateReductionHouseholdLevelTracing,
                          self.params)
+
+    def _initialise_intervention(self):
+        return Intervention(self.network,
+                            self.params)
 
     def simulate_one_step(self):
         """Simulates one day of the infection and contact tracing."""
@@ -93,10 +97,10 @@ class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
         for step in range(5):
             new_increment.increment_contact_tracing(self.time)
         # node recoveries
-        self.infection.perform_recoveries(self.network, self.time)
+        self.infection.perform_recoveries(self.time)
         # release nodes from quarantine or isolation if the time has arrived
-        release_nodes.completed_isolation(self.network, self.time, self.params)
-        release_nodes.completed_quarantine(self.network, self.time, self.params)
+        self.intervention.completed_isolation(self.time)
+        self.intervention.completed_quarantine(self.time)
         # increment time
         self.time += 1
 
@@ -200,8 +204,8 @@ class IndividualLevelTracing(HouseholdLevelTracing):
 
     schema_path = "schemas/uk_model.json"
 
-    def _initialise_infection(self, network: Network):
-        return Infection(network,
+    def _initialise_infection(self):
+        return Infection(self.network,
                          NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel,
                          ContactRateReductionHouseholdLevelTracing,
@@ -224,10 +228,10 @@ class IndividualLevelTracing(HouseholdLevelTracing):
         for step in range(5):
             new_increment.increment_contact_tracing(self.time)
         # node recoveries
-        self.infection.perform_recoveries(self.network, self.time)
+        self.infection.perform_recoveries(self.time)
         # release nodes from quarantine or isolation if the time has arrived
-        release_nodes.completed_isolation(self.network, self.time, self.params)
-        release_nodes.completed_quarantine(self.network, self.time, self.params)
+        self.intervention.completed_isolation(self.time)
+        self.intervention.completed_quarantine(self.time)
         # increment time
         self.time += 1
 
@@ -246,8 +250,8 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
     """
     schema_path = "schemas/contact_model_test.json"
 
-    def _initialise_infection(self, network: Network):
-        return Infection(network,
+    def _initialise_infection(self):
+        return Infection(self.network,
                          NewHouseholdIndividualTracingDailyTesting,
                          new_infection.NewInfectionIndividualTracingDailyTesting,
                          ContactRateReductionIndividualTracingDaily,
@@ -268,7 +272,7 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
         new_isolation.update_households_contact_traced(self.time)
         new_isolation.update_isolation(self.time)
         # isolate self reporting nodes
-        positive_nodes = lft_nodes(self.network, self.time, self.prob_lfa_positive, self.params)
+        positive_nodes = self.intervention.lft_nodes(self.time, self.prob_lfa_positive)
         new_isolation.act_on_positive_LFA_tests(self.time, self.prob_pcr_positive, positive_nodes)
         # if we require PCR tests, to confirm infection we act on those
         if new_increment.LFA_testing_requires_confirmatory_PCR:
@@ -280,10 +284,10 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
         for _ in range(5):
             new_increment.increment_contact_tracing(self.time)
         # node recoveries
-        self.infection.perform_recoveries(self.network, self.time)
+        self.infection.perform_recoveries(self.time)
         # release nodes from quarantine or isolation if the time has arrived
-        release_nodes.completed_isolation(self.network, self.time, self.params)
-        release_nodes.completed_lateral_flow_testing(self.network, self.time, self.params)
+        self.intervention.completed_isolation(self.time)
+        self.intervention.completed_lateral_flow_testing(self.time)
 
         # increment time
         self.time += 1
