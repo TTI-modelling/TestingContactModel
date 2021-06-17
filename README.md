@@ -38,6 +38,7 @@ To improve or add further views, see the `Contributing` section.
 
 ```
 .
+├── docs
 ├── examples
 ├── household_contact_tracing
 │   ├── behaviours
@@ -153,7 +154,13 @@ build the simulation code.
 
 ### Extending functionality
 
-* 
+1. Design a new model, with combination of existing infection / intervention behaviours
+
+    Create a new branching process model (can be within `branching_process_models.py` or in a separate module). It
+    must inherit from `BranchingProcessModel` or one of its sub-classes (currently all contained within
+    `branching_process_model`.) A good idea would be to find a suitable `BranchingProcessModel` class to use as
+    a template. 
+
   
 ### Improvements to code
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
