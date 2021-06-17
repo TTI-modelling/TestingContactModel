@@ -4,7 +4,7 @@ import pytest
 from household_contact_tracing.behaviours.increment_tracing import \
     IncrementTracingIndividualDailyTesting
 from household_contact_tracing.behaviours.isolation import DailyTestingIsolation
-from household_contact_tracing.behaviours.lft_nodes import lft_nodes
+from household_contact_tracing.intervention import Intervention
 from household_contact_tracing.branching_process_models import IndividualTracingDailyTesting
 from household_contact_tracing.network import PositivePolicy
 
@@ -178,7 +178,7 @@ def test_get_positive_lateral_flow_nodes_default_exclusion(simple_model_high_tes
 
     model = simple_model_high_test_prob
 
-    assert lft_nodes(model.network, model.time, model.prob_lfa_positive, model.params) == []
+    assert model.intervention.lft_nodes(model.time, model.prob_lfa_positive) == []
 
 
 def test_get_positive_lateral_flow_nodes_timings(simple_model_high_test_prob):
@@ -191,7 +191,7 @@ def test_get_positive_lateral_flow_nodes_timings(simple_model_high_test_prob):
 
     node_of_interest.being_lateral_flow_tested = True
 
-    assert lft_nodes(model.network, model.time, model.prob_lfa_positive, model.params) == []
+    assert model.intervention.lft_nodes(model.time, model.prob_lfa_positive) == []
 
 
 def test_get_positive_lateral_flow_nodes(simple_model_high_test_prob):
@@ -206,8 +206,7 @@ def test_get_positive_lateral_flow_nodes(simple_model_high_test_prob):
 
     model.time = 5
 
-    assert lft_nodes(model.network, model.time,
-                     model.prob_lfa_positive, model.params) == [node_of_interest]
+    assert model.intervention.lft_nodes(model.time, model.prob_lfa_positive) == [node_of_interest]
 
 
 def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
@@ -267,7 +266,7 @@ def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: Indivi
 
     model.network.node(1).being_lateral_flow_tested = True
 
-    positive_nodes = lft_nodes(model.network, model.time, model.prob_lfa_positive, model.params)
+    positive_nodes = model.intervention.lft_nodes(model.time, model.prob_lfa_positive)
     new_isolation = DailyTestingIsolation(model.network, model.params)
     new_isolation.isolate_positive_lateral_flow_tests(model.time, positive_nodes)
 
@@ -325,7 +324,7 @@ def test_start_lateral_flow_testing_household_and_quarantine(
 
     model.network.node(1).being_lateral_flow_tested = True
 
-    positive_nodes = lft_nodes(model.network, model.time, model.prob_lfa_positive, model.params)
+    positive_nodes = model.intervention.lft_nodes(model.time, model.prob_lfa_positive)
 
     isolation = DailyTestingIsolation(model.network, model.params)
     isolation.isolate_positive_lateral_flow_tests(model.time, positive_nodes)
@@ -386,7 +385,7 @@ def test_household_contacts_quarantine_only(
     model.network.node(1).being_lateral_flow_tested = True
 
     # this line is required before the isolate_positive_lateral_flow_tests func can work
-    positive_nodes = lft_nodes(model.network, model.time, model.prob_lfa_positive, model.params)
+    positive_nodes = model.intervention.lft_nodes(model.time, model.prob_lfa_positive)
     isolation = DailyTestingIsolation(model.network, model.params)
     isolation.isolate_positive_lateral_flow_tests(model.time, positive_nodes)
 

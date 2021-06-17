@@ -260,14 +260,13 @@ class Infection(Parameterised):
         # We record which edges are within this household for visualisation later on
         infecting_node_household.within_house_edges.append((infecting_node.id, node_count))
 
-    @staticmethod
-    def perform_recoveries(network: Network, time: int):
+    def perform_recoveries(self, time: int):
         """
         Loops over all nodes in the branching process and determine recoveries.
 
         time - The current time of the process, if a nodes recovery time equals the current time, then it is set to the
         recovered state
         """
-        for node in network.all_nodes():
+        for node in self.network.all_nodes():
             if node.recovery_time == time:
                 node.recovered = True
