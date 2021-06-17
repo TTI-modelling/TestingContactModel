@@ -1,4 +1,3 @@
-"""Various methods of doing a day worth of contact tracing."""
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Callable
@@ -11,6 +10,7 @@ from household_contact_tracing.parameterised import Parameterised
 class IncrementTracing(ABC, Parameterised):
     """
         An abstract base class used to represent the highest level 'increment tracing' behaviour.
+        Implements contact tracing increments.
 
         Note:   This class forms part of a 'Strategy' pattern. All child classes implement a family of possible
                 behaviours or strategies (ways of incrementing contact tracing).
