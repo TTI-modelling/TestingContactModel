@@ -30,32 +30,33 @@ class Infection(Parameterised):
 
     """
 
-    def __init__(self, network: Network, new_household: Type[NewHousehold],
+    def __init__(self,
+                 network: Network,
+                 new_household: Type[NewHousehold],
                  new_infection: Type[NewInfection],
                  contact_rate_reduction: Type[ContactRateReduction], params: dict):
+
+        # Set the network
         self.network = network
 
+        # set infection input  parameters (create defaults then override with inputs if present)
         # The mean number of contacts made by each household
         self.total_contact_means = [7.238, 10.133, 11.419, 12.844, 14.535, 15.844]
-
         # Local contact probability:
         self.local_contact_probs = [0, 0.826, 0.795, 0.803, 0.787, 0.819]
-
-        # infection parameters
         self.outside_household_infectivity_scaling = 1.0
         self.overdispersion = 0.32
         self.asymptomatic_relative_infectivity = 0.5
         self.starting_infections = 1
         self.household_pairwise_survival_prob = 0.2
-
         self.update_params(params)
 
-        household_size = len(self.total_contact_means)
+        # Perform initial set-up calculations
 
         # Precomputing the cdf's for generating the overdispersed contact data
+        household_size = len(self.total_contact_means)
         self.cdf_dict = {i + 1: compute_negbin_cdf(self.total_contact_means[i], self.overdispersion)
                          for i in range(household_size)}
-
 
         self.symptomatic_local_infection_probs = self.compute_hh_infection_probs(self.household_pairwise_survival_prob)
         asymptomatic_household_pairwise_survival_prob = (1 - self.asymptomatic_relative_infectivity
@@ -74,12 +75,12 @@ class Infection(Parameterised):
                                                             self.asymptomatic_relative_infectivity *
                                                             current_rate_infection(day))
 
-        self.new_household = new_household(self.network, params, self.local_contact_probs,
-                                           self.total_contact_means)
-
+        # Set infection behaviours
+        self.new_household = new_household(self.network, params, self.local_contact_probs, self.total_contact_means)
         self.new_infection = new_infection(self.network, params)
         self.contact_rate_reduction = contact_rate_reduction(params)
 
+        # Initialise starting infections of simulation
         self.initialise()
 
     def initialise(self):

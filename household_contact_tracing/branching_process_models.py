@@ -79,6 +79,7 @@ class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
 
     def _initialise_intervention(self):
         return Intervention(self.network,
+                            isolation.HouseholdIsolation,
                             self.params)
 
     def simulate_one_step(self):
@@ -87,11 +88,11 @@ class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
         # Perform one day of the infection
         self.infection.increment(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
-        new_isolation = isolation.HouseholdIsolation(self.network, self.params)
-        new_isolation.isolate_self_reporting_cases(self.time)
+
+        self.intervention.isolation.isolate_self_reporting_cases(self.time)
         # isolate self-reporting-nodes while they wait for tests
-        new_isolation.update_households_contact_traced(self.time)
-        new_isolation.update_isolation(self.time)
+        self.intervention.isolation.update_households_contact_traced(self.time)
+        self.intervention.isolation.update_isolation(self.time)
         # propagate contact tracing
         new_increment = increment.IncrementTracingHouseholdLevel(self.network, self.params)
         for step in range(5):
@@ -211,17 +212,21 @@ class IndividualLevelTracing(HouseholdLevelTracing):
                          ContactRateReductionHouseholdLevelTracing,
                          self.params)
 
+    def _initialise_intervention(self):
+        return Intervention(self.network,
+                            isolation.IndividualIsolation,
+                            self.params)
+
     def simulate_one_step(self):
         """Simulates one day of the infection and contact tracing."""
 
         # Perform one day of the infection
         self.infection.increment(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
-        new_isolation = isolation.IndividualIsolation(self.network, self.params)
-        new_isolation.isolate_self_reporting_cases(self.time)
+        self.intervention.isolation.isolate_self_reporting_cases(self.time)
         # isolate self-reporting-nodes while they wait for tests
-        new_isolation.update_households_contact_traced(self.time)
-        new_isolation.update_isolation(self.time)
+        self.intervention.isolation.update_households_contact_traced(self.time)
+        self.intervention.isolation.update_isolation(self.time)
         # propagate contact tracing
         new_increment = increment.IncrementTracingIndividualLevel(self.network, self.params,
                                                                   self.prob_pcr_positive)
@@ -256,27 +261,30 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
                          new_infection.NewInfectionIndividualTracingDailyTesting,
                          ContactRateReductionIndividualTracingDaily,
                          self.params)
+    def _initialise_intervention(self):
+        return Intervention(self.network,
+                            isolation.DailyTestingIsolation,
+                            self.params)
 
     def simulate_one_step(self):
         """ Simulates one day of the infection and contact tracing.
         """
         # Set up objects to initialise parameters.
-        new_isolation = isolation.DailyTestingIsolation(self.network, self.params)
         new_increment = increment.IncrementTracingIndividualDailyTesting(self.network,
                                                                          self.params,
                                                                          self.prob_pcr_positive)
 
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
-        new_isolation.isolate_self_reporting_cases(self.time)
+        self.intervention.isolation.isolate_self_reporting_cases(self.time)
         # isolate self-reporting-nodes while they wait for tests
-        new_isolation.update_households_contact_traced(self.time)
-        new_isolation.update_isolation(self.time)
+        self.intervention.isolation.update_households_contact_traced(self.time)
+        self.intervention.isolation.update_isolation(self.time)
         # isolate self reporting nodes
         positive_nodes = self.intervention.lft_nodes(self.time, self.prob_lfa_positive)
-        new_isolation.act_on_positive_LFA_tests(self.time, self.prob_pcr_positive, positive_nodes)
+        self.intervention.isolation.act_on_positive_LFA_tests(self.time, self.prob_pcr_positive, positive_nodes)
         # if we require PCR tests, to confirm infection we act on those
         if new_increment.LFA_testing_requires_confirmatory_PCR:
-            new_isolation.act_on_confirmatory_pcr_results(self.time)
+            new_increment.act_on_confirmatory_pcr_results(self.time)
         # Perform one day of the infection
         self.infection.increment(self.time)
 
