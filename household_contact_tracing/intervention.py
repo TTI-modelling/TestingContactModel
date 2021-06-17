@@ -4,6 +4,7 @@ from typing import Callable, List, Type
 from household_contact_tracing.network import Network, Node, InfectionStatus, TestType
 from household_contact_tracing.parameterised import Parameterised
 from household_contact_tracing.behaviours.isolation import Isolation
+from household_contact_tracing.behaviours.increment_tracing import IncrementTracing
 
 
 class Intervention(Parameterised):
@@ -27,6 +28,7 @@ class Intervention(Parameterised):
     def __init__(self,
                  network: Network,
                  isolation: Type[Isolation],
+                 increment_tracing: Type[IncrementTracing],
                  params: dict):
 
         # Set the network
@@ -39,8 +41,9 @@ class Intervention(Parameterised):
         self.lateral_flow_testing_duration = 7
         self.update_params(params)
 
-        # Set infection behaviours
+        # Set intervention behaviours
         self.isolation = isolation(network, params)
+        self.increment_tracing = increment_tracing(network, params)
 
     def lft_nodes(self, time: int, prob_lfa_positive: Callable) -> List[Node]:
         """Performs a days worth of lateral flow testing.

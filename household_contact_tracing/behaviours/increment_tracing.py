@@ -22,17 +22,6 @@ class IncrementTracing(ABC, Parameterised):
         network: Network
             The store of Nodes and households used in the simulation
 
-        Todo descriptions for all attributes below
-        do_2_step
-        contact_tracing_success_prob
-        contact_trace_delay
-        number_of_days_to_trace_backwards
-        number_of_days_to_trace_forwards
-        recall_probability_fall_off
-        number_of_days_prior_to_LFA_result_to_trace: int
-        lfa_tested_nodes_book_pcr_on_symptom_onset
-        LFA_testing_requires_confirmatory_PCR
-
         Methods
         -------
 
@@ -194,10 +183,26 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
 
 class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
 
-    def __init__(self, network: Network, params: dict, prob_pcr_positive: Callable):
+    def __init__(self, network: Network, params: dict):
 
         super().__init__(network, params)
-        self.prob_pcr_positive = prob_pcr_positive
+        self.prob_pcr_positive = self.default_prob_pcr_positive
+
+    @property
+    def prob_pcr_positive(self) -> Callable[[int], float]:
+        return self._prob_pcr_positive
+
+    @prob_pcr_positive.setter
+    def prob_pcr_positive(self, fn: Callable[[int], float]):
+        self._prob_pcr_positive = fn
+
+    @staticmethod
+    def default_prob_pcr_positive(infectious_age):
+        """Default PCR test result probability."""
+        if infectious_age in [4, 5, 6]:
+            return 0
+        else:
+            return 0
 
     def pcr_test_node(self, node: Node, time: int, prob_pcr_positive: Callable):
         node.received_result = True

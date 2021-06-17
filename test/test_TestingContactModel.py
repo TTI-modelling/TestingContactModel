@@ -235,15 +235,12 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
     params["contact_tracing_success_prob"] = 1
 
     model = IndividualTracingDailyTesting(params)
-    model.prob_pcr_positive = prob_testing_positive_pcr_func
+    model.intervention.increment_tracing.prob_pcr_positive = prob_testing_positive_pcr_func
     model.prob_lfa_positive = prob_testing_positive_lfa_func
 
     model.infection.new_outside_household_infection(time=0, infecting_node=model.network.node(1))
 
-    increment_tracing = IncrementTracingIndividualDailyTesting(model.network,
-                                                               params,
-                                                               model.prob_pcr_positive)
-    increment_tracing.attempt_contact_trace_of_household(
+    model.intervention.increment_tracing.attempt_contact_trace_of_household(
         house_to=model.network.household(2),
         house_from=model.network.household(1),
         days_since_contact_occurred=0,
