@@ -86,10 +86,9 @@ def recreate_pytest_1():
     model.prob_pcr_positive = prob_pcr_positive
 
     model.infection.new_outside_household_infection(time=0, infecting_node=model.network.node(1))
-    new_increment_tracing = IncrementTracingIndividualDailyTesting(model.network, params,
-                                                                   prob_pcr_positive)
+    model.intervention.increment_tracing.prob_pcr_positive = prob_pcr_positive
 
-    new_increment_tracing.attempt_contact_trace_of_household(
+    model.intervention.increment_tracing.attempt_contact_trace_of_household(
         house_to=model.network.household(2),
         house_from=model.network.household(1),
         days_since_contact_occurred=0,
