@@ -14,6 +14,7 @@ The sections below are:
 - [Testing](#testing) 
   - [Unit testing](#unit-testing)
 - [Logging](#logging)
+- [Design](#design)  
 - [Contributing](#contributing)
 - [Copyright and Licensing](#copyright--licensing)
 
@@ -37,6 +38,7 @@ To improve or add further views, see the `Contributing` section.
 
 ```
 .
+├── docs
 ├── examples
 ├── household_contact_tracing
 │   ├── behaviours
@@ -143,13 +145,69 @@ A set of python pytest test files can be found in the `test` directory, and can 
 ## Logging
 [Todo]
 
+## Software Design
+
+A UML diagram is included in the `docs` folder, which gives a high level view of the classes and patterns used to 
+build the simulation code.
+
 ## Contributing
 
 ### Extending functionality
 
-* 
+Use the `current_UML.png` file (found in the `docs` folder) to help you visualise where any new amendments will
+fit in.  The following is intended as a guide, and assumes some knowledge of OO software design.
+
+## Behaviours
+
+1. Design a new model, with combination of existing infection / intervention behaviours
+
+    Create a new branching process model (can be within `branching_process_models.py` or in a separate module). It
+    must inherit from `BranchingProcessModel` or one of its sub-classes (currently all contained within
+    `branching_process_model`.) A good idea would be to find a suitable 'sibling' `BranchingProcessModel` class to use as
+    a template. Copy the sibling class and make any amendments to which behaviours are used. 
+    Behaviours are selected in the `_initialise_infection()` and `_initialise_intervention()` functions. See the 
+    `household_contact_tracing/behaviours` folder to see the available behaviours.
+   
+2. Writing new behaviours (subclassing existing behaviours)
+
+    See the modules in the `household_contact_tracing/behaviours` folder for current behaviours. Each of these
+    modules has an abstract base (highest level parent class that must be sub-classed and can't be directly 
+    instantiated.)  Below the abstract parent class is a set of sub-classes. Either inherit directly from
+    the abstract class, or one of its sub-classes in that module.  It may help to select a 'sibling' class 
+    suitable to use as a template, and make a copy of that and amend it as required.
+   
+    Select your new behaviour in the model, using the `_initialise_infection()` or `_initialise_intervention()` 
+    function as appropriate.
+   
+3. Writing new behaviours (creating new behaviours)
+
+    If the new required behaviour does not need to use inheritance to apply to different scenarios,
+    it can be written as a method and added to the Infection or Intervention class directly (these classes 
+    can be found within the `household_contact_tracing` folder, in `infection.py` and `intervention.py`).
+
+    See the modules in the `household_contact_tracing/behaviours` folder for current behaviours. 
+    It may help to select a 'sibling' module (.py) file to copy and use as a template for your new behaviour
+    module / set of classes.
+   
+    Once written, add usage of the new behaviour into the `Infection` or `Intervention` classes as required:
+    Add the new behaviour as a parameter contructor and use as required. In the model class 
+    (e.g. BranchingProcessModel within `branching_process_models.py`) select the new behaviour using the 
+    `_initialise_infection()` or `_initialise_intervention()` function as appropriate, passing it to the constructor.
+   
+## Views
+
+1. Add a new view and register it with the model, and add to the controller.
+    * Look at the views in the `household_contact_tracing/views` folder to see how these are created, copying the most 
+      appropriate one to use as a template. You will see that all views inherit from SimulationView
+      (`views/simulation_view.py`).  The views also contain a copy of the model, and use this to register themselves as 
+      observers of the model, signing up to events of interest, so that they can output any information back to the user.
   
-### Improvements to code
+    * Add the new view to the `BranchingProcessController` class (or other class inherited from `SimulationController). 
+      See others views added in that Controller class, to look at examples.   
+    
+
+  
+### General improvements to code
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 
