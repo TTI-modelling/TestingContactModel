@@ -3,8 +3,8 @@ from typing import Callable, List, Type
 
 from household_contact_tracing.network import Network, Node, InfectionStatus, TestType
 from household_contact_tracing.parameterised import Parameterised
-from household_contact_tracing.behaviours.isolation import Isolation
-from household_contact_tracing.behaviours.increment_tracing import IncrementTracing
+from household_contact_tracing.behaviours.intervention.isolation import Isolation
+from household_contact_tracing.behaviours.intervention.increment_tracing import IncrementTracing
 
 
 class Intervention(Parameterised):
@@ -94,7 +94,7 @@ class Intervention(Parameterised):
 
     def completed_isolation(self, time: int):
         """
-        Nodes leave self-isolation, rather than quarantine, when their infection status is either known
+        Nodes leave self-intervention, rather than quarantine, when their infection status is either known
         (ie tested) or when they are in a contact traced household and they develop symptoms (they
         might then go on to get a test, but they isolate regardless). Nodes in contact traced
         households do not have a will_report_infection probability: if they develop symptoms, they
@@ -102,7 +102,7 @@ class Intervention(Parameterised):
         infection.
 
         If it has been isolation_duration since these individuals have had symptom onset, then they are
-        released from isolation.
+        released from intervention.
         """
 
         for node in self.network.all_nodes():

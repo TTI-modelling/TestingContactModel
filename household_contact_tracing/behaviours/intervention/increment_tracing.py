@@ -58,13 +58,13 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
         * Looks for houses in the contact traced state, and checks them for symptoms. If any of them have symptoms,
         the house is isolated
 
-        The isolation function also assigns contact tracing times to any houses that had contact with that household
+        The intervention function also assigns contact tracing times to any houses that had contact with that household
 
         For each node that is contact traced
         """
 
         # Isolate all households under observation that now display symptoms (excludes those
-        # who will not take up isolation if prob <1)
+        # who will not take up intervention if prob <1)
         for node in self.network.all_nodes():
             if node.symptom_onset_time <= time:
                 if node.contact_traced:
@@ -242,13 +242,13 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
         * Looks for houses in the contact traced state, and checks them for symptoms. If any of them have symptoms, the
         house is isolated
 
-        The isolation function also assigns contact tracing times to any houses that had contact with that household
+        The intervention function also assigns contact tracing times to any houses that had contact with that household
 
         For each node that is contact traced
         """
 
         # Isolate all households under observation that now display symptoms (excludes those who will not take up
-        # isolation if prob <1)
+        # intervention if prob <1)
         self.receive_pcr_test_results(time, self.prob_pcr_positive)
 
         for node in self.network.all_nodes():

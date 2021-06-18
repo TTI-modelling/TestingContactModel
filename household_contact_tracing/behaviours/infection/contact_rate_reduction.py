@@ -27,7 +27,7 @@ class ContactRateReduction(ABC, Parameterised):
 
         get_contact_rate_reduction(self, node) -> int
             Returns a contact rate reduction, depending upon a nodes current status and various
-            isolation parameters
+            intervention parameters
 
     """
 
@@ -42,7 +42,7 @@ class ContactRateReduction(ABC, Parameterised):
     def get_contact_rate_reduction(self, node: Node) -> int:
         """
         Returns a contact rate reduction, depending upon a nodes current status and various
-        isolation parameters
+        intervention parameters
 
         Parameters
         -------
@@ -55,7 +55,7 @@ class ContactRateReductionHouseholdLevelTracing(ContactRateReduction):
 
     def get_contact_rate_reduction(self, node: Node) -> int:
         """Returns a contact rate reduction, depending upon a nodes current status and various
-        isolation parameters
+        intervention parameters
         """
 
         if node.isolated and node.propensity_imperfect_isolation:
@@ -79,14 +79,14 @@ class ContactRateReductionIndividualTracingDaily(ContactRateReduction):
 
         Remember that a contact rate reduction of 1 implies that 100% of contacts are stopped.
         """
-        # the isolated status should never apply to an individual who will not uptake isolation
+        # the isolated status should never apply to an individual who will not uptake intervention
 
         if node.isolated and not node.propensity_imperfect_isolation:
-            # perfect isolation
+            # perfect intervention
             return 1
 
         elif node.isolated and node.propensity_imperfect_isolation:
-            # imperfect isolation
+            # imperfect intervention
             return self.global_contact_reduction_imperfect_quarantine
 
         elif node.being_lateral_flow_tested and node.propensity_risky_behaviour_lfa_testing:

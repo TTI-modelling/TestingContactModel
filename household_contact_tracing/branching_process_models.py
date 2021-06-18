@@ -9,13 +9,13 @@ from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.simulation_states import RunningState, ExtinctState,\
     MaxNodesInfectiousState, TimedOutState
 from household_contact_tracing.parameterised import Parameterised
-from household_contact_tracing.behaviours.new_household import NewHouseholdLevel, \
+from household_contact_tracing.behaviours.infection.new_household import NewHouseholdLevel, \
     NewHouseholdIndividualTracingDailyTesting
-from household_contact_tracing.behaviours.contact_rate_reduction import \
+from household_contact_tracing.behaviours.infection.contact_rate_reduction import \
     ContactRateReductionHouseholdLevelTracing, ContactRateReductionIndividualTracingDaily
-import household_contact_tracing.behaviours.increment_tracing as increment
-import household_contact_tracing.behaviours.isolation as isolation
-import household_contact_tracing.behaviours.new_infection as new_infection
+import household_contact_tracing.behaviours.intervention.increment_tracing as increment
+import household_contact_tracing.behaviours.intervention.isolation as isolation
+import household_contact_tracing.behaviours.infection.new_infection as new_infection
 
 
 class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
@@ -101,7 +101,7 @@ class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
             self.intervention.increment_tracing.increment_contact_tracing(self.time)
         # node recoveries
         self.infection.perform_recoveries(self.time)
-        # release nodes from quarantine or isolation if the time has arrived
+        # release nodes from quarantine or intervention if the time has arrived
         self.intervention.completed_isolation(self.time)
         self.intervention.completed_quarantine(self.time)
         # increment time
@@ -238,7 +238,7 @@ class IndividualLevelTracing(HouseholdLevelTracing):
             self.intervention.increment_tracing.increment_contact_tracing(self.time)
         # node recoveries
         self.infection.perform_recoveries(self.time)
-        # release nodes from quarantine or isolation if the time has arrived
+        # release nodes from quarantine or intervention if the time has arrived
         self.intervention.completed_isolation(self.time)
         self.intervention.completed_quarantine(self.time)
         # increment time
@@ -294,7 +294,7 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
             self.intervention.increment_tracing.increment_contact_tracing(self.time)
         # node recoveries
         self.infection.perform_recoveries(self.time)
-        # release nodes from quarantine or isolation if the time has arrived
+        # release nodes from quarantine or intervention if the time has arrived
         self.intervention.completed_isolation(self.time)
         self.intervention.completed_lateral_flow_testing(self.time)
 

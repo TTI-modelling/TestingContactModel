@@ -4,9 +4,9 @@ import numpy as np
 import numpy.random as npr
 from typing import Type
 
-from household_contact_tracing.behaviours.contact_rate_reduction import ContactRateReduction
-from household_contact_tracing.behaviours.new_household import NewHousehold
-from household_contact_tracing.behaviours.new_infection import NewInfection
+from household_contact_tracing.behaviours.infection.contact_rate_reduction import ContactRateReduction
+from household_contact_tracing.behaviours.infection.new_household import NewHousehold
+from household_contact_tracing.behaviours.infection.new_infection import NewInfection
 from household_contact_tracing.distributions import current_hazard_rate, current_rate_infection, compute_negbin_cdf
 from household_contact_tracing.network import EdgeType, Network, Node
 from household_contact_tracing.parameterised import Parameterised

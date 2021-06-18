@@ -1,4 +1,4 @@
-# Household isolation integration tests. Some simple runs of the system with fixed seeds.
+# Household intervention integration tests. Some simple runs of the system with fixed seeds.
 import copy
 from typing import Tuple, List
 
@@ -42,7 +42,7 @@ class TestSimpleHousehold:
     """The first implementation of the contact tracing model uses household level contact tracing.
     This means that if a case is detected in a household, all members of the household will
     trace their contacts. When an individual is traced, their entire household goes into
-    isolation.
+    intervention.
     """
 
     @staticmethod
@@ -81,8 +81,8 @@ class TestSimpleHousehold:
     def test_no_isolation_no_reporting(self, household_params):
         """The most basic functionality of the model is to simulate a individual-household
         branching process model of SARS-CoV-2. This includes asymptomatic individuals but
-        there is, no symptom reporting or self-isolation.
-        Because household transmission is based on isolation, there is no household transmission
+        there is, no symptom reporting or self-intervention.
+        Because household transmission is based on intervention, there is no household transmission
         either.
         """
         numpy.random.seed(42)
@@ -99,7 +99,7 @@ class TestSimpleHousehold:
     def test_reporting_and_isolation(self, household_params):
         """The infection reporting probability is now set to a non-zero value.
         This means that some individuals will develop symptoms, and report them, which initiates
-        creation and isolation of the other household members. When a nodes household is isolated
+        creation and intervention of the other household members. When a nodes household is isolated
         all the nodes inside are isolated and will not make outside household contacts."""
 
         # 50% of symptomatic individuals will report their symptoms, and self-isolate
@@ -151,7 +151,7 @@ class TestSimpleHousehold:
         assert edge_counts[EdgeType.between_house] > 0
         assert len(edge_counts) == 3
 
-        # No isolation should expire by day 10 so all whose household is isolated should
+        # No intervention should expire by day 10 so all whose household is isolated should
         # be isolating.
         assert all(self.nodes_isolating_correctly(network))
 
@@ -173,7 +173,7 @@ class TestSimpleHousehold:
 
         assert network.node(1).testing_delay != 0
 
-        # No isolation should expire by day 10 so all whose household is isolated should
+        # No intervention should expire by day 10 so all whose household is isolated should
         # be isolating.
         assert all(self.nodes_isolating_correctly(network))
 
@@ -204,12 +204,12 @@ class TestSimpleHousehold:
         assert edge_counts[EdgeType.between_house] > 0
         assert edge_counts[EdgeType.app_traced] > 0
         assert len(edge_counts) == 4
-        # No isolation should expire by day 10 so all whose household is isolated should
+        # No intervention should expire by day 10 so all whose household is isolated should
         # be isolating.
         assert all(self.nodes_isolating_correctly(network))
 
     def test_non_uptake_of_isolation(self, household_params):
-        """A percentage of people now refuse to take up isolation when traced."""
+        """A percentage of people now refuse to take up intervention when traced."""
         household_params['infection_reporting_prob'] = 0.5
         household_params['self_isolation_duration'] = 10
         household_params['contact_tracing_success_prob'] = 1
@@ -225,7 +225,7 @@ class TestSimpleHousehold:
 
     def test_imperfect_isolation(self, household_params):
         """We now assume that some nodes do isolate or quarantine, but do it badly. An individual
-        doing perfect isolation/quarantine will reduce their outside household contacts by 100%,
+        doing perfect intervention/quarantine will reduce their outside household contacts by 100%,
         an individual who is imperfectly isolating/quarantining will reduce their contacts by less
         than 100%."""
 
@@ -236,7 +236,7 @@ class TestSimpleHousehold:
         household_params['prob_has_trace_app'] = 0.7
         # now, 50% of nodes will isolate, but will do it badly
         household_params['propensity_imperfect_quarantine'] = 0.5
-        # a node doing imperfect isolation will reduce their outside household contacts by 75%
+        # a node doing imperfect intervention will reduce their outside household contacts by 75%
         household_params['global_contact_reduction_imperfect_quarantine'] = 0.75
 
         numpy.random.seed(42)
@@ -366,7 +366,7 @@ class TestIndividualTracingDailyTesting:
     def prob_positive_lfa(time_relative_to_symptom_onset):
         """This function controls the sensitivity of the lfa test. A value of 0 is unrealistic,
         but it makes it easier to see nodes being lfa tested since they won't move to
-        the isolation status due to lfa testing."""
+        the intervention status due to lfa testing."""
         return 0
 
     def test_simple_individual_model(self, daily_testing_params: dict):

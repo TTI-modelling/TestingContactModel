@@ -119,10 +119,10 @@ class NewInfection(ABC, Parameterised):
 
     def will_uptake_isolation(self) -> bool:
         """Based on the node_will_uptake_isolation_prob, return a bool
-        where True implies they do take up isolation and False implies they do not uptake isolation
+        where True implies they do take up intervention and False implies they do not uptake intervention
 
         Returns:
-            bool: If True they uptake isolation, if False they do not uptake isolation
+            bool: If True they uptake intervention, if False they do not uptake intervention
         """
         return numpy.random.choice([True, False], p=(self.node_will_uptake_isolation_prob, 1 -
                                                      self.node_will_uptake_isolation_prob))
