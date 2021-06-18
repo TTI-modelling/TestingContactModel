@@ -66,7 +66,9 @@ class BranchingProcessController(SimulationController):
         self.graph_pyvis_view = GraphPyvisView(self, model)
         self.timeline_view = TimelineGraphView(self, model)
 
-    def set_display(self, display: bool):
+        self.set_graphic_displays(False)
+
+    def set_graphic_displays(self, display: bool):
         """Turn on or off all graphical output."""
         self.graph_view.set_display(display)
         self.graph_pyvis_view.set_display(display)
