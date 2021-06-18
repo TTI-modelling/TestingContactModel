@@ -28,11 +28,11 @@ class Isolation(ABC, Parameterised):
         -------
 
         update_isolation(self, time: int)
-            Increments the isolation process by one step, performing any steps required due to the current step
+            Increments the intervention process by one step, performing any steps required due to the current step
             number (time)
 
         isolate_self_reporting_cases(self, time: int)
-            Applies the isolation status to nodes who have reached their self-report time.
+            Applies the intervention status to nodes who have reached their self-report time.
 
         update_households_contact_traced(self, time: int)
             Update the contact traced status for all households that have had the contact tracing process get there.
@@ -48,7 +48,7 @@ class Isolation(ABC, Parameterised):
 
     @abstractmethod
     def isolate_self_reporting_cases(self, time: int):
-        """Applies the isolation status to nodes who have reached their self-report time.
+        """Applies the intervention status to nodes who have reached their self-report time.
 
         Arguments:
             time -- The current step number (e.g. day) of the simulation
@@ -70,7 +70,7 @@ class Isolation(ABC, Parameterised):
 
     @abstractmethod
     def update_isolation(self, time: int):
-        """ Increments the isolation process by one step, performing any steps required due to the current step
+        """ Increments the intervention process by one step, performing any steps required due to the current step
             number (time)
 
         Arguments:
@@ -84,9 +84,9 @@ class Isolation(ABC, Parameterised):
 class HouseholdIsolation(Isolation):
 
     def isolate_self_reporting_cases(self, time: int):
-        """Applies the isolation status to nodes who have reached their self-report time.
-        They may of course decide to not adhere to said isolation, or may be a member of a household
-        who will not uptake isolation
+        """Applies the intervention status to nodes who have reached their self-report time.
+        They may of course decide to not adhere to said intervention, or may be a member of a household
+        who will not uptake intervention
         """
         for node in self.network.all_nodes():
             if node.will_uptake_isolation:

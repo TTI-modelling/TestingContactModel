@@ -22,19 +22,19 @@ The sections below are:
 
 ## Repository Structure
 
-Example scripts are stored within the `examples` directory, see `Requirements` and `Usage` sections to get these working. 
-The `household_contact_tracing` directory contains the python package modules. 
+Example scripts are stored within the `examples` directory, see [`Requirements`](#requirements) and 
+[`Usage`](#usage) sections to get these working. 
 
-Contained within this, 
+The `household_contact_tracing` directory contains the python package modules. Contained within this, 
 the `behaviours` directory stores the different behaviours classes, each containing the various strategies used to 
 implement simulation processes such as `contact_rate_reduction` and `isolation`. To add new or extend functionalities, 
-see the `Contributing` section.
+see the [`Contributing`](#contributing) section.
 
 The `schemas` directory contains JSON schemas used to validate the JSON parameter files, used to initialise each 
 simulation run.
 
 The `views` directory contains classes representing the different outputs available, such as graph or textual views.
-To improve or add further views, see the `Contributing` section.
+To improve or add further views, see the [`Contributing`](#contributing) section.
 
 ```
 .
@@ -42,6 +42,8 @@ To improve or add further views, see the `Contributing` section.
 ├── examples
 ├── household_contact_tracing
 │   ├── behaviours
+│   │   ├── infection
+│   │   ├── intervention
 │   ├── schemas
 │   ├── views
 ├── temp
@@ -52,23 +54,25 @@ To improve or add further views, see the `Contributing` section.
 
 ## Requirements
 
-The processing scripts in this repository are written in python, tested on unix and [Todo] systems.
+All scripts in this repository are written in python3, tested on unix and [Todo] systems.
 
 We recommend using conda to import the required python libraries. Using standalone pip is untested.
 
-The processing scripts are written in python3. To install the packages needed for these 
-(using conda and pip) use this script: `conda env create -f env_household_contact_tracing.yml`. 
+To install the packages needed for these (using conda and pip) use this script: 
+`conda env create -f env_household_contact_tracing.yml`. 
 To activate this environment use `conda activate household-contact-tracing`.
 
 ## Usage
 
-The example jupyter notebook scripts are in the examples directory and are written in jupyter notebook.
+Example jupyter notebook scripts are in the `examples` directory and are written in Jupyter Notebook 
+(see [Jupyter/IPython Quick Start Guide](https://jupyter-notebook-beginner-guide.readthedocs.io/en/latest/)).
 
-To get a simple example running:
-
-The required parts are highlighted in the following shortened excerpt:
+Alternatively, use the following code to get a simple example running from the command line:
 
 ```python
+import sys
+sys.path.append("../") # REPLACE WITH PATH TO THE 'household_contact_tracing' PACKAGE.
+
 import household_contact_tracing.branching_process_models as bpm
 from household_contact_tracing.simulation_controller import BranchingProcessController
 
@@ -155,7 +159,7 @@ build the simulation code.
 ### Extending functionality
 
 Use the `current_UML.png` file (found in the `docs` folder) to help you visualise where any new amendments will
-fit in.  The following is intended as a guide, and assumes some knowledge of OO software design.
+fit in.  The following is intended as a guide, and assumes basic knowledge of OO software design.
 
 #### Behaviours
 
