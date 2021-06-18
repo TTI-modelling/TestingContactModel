@@ -30,15 +30,15 @@ class ShellView(SimulationView):
 
     def graph_change(self, subject):
         """ Respond to changes in graph (nodes/households network) """
-        print('shell view observed graph change')
+        print('Graph changed')
 
     def model_state_change(self, subject):
         """ Respond to changes in model state (e.g. running, extinct, timed-out) """
-        print('shell view observed state change. New state: {}'.format(subject.state))
+        print('State change: New state: {}'.format(subject.state))
 
     def model_step_increment(self, subject):
         """ Respond to increment in simulation """
-        print('shell view observed that Model has been incremented by one step')
+        print('Model has been incremented by one step')
 
     def model_simulation_stopped(self, subject):
-        print('shell view observed that simulation has stopped running')
+        print('Simulation has stopped running')

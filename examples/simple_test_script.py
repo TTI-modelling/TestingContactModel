@@ -28,7 +28,6 @@ params = {'outside_household_infectivity_scaling': 0.7,
             'transmission_probability_multiplier': 1, # this isn't really useable (I would argue for removing it)
             'propensity_imperfect_quarantine': 0,    # doesn't matter no tracing
             'global_contact_reduction_imperfect_quarantine': 0, # doesn't matter, no tracing
-
          }
 
 # Create controller and add model, then run

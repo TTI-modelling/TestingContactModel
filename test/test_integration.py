@@ -50,7 +50,7 @@ class TestSimpleHousehold:
         """Run the Household model for 10 days with the given params and return the
         model."""
         controller = BranchingProcessController(bpm.HouseholdLevelTracing(params))
-        controller.set_display(False)
+        controller.set_graphic_displays(False)
         controller.run_simulation(days)
 
         return controller.model
@@ -298,7 +298,7 @@ class TestIndividualTracing:
         """Run the IndividualTracing model for 10 days with the given params and return the
         model."""
         controller = BranchingProcessController(bpm.IndividualLevelTracing(params))
-        controller.set_display(False)
+        controller.set_graphic_displays(False)
         controller.run_simulation(days)
 
         return controller.model
@@ -348,7 +348,7 @@ class TestIndividualTracingDailyTesting:
         """Run the IndividualTracingDailyTesting model for 10 days with the given params and
         return the model."""
         controller = BranchingProcessController(bpm.IndividualTracingDailyTesting(params))
-        controller.set_display(False)
+        controller.set_graphic_displays(False)
         controller.run_simulation(days)
 
         return controller.model

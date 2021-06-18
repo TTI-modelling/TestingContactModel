@@ -22,13 +22,14 @@ The sections below are:
 
 ## Repository Structure
 
-Example scripts are stored within the `examples` directory, see [`Requirements`](#requirements) and 
+Example python scripts are stored within the `examples` directory, see [`Requirements`](#requirements) and 
 [`Usage`](#usage) sections to get these working. 
 
-The `household_contact_tracing` directory contains the python package modules. Contained within this, 
+The `household_contact_tracing` directory contains all of the python package modules. Contained within this, 
 the `behaviours` directory stores the different behaviours classes, each containing the various strategies used to 
-implement simulation processes such as `contact_rate_reduction` and `isolation`. To add new or extend functionalities, 
-see the [`Contributing`](#contributing) section.
+implement simulation processes such as `contact_rate_reduction` and `isolation`. Each of these 'behaviours' belongs
+either to the higher level `infection` or the `intervention` processes.
+To add new or extend functionalities, see the [`Contributing`](#contributing) section.
 
 The `schemas` directory contains JSON schemas used to validate the JSON parameter files, used to initialise each 
 simulation run.
@@ -89,19 +90,18 @@ params = {'outside_household_infectivity_scaling': 0.7,
             'incubation_period_delay': 5,
             'symptom_reporting_delay': 1,
             'household_pairwise_survival_prob': 0.2,
-            'do_2_step': False,                      # doesn't matter, no tracing
+            'do_2_step': False,                      
             'reduce_contacts_by': 0.3,
-            'prob_has_trace_app': 0,                 # doesn't matter, no tracing
-            'hh_propensity_to_use_trace_app': 1,     # doesn't matter, no tracing
-            'test_before_propagate_tracing': True,   # doesn't matter, no tracing
+            'prob_has_trace_app': 0,                 
+            'hh_propensity_to_use_trace_app': 1,     
+            'test_before_propagate_tracing': True,   
             'starting_infections': 1, 
-            'node_will_uptake_isolation_prob': 1,    # doesn't matter, no tracing
-            'self_isolation_duration': 0,            # doesn't matter, no tracing
-            'quarantine_duration': 0,                # doesn't matter, no tracing
-            'transmission_probability_multiplier': 1, # this isn't really useable (I would argue for removing it)
-            'propensity_imperfect_quarantine': 0,    # doesn't matter no tracing
-            'global_contact_reduction_imperfect_quarantine': 0, # doesn't matter, no tracing
-
+            'node_will_uptake_isolation_prob': 1,    
+            'self_isolation_duration': 0,            
+            'quarantine_duration': 0,                
+            'transmission_probability_multiplier': 1, 
+            'propensity_imperfect_quarantine': 0,    
+            'global_contact_reduction_imperfect_quarantine': 0
          }
 
 # Create controller and add model, then run
@@ -139,7 +139,7 @@ controller.run_simulation(10)
 We explore strategies of contact tracing, isolation of infected individuals and quarantine of exposed individuals to control the SARS-Cov-2 epidemic using a household-individual branching process model. The explicit presence of households allows for modelling of household quarantine, and improved estimation of the effects of contact tracing. A contact tracing process designed to take advantage of the household structure is implemented, to understand whether such a strategy could control the epidemic. We evaluate the effects of different strategies of contact tracing, isolation and quarantine, such as two-step tracing, backwards tracing, smartphone tracing apps, and whether to test before the propagation contact tracing attempts. Uncertainty in SARS-Cov-2 transmission dynamics and contact tracing processes is modelled using prior distributions. The primary model outcome is the effect on the growth rate and doubling times of the epidemic, in combination with different levels of social distancing. Models of uptake and adherence to quarantine are applied, as well as contact recall, and how these affect the dynamics of contact tracing are considered. We find that a household contact tracing strategy allows for some relaxation of social distancing measures; however, it is unable to completely control the epidemic in the absence of other measures. Effectiveness of contact tracing and isolation is sensitive to delays, so strategies to improve speed relative to transmission could improve epidemic control, but non-uptake, imperfect recall and non-adherence to isolation can erode effectiveness. Improvements to the case identification rate could greatly benefit contact tracing interventions of SARS-Cov-2. Further, we find that once the epidemic has become established, the extinction times are on the scale of years when there is a small relaxation of the UK lockdown and contact tracing is employed.
 
 ### Authors
-Martyn Fyles Elizabeth Fearon
+Martyn Fyles and Elizabeth Fearon
 
 ## Testing
 A set of python pytest test files can be found in the `test` directory, and can be run from the shell 
