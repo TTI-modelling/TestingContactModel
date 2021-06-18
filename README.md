@@ -125,11 +125,9 @@ params['probable_infections_need_test'] = True
 
 # Create new model type 
 controller = BranchingProcessController(bpm.IndividualLevelTracing(params))
-# Switch off a view (e.g. the timeline graph views)
-controller.timeline_view.set_display(False)
+# Switch on a view (e.g. the timeline graph views)
+controller.graph_view.set_display(True)
 controller.run_simulation(10)
-
-
 ```
 
 
