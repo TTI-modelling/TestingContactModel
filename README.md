@@ -157,7 +157,7 @@ build the simulation code.
 Use the `current_UML.png` file (found in the `docs` folder) to help you visualise where any new amendments will
 fit in.  The following is intended as a guide, and assumes some knowledge of OO software design.
 
-## Behaviours
+#### Behaviours
 
 1. Design a new model, with combination of existing infection / intervention behaviours
 
@@ -194,7 +194,7 @@ fit in.  The following is intended as a guide, and assumes some knowledge of OO 
     (e.g. BranchingProcessModel within `branching_process_models.py`) select the new behaviour using the 
     `_initialise_infection()` or `_initialise_intervention()` function as appropriate, passing it to the constructor.
    
-## Views
+#### Views
 
 1. Add a new view and register it with the model, and add to the controller.
     * Look at the views in the `household_contact_tracing/views` folder to see how these are created, copying the most 
