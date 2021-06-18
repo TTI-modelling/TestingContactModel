@@ -159,9 +159,9 @@ build the simulation code.
 Use the `current_UML.png` file (found in the `docs` folder) to help you visualise where any new amendments will
 fit in.  The following is intended as a guide, and assumes basic knowledge of OO software design.
 
-#### Behaviours
+#### Updating Behaviours
 
-1. Design a new model, with combination of existing infection / intervention behaviours
+1. How to design a new model, with combination of existing infection / intervention behaviours
 
     Create a new branching process model (can be within `branching_process_models.py` or in a separate module). It
     must inherit from `BranchingProcessModel` or one of its sub-classes (currently all contained within
@@ -170,7 +170,7 @@ fit in.  The following is intended as a guide, and assumes basic knowledge of OO
     Behaviours are selected in the `_initialise_infection()` and `_initialise_intervention()` functions. See the 
     `household_contact_tracing/behaviours` folder to see the available behaviours.
    
-2. Writing new behaviours (subclassing existing behaviours)
+2. How to write new behaviours (extending existing behaviour classes)
 
     See the modules in the `household_contact_tracing/behaviours` folder for current behaviours. Each of these
     modules has an abstract base (highest level parent class that must be sub-classed and can't be directly 
@@ -181,20 +181,21 @@ fit in.  The following is intended as a guide, and assumes basic knowledge of OO
     Select your new behaviour in the model, using the `_initialise_infection()` or `_initialise_intervention()` 
     function as appropriate.
    
-3. Writing new behaviours (creating new behaviours)
+3. How to write new behaviours (creating a new behaviour)
 
-    If the new required behaviour does not need to use inheritance to apply to different scenarios,
-    it can be written as a method and added to the Infection or Intervention class directly (these classes 
+    If the new required behaviour does not need to use inheritance to apply to different scenarios/contexts,
+    it can be written as a method and added to the `Infection` or `Intervention` class directly (these classes 
     can be found within the `household_contact_tracing` folder, in `infection.py` and `intervention.py`).
 
     See the modules in the `household_contact_tracing/behaviours` folder for current behaviours. 
     It may help to select a 'sibling' module (.py) file to copy and use as a template for your new behaviour
     module / set of classes.
    
-    Once written, add usage of the new behaviour into the `Infection` or `Intervention` classes as required:
-    Add the new behaviour as a parameter contructor and use as required. In the model class 
-    (e.g. BranchingProcessModel within `branching_process_models.py`) select the new behaviour using the 
-    `_initialise_infection()` or `_initialise_intervention()` function as appropriate, passing it to the constructor.
+    Once written, add usage of the new behaviour into either the `Infection` or `Intervention` classes as appropriate:
+    Add the new behaviour as a parameter to the constructor, to be used as required by that class. 
+    In the model class (e.g. BranchingProcessModel within `branching_process_models.py`), select the new behaviour 
+    using the `_initialise_infection()` or `_initialise_intervention()` function as appropriate, passing it to the 
+    constructor.
    
 #### Views
 
@@ -205,13 +206,10 @@ fit in.  The following is intended as a guide, and assumes basic knowledge of OO
       observers of the model, signing up to events of interest, so that they can output any information back to the user.
   
     * Add the new view to the `BranchingProcessController` class (or other class inherited from `SimulationController). 
-      See others views added in that Controller class, to look at examples.   
-    
-
+      See others views added in that Controller class, to look at examples.  
   
 ### General improvements to code
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
 
 ## Copyright & Licensing
 '''todo: this is from the previous/template'''
