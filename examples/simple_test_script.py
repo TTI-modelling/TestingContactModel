@@ -28,8 +28,7 @@ params = {'outside_household_infectivity_scaling': 0.7,
             'quarantine_duration': 0,                
             'transmission_probability_multiplier': 1, 
             'propensity_imperfect_quarantine': 0,    
-            'global_contact_reduction_imperfect_quarantine': 0
-         }
+            'global_contact_reduction_imperfect_quarantine': 0}
 
 # Create controller and add model, then run
 controller = BranchingProcessController(bpm.HouseholdLevelTracing(params))
