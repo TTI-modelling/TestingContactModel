@@ -5,7 +5,7 @@ import pandas as pd
 
 from household_contact_tracing.views.simulation_view import SimulationView
 from household_contact_tracing.network import NodeType
-from household_contact_tracing.simulation_model import SimulationModel, BranchingProcessModel
+from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.views.colors import node_colours
 
 
