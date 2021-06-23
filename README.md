@@ -214,9 +214,10 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 ## Copyright & Licensing
 '''todo: this is from the previous/template'''
 
-This software has been developed by the XXX (https://xxx/) and [Research IT](https://research-it.manchester.ac.uk/) 
-group at the [University of Manchester](https://www.manchester.ac.uk/) for an 
-[YYY](https://www.yyy/) project.
+This software has been developed by the Martyn Fyles and Elizabeth Fearon from the 
+[The London School of Hygiene & Tropical Medicine](https://www.lshtm.ac.uk/) 
+and Ann Gledson and Peter Crowther from the [Research IT](https://research-it.manchester.ac.uk/) 
+group at the [University of Manchester](https://www.manchester.ac.uk/).
 
-(c) 2020-2021 University of Manchester and XXX.
+(c) 2020-2021 The London School of Hygiene & Tropical Medicine and the University of Manchester.
 Licensed under the GPL-3.0 license, see the file LICENSE for details.
