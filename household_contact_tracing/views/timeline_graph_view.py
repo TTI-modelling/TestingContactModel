@@ -34,15 +34,11 @@ class TimelineGraphView(SimulationView):
             self.model.remove_observer_graph_change(self)
             self.model.remove_observer_step_increment(self)
 
-    def model_param_change(self, subject: SimulationModel):
-        """ Respond to parameter change(s) """
-        pass
-
-    def model_state_change(self, subject: SimulationModel):
+    def model_state_change(self, subject: BranchingProcessModel):
         """ Respond to changes in model state (e.g. running, extinct, timed-out) """
         pass
 
-    def graph_change(self, subject: SimulationModel):
+    def graph_change(self, subject: BranchingProcessModel):
         """ Respond to changes in graph (nodes/households network) """
         pass
 
@@ -50,7 +46,7 @@ class TimelineGraphView(SimulationView):
         """ Respond to single step increment in simulation """
         self.increment_timeline(subject.network)
 
-    def model_simulation_stopped(self, subject: SimulationModel):
+    def model_simulation_stopped(self, subject: BranchingProcessModel):
         self.draw_timeline()
 
     def draw_timeline(self):

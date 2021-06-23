@@ -45,15 +45,11 @@ class GraphPyvisView(SimulationView):
         else:
             self.model.remove_observer_simulation_stopped(self)
 
-    def model_param_change(self, subject):
-        """ Respond to parameter change(s) """
-        pass
-
-    def model_state_change(self, subject):
+    def model_state_change(self, subject: BranchingProcessModel):
         """ Respond to changes in model state (e.g. running, extinct, timed-out) """
         pass
 
-    def model_step_increment(self, subject):
+    def model_step_increment(self, subject: BranchingProcessModel):
         """ Respond to single step increment in simulation """
         pass
 

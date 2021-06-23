@@ -29,17 +29,17 @@ class ShellView(SimulationView):
             self._model.remove_observer_step_increment(self)
             self._model.remove_observer_simulation_stopped(self)
 
-    def graph_change(self, subject):
+    def graph_change(self, subject: BranchingProcessModel):
         """ Respond to changes in graph (nodes/households network) """
         print('Graph changed')
 
-    def model_state_change(self, subject):
+    def model_state_change(self, subject: BranchingProcessModel):
         """ Respond to changes in model state (e.g. running, extinct, timed-out) """
         print('State change: New state: {}'.format(subject.state))
 
-    def model_step_increment(self, subject):
+    def model_step_increment(self, subject: BranchingProcessModel):
         """ Respond to increment in simulation """
         print('Model has been incremented by one step')
 
-    def model_simulation_stopped(self, subject):
+    def model_simulation_stopped(self, subject: BranchingProcessModel):
         print('Simulation has stopped running')

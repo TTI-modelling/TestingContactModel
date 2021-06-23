@@ -2,6 +2,7 @@ from abc import ABC
 
 from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.views.shell_view import ShellView
+from household_contact_tracing.views.csv_file_view import CSVFileView
 from household_contact_tracing.views.graph_view import GraphView
 from household_contact_tracing.views.graph_pyvis_view import GraphPyvisView
 from household_contact_tracing.views.timeline_graph_view import TimelineGraphView
@@ -22,6 +23,7 @@ class SimulationController(ABC):
     def __init__(self, model: BranchingProcessModel):
         self._model = model
         self.shell_view = ShellView(model)
+        self.csv_view = CSVFileView(model)
 
     @property
     def model(self) -> BranchingProcessModel:
