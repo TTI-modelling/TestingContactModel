@@ -41,18 +41,17 @@ class CSVFileView(SimulationView):
         # If simulation has stopped, add state info to CSV file
         if subject.state.name in ['ExtinctState', 'TimedOutState', 'MaxNodesInfectiousState']:
 
-            dict_flattened = {'end_state': subject.state.name}
+            dict_flattened = {'time_finished': str(datetime.datetime.now()),
+                             'end_state': subject.state.name}
             for key in subject.state.info:
                 dict_flattened[key] = [subject.state.info[key]]
-            print('Dict flattened:', dict_flattened)
 
             df_new_state = pd.DataFrame.from_dict(data=dict_flattened)
-            print(df_new_state)
-            # Check if file exists and
+
+            # Check if file exists and if so read contents to dataframe, if not, create new dataframe
             try:
                 df_history_states = pd.read_csv(self.filename)
-            except Exception as err:
-                print(err)
+            except FileNotFoundError:
                 df_history_states = pd.DataFrame()
             df_history_states = pd.concat([df_history_states, df_new_state])
             df_history_states.to_csv(self.filename, index=False)
