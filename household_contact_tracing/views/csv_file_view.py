@@ -17,13 +17,24 @@ class CSVFileView(SimulationView):
         self.model = model
 
         if filename and os.path.exists(os.path.dirname(self.filename)):
-            self.filename = filename
+            self._filename = filename
         else:
-            self.filename = os.path.join(os.path.dirname(self.model.root_dir),
+            self._filename = os.path.join(os.path.dirname(self.model.root_dir),
                                          'temp',
                                          'simulation_output_{}.csv'.format(datetime.datetime.now().strftime("%Y%m%d")))
         # Register as observer
         self.model.register_observer_state_change(self)
+
+    @property
+    def filename(self) -> BranchingProcessModel:
+        return self._filename
+
+    @filename.setter
+    def filename(self, filename: str):
+        if os.path.dirname(filename) and os.path.exists(os.path.dirname(filename)):
+            self._filename = filename
+        else:
+            raise FileNotFoundError('Filename directory {} does not exist'.format(os.path.dirname(filename)))
 
     def set_display(self, show: bool):
         if show:
@@ -50,11 +61,11 @@ class CSVFileView(SimulationView):
 
             # Check if file exists and if so read contents to dataframe, if not, create new dataframe
             try:
-                df_history_states = pd.read_csv(self.filename)
+                df_history_states = pd.read_csv(self._filename)
             except FileNotFoundError:
                 df_history_states = pd.DataFrame()
             df_history_states = pd.concat([df_history_states, df_new_state])
-            df_history_states.to_csv(self.filename, index=False)
+            df_history_states.to_csv(self._filename, index=False)
 
     def model_step_increment(self, subject: BranchingProcessModel):
         """ Respond to single step increment in simulation """
