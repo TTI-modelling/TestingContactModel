@@ -1,4 +1,5 @@
 from household_contact_tracing.views.simulation_view import SimulationView
+from household_contact_tracing.simulation_model import BranchingProcessModel
 
 
 class ShellView(SimulationView):
@@ -6,8 +7,8 @@ class ShellView(SimulationView):
         Shell View (for now I just print out everything that I'm registered to observe)
     """
 
-    def __init__(self, controller, model):
-        # Viewers can own copies of controller and model (MVC pattern)
+    def __init__(self, model: BranchingProcessModel):
+        # Viewers can also own copies of controller and model (MVC pattern)
         # ... but controller not required yet (no input collected from view)
         #self.controller = controller
         self._model = model

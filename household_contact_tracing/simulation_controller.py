@@ -21,7 +21,7 @@ class SimulationController(ABC):
 
     def __init__(self, model: BranchingProcessModel):
         self._model = model
-        self.shell_view = ShellView(self, model)
+        self.shell_view = ShellView(model)
 
     @property
     def model(self) -> BranchingProcessModel:
@@ -58,9 +58,9 @@ class BranchingProcessController(SimulationController):
         # Call superclass constructor
         super().__init__(model)
 
-        self.graph_view = GraphView(self, model)
-        self.graph_pyvis_view = GraphPyvisView(self, model)
-        self.timeline_view = TimelineGraphView(self, model)
+        self.graph_view = GraphView(model)
+        self.graph_pyvis_view = GraphPyvisView(model)
+        self.timeline_view = TimelineGraphView(model)
 
         self.set_graphic_displays(False)
 

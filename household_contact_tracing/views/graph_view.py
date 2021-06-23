@@ -1,13 +1,10 @@
 # Code to visualise networks derived from the model
-from typing import Union
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 from matplotlib.lines import Line2D
 import networkx as nx
 
-from household_contact_tracing.branching_process_models import HouseholdLevelTracing, \
-    IndividualLevelTracing, IndividualTracingDailyTesting
 from household_contact_tracing.views.simulation_view import SimulationView
 from household_contact_tracing.network import Network
 from household_contact_tracing.simulation_model import BranchingProcessModel
@@ -16,7 +13,7 @@ from household_contact_tracing.views.colors import node_colours, edge_colours
 
 class GraphView(SimulationView):
     """Graph View"""
-    def __init__(self, controller, model: BranchingProcessModel):
+    def __init__(self, model: BranchingProcessModel):
         # Viewers own copies of controller and model (MVC pattern)
         # ... but controller not required yet (no input collected from view)
         # self.controller = controller
@@ -46,15 +43,11 @@ class GraphView(SimulationView):
         """ Respond to single step increment in simulation """
         pass
 
-    def model_simulation_stopped(self, subject: Union[HouseholdLevelTracing,
-                                                      IndividualLevelTracing,
-                                                      IndividualTracingDailyTesting]):
-        if self not in subject._observers_graph_change:
+    def model_simulation_stopped(self, subject: BranchingProcessModel):
+        if self not in subject.observers_graph_change:
             self.draw_network(subject.network)
 
-    def graph_change(self, subject: Union[HouseholdLevelTracing,
-                                          IndividualLevelTracing,
-                                          IndividualTracingDailyTesting]):
+    def graph_change(self, subject: BranchingProcessModel):
         """ Respond to changes in graph (nodes/households network) """
         self.draw_network(subject.network)
 
