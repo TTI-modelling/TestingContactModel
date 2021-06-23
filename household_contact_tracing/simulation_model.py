@@ -138,7 +138,7 @@ class BranchingProcessModel(SimulationModel):
         super().__init__()
 
         # Set observer lists
-        self._observers_graph_change = []
+        self.observers_graph_change = []
 
         # State
         self._state = ReadyState(self)
@@ -163,20 +163,20 @@ class BranchingProcessModel(SimulationModel):
         Arguments:
             observer -- the object to be added to the graph change observers list
         """
-        if observer not in self._observers_graph_change:
-            self._observers_graph_change.append(observer)
+        if observer not in self.observers_graph_change:
+            self.observers_graph_change.append(observer)
 
     # Remove observers
     def remove_observer_graph_change(self, observer: SimulationView):
         """ Remove as observer for graph changes """
         try:
-            self._observers_graph_change.remove(observer)
+            self.observers_graph_change.remove(observer)
         except ValueError:
             pass
 
     # Notify Observers
     def notify_observers_graph_change(self, modifier=None):
         """ Notify observer about changes in graph (nodes/households network) """
-        for observer in self._observers_graph_change:
+        for observer in self.observers_graph_change:
             if observer != modifier:
                 observer.graph_change(self)

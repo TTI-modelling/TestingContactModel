@@ -2,6 +2,7 @@ from abc import ABC
 
 from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.views.shell_view import ShellView
+from household_contact_tracing.views.csv_file_view import CSVFileView
 from household_contact_tracing.views.graph_view import GraphView
 from household_contact_tracing.views.graph_pyvis_view import GraphPyvisView
 from household_contact_tracing.views.timeline_graph_view import TimelineGraphView
@@ -17,15 +18,12 @@ class SimulationController(ABC):
         ----------
         model (BranchingProcessModel): the model who's state is being recorded
         shell_view (ShellView): console output for any simulation model type
-
-        Methods
-        -------
-
     """
 
     def __init__(self, model: BranchingProcessModel):
         self._model = model
-        self.shell_view = ShellView(self, model)
+        self.shell_view = ShellView(model)
+        self.csv_view = CSVFileView(model)
 
     @property
     def model(self) -> BranchingProcessModel:
@@ -62,9 +60,9 @@ class BranchingProcessController(SimulationController):
         # Call superclass constructor
         super().__init__(model)
 
-        self.graph_view = GraphView(self, model)
-        self.graph_pyvis_view = GraphPyvisView(self, model)
-        self.timeline_view = TimelineGraphView(self, model)
+        self.graph_view = GraphView(model)
+        self.graph_pyvis_view = GraphPyvisView(model)
+        self.timeline_view = TimelineGraphView(model)
 
         self.set_graphic_displays(False)
 
