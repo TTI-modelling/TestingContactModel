@@ -17,10 +17,6 @@ class SimulationController(ABC):
         ----------
         model (BranchingProcessModel): the model who's state is being recorded
         shell_view (ShellView): console output for any simulation model type
-
-        Methods
-        -------
-
     """
 
     def __init__(self, model: BranchingProcessModel):
