@@ -105,7 +105,7 @@ def recreate_pytest_1():
     # instead of default ('/temp/sumulation_ouput_[todays date].csv')
     #/home/ann/Code/TTI/TestingContactModel/temp
     #/home/ann/Code/TTI/TestingContactModel/temp/my_test.csv
-    save_path = os.path.join(os.path.dirname(model.root_dir), 'temp', 'my_test.csv')
+    save_path = os.path.join(os.path.dirname(IndividualTracingDailyTesting.root_dir), 'temp', 'my_test.csv')
 
     for idx in range(0,10):
         controller = BranchingProcessController(model=IndividualTracingDailyTesting(params))
