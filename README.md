@@ -55,13 +55,28 @@ To improve or add further views, see the [`Contributing`](#contributing) section
 
 ## Requirements
 
-All scripts in this repository are written in python3, tested on unix and [Todo] systems.
+All scripts in this repository are written in Python, tested on Unix and Windows systems. The minimum 
+Python requirement is Python 3.6, though the code has been developed and tested with Python 3.8.
 
-We recommend using conda to import the required python libraries. Using standalone pip is untested.
+To install the required packages using a conda environment and pip: 
+```
+conda env create -f env_household_contact_tracing.yml
+conda activate household-contact-tracing
+```
 
-To install the packages needed for these (using conda and pip) use this script: 
-`conda env create -f env_household_contact_tracing.yml`. 
-To activate this environment use `conda activate household-contact-tracing`.
+Alternatively to use venv and pip:
+```
+# Create the environment
+python -m venv venv
+# Activate the environment
+venv/bin/activate.bat       # for Windows
+source venv/bin/activate    # for Unix/OSX
+# Install packages
+pip install -U pip
+pip install -r requirements.txt
+```
+Note that the command to activate the environment is different for Windows and for Unix/OSX
+
 
 ## Usage
 
