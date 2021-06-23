@@ -151,6 +151,13 @@ class BranchingProcessModel(SimulationModel):
     def run_simulation(self, max_time: int, infection_threshold: int) -> None:
         """ Run the simulation until it stops (e.g times out, or too many infectious nodes) """
 
+    @abstractmethod
+    def _initialise_infection(self):
+        ''' Initialise an Infection class, passing in the required behaviours into its constructor '''
+
+    def _initialise_intervention(self):
+        ''' Initialise an Intervention class, passing in the required behaviours into its constructor '''
+
     def graph_changed(self):
         """ The graph has changed """
         self.notify_observers_graph_change()

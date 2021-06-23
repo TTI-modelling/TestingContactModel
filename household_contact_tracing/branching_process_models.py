@@ -9,6 +9,7 @@ from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.simulation_states import RunningState, ExtinctState,\
     MaxNodesInfectiousState, TimedOutState
 from household_contact_tracing.parameterised import Parameterised
+<<<<<<< Updated upstream
 from household_contact_tracing.behaviours.infection.new_household import NewHouseholdLevel, \
     NewHouseholdIndividualTracingDailyTesting
 from household_contact_tracing.behaviours.infection.contact_rate_reduction import \
@@ -16,6 +17,13 @@ from household_contact_tracing.behaviours.infection.contact_rate_reduction impor
 import household_contact_tracing.behaviours.intervention.increment_tracing as increment
 import household_contact_tracing.behaviours.intervention.isolation as isolation
 import household_contact_tracing.behaviours.infection.new_infection as new_infection
+=======
+import household_contact_tracing.behaviours.increment_tracing as increment
+import household_contact_tracing.behaviours.isolation as isolation
+import household_contact_tracing.behaviours.new_infection as new_infection
+import household_contact_tracing.behaviours.new_household as new_household
+import household_contact_tracing.behaviours.contact_rate_reduction as contact_rate_reduction
+>>>>>>> Stashed changes
 
 
 class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
@@ -71,15 +79,24 @@ class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
         self.time = 0
 
     def _initialise_infection(self):
+<<<<<<< Updated upstream
         """ Initialise an Infection class, passing in the required behaviours into its constructor """
+=======
+        ''' Initialise an Infection class, passing in the required sub-behaviours
+            (NewInfection and Newinto its constructor '''
+>>>>>>> Stashed changes
         return Infection(self.network,
-                         NewHouseholdLevel,
+                         new_household.NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel,
-                         ContactRateReductionHouseholdLevelTracing,
+                         contact_rate_reduction.ContactRateReductionHouseholdLevelTracing,
                          self.params)
 
     def _initialise_intervention(self):
+<<<<<<< Updated upstream
         """ Initialise an Intervention class, passing in the required behaviours into its constructor """
+=======
+        ''' Initialise an Intervention class, passing in the required sub-behaviours into its constructor '''
+>>>>>>> Stashed changes
         return Intervention(self.network,
                             isolation.HouseholdIsolation,
                             increment.IncrementTracingHouseholdLevel,
@@ -210,9 +227,9 @@ class IndividualLevelTracing(HouseholdLevelTracing):
     def _initialise_infection(self):
         """ Initialise an Infection class, passing in the required behaviours into its constructor """
         return Infection(self.network,
-                         NewHouseholdLevel,
+                         new_household.NewHouseholdLevel,
                          new_infection.NewInfectionHouseholdLevel,
-                         ContactRateReductionHouseholdLevelTracing,
+                         contact_rate_reduction.ContactRateReductionHouseholdLevelTracing,
                          self.params)
 
     def _initialise_intervention(self):
@@ -262,9 +279,9 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
     def _initialise_infection(self):
         """ Initialise an Infection class, passing in the required behaviours into its constructor """
         return Infection(self.network,
-                         NewHouseholdIndividualTracingDailyTesting,
+                         new_household.NewHouseholdIndividualTracingDailyTesting,
                          new_infection.NewInfectionIndividualTracingDailyTesting,
-                         ContactRateReductionIndividualTracingDaily,
+                         contact_rate_reduction.ContactRateReductionIndividualTracingDaily,
                          self.params)
     def _initialise_intervention(self):
         """ Initialise an Intervention class, passing in the required behaviours into its constructor """
