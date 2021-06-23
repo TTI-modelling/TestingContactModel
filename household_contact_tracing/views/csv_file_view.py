@@ -66,6 +66,7 @@ class CSVFileView(SimulationView):
                 df_history_states = pd.DataFrame()
             df_history_states = pd.concat([df_history_states, df_new_state])
             df_history_states.to_csv(self._filename, index=False)
+            print('Updated run results to file: {}'.format(self._filename))
 
     def model_step_increment(self, subject: BranchingProcessModel):
         """ Respond to single step increment in simulation """
