@@ -52,8 +52,8 @@ class CSVFileView(SimulationView):
         # If simulation has stopped, add state info to CSV file
         if subject.state.name in ['ExtinctState', 'TimedOutState', 'MaxNodesInfectiousState']:
 
-            dict_flattened = {'time_finished': str(datetime.datetime.now()),
-                             'end_state': subject.state.name}
+            dict_flattened = {'run_finished': str(datetime.datetime.now()),
+                              'end_state': subject.state.name}
             for key in subject.state.info:
                 dict_flattened[key] = [subject.state.info[key]]
 

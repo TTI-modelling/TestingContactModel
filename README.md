@@ -70,6 +70,8 @@ Example jupyter notebook scripts are in the `examples` directory and are written
 
 Alternatively, use the following code to get a simple example running from the command line:
 
+(this code is also found in `/examples/simple_test_script.py`)
+
 ```python
 import sys, os
 sys.path.append("../") # REPLACE WITH PATH TO THE 'household_contact_tracing' PACKAGE.
@@ -131,13 +133,12 @@ controller.graph_view.set_display(True)
 controller.run_simulation(10)
 
 
-# Repeat runs and outputs to a named CSV file
-save_path = os.path.join(os.path.dirname(model.root_dir), 'temp', 'my_test.csv')
-
-for idx in range(0,10):
-    controller = BranchingProcessController(model=bpm.IndividualLevelTracing(params))
+# Repeat runs and output to a named CSV file (previously defaulted to '/temp/simulation_output_[date-string].csv' )
+save_path = os.path.join(os.path.dirname(bpm.IndividualTracingDailyTesting.root_dir), 'temp', 'my_test.csv')
+for idx in range(0, 10):
+    controller = BranchingProcessController(bpm.IndividualLevelTracing(params))
     controller.csv_view.filename = save_path
-    controller.run_simulation(20, 5)
+    controller.run_simulation(5)
 
 ```
 
