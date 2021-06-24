@@ -17,13 +17,24 @@ class CSVFileView(SimulationView):
         self.model = model
 
         if filename and os.path.exists(os.path.dirname(self.filename)):
-            self.filename = filename
+            self._filename = filename
         else:
-            self.filename = os.path.join(os.path.dirname(self.model.root_dir),
+            self._filename = os.path.join(os.path.dirname(self.model.root_dir),
                                          'temp',
                                          'simulation_output_{}.csv'.format(datetime.datetime.now().strftime("%Y%m%d")))
         # Register as observer
         self.model.register_observer_state_change(self)
+
+    @property
+    def filename(self) -> BranchingProcessModel:
+        return self._filename
+
+    @filename.setter
+    def filename(self, filename: str):
+        if os.path.dirname(filename) and os.path.exists(os.path.dirname(filename)):
+            self._filename = filename
+        else:
+            raise FileNotFoundError('Filename directory {} does not exist'.format(os.path.dirname(filename)))
 
     def set_display(self, show: bool):
         if show:
@@ -41,21 +52,21 @@ class CSVFileView(SimulationView):
         # If simulation has stopped, add state info to CSV file
         if subject.state.name in ['ExtinctState', 'TimedOutState', 'MaxNodesInfectiousState']:
 
-            dict_flattened = {'end_state': subject.state.name}
+            dict_flattened = {'run_finished': str(datetime.datetime.now()),
+                              'end_state': subject.state.name}
             for key in subject.state.info:
                 dict_flattened[key] = [subject.state.info[key]]
-            print('Dict flattened:', dict_flattened)
 
             df_new_state = pd.DataFrame.from_dict(data=dict_flattened)
-            print(df_new_state)
-            # Check if file exists and
+
+            # Check if file exists and if so read contents to dataframe, if not, create new dataframe
             try:
-                df_history_states = pd.read_csv(self.filename)
-            except Exception as err:
-                print(err)
+                df_history_states = pd.read_csv(self._filename)
+            except FileNotFoundError:
                 df_history_states = pd.DataFrame()
             df_history_states = pd.concat([df_history_states, df_new_state])
-            df_history_states.to_csv(self.filename, index=False)
+            df_history_states.to_csv(self._filename, index=False)
+            print('Updated run results to file: {}'.format(self._filename))
 
     def model_step_increment(self, subject: BranchingProcessModel):
         """ Respond to single step increment in simulation """
