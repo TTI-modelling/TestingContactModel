@@ -149,7 +149,7 @@ controller.run_simulation(10)
 
 
 # Repeat runs and output to a named CSV file (previously defaulted to '/temp/simulation_output_[date-string].csv' )
-save_path = os.path.join(os.path.dirname(bpm.IndividualTracingDailyTesting.root_dir), 'temp', 'my_test.csv')
+save_path = os.path.join('..', 'temp', 'my_test.csv')
 for idx in range(0, 10):
     controller = BranchingProcessController(bpm.IndividualLevelTracing(params))
     controller.csv_view.filename = save_path

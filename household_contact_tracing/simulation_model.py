@@ -35,10 +35,9 @@ class SimulationModel(ABC):
     def state(self) -> SimulationState:
         """Return the state of the model"""
 
-    @classmethod
     @property
-    def root_dir(cls) -> str:
-        return cls.__ROOT_DIR
+    def root_dir(self) -> str:
+        return self.__ROOT_DIR
 
     def _simulation_stopped(self):
         """ The simulation has stopped running """
