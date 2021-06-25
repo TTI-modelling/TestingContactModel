@@ -2,7 +2,7 @@ import sys, os
 sys.path.append("../") # REPLACE WITH PATH TO THE 'household_contact_tracing' PACKAGE.
 
 import household_contact_tracing.branching_process_models as bpm
-from household_contact_tracing.simulation_controller import BranchingProcessController
+from household_contact_tracing.branching_process_controller import BranchingProcessController
 
 
 params = {'outside_household_infectivity_scaling': 0.7,
