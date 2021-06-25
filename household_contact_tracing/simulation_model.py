@@ -14,7 +14,7 @@ class SimulationModel(ABC):
 
         Attributes
         ----------
-        __ROOT_DIR: str
+        root_dir (str):
             root directory of containing package
 
         Methods
@@ -34,10 +34,11 @@ class SimulationModel(ABC):
     @property
     @abstractmethod
     def state(self) -> SimulationState:
-        """Return the state of the model"""
+        """ Get the current state of the model """
 
     @property
     def root_dir(self) -> str:
+        """ Get root directory of containing package """
         return self.__ROOT_DIR
 
     def _simulation_stopped(self):
