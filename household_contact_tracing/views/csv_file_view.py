@@ -11,19 +11,16 @@ class CSVFileView(SimulationView):
     """
 
     def __init__(self, model: BranchingProcessModel, filename=None):
-        # Viewers own copies of controller and model (MVC pattern)
-        # ... but controller not required yet (no input collected from view)
-        # self.controller = controller
-        self.model = model
+        self._model = model
 
         if filename and os.path.exists(os.path.dirname(self.filename)):
             self._filename = filename
         else:
-            self._filename = os.path.join(os.path.dirname(self.model.root_dir),
+            self._filename = os.path.join(os.path.dirname(self._model.root_dir),
                                           'temp',
                                           'simulation_output_{}.csv'.format(datetime.datetime.now().strftime("%Y%m%d")))
         # Register as observer
-        self.model.register_observer_simulation_stopped(self)
+        self._model.register_observer_simulation_stopped(self)
 
     @property
     def filename(self) -> BranchingProcessModel:
@@ -38,9 +35,9 @@ class CSVFileView(SimulationView):
 
     def set_display(self, show: bool):
         if show:
-            self.model.register_observer_simulation_stopped(self)
+            self._model.register_observer_simulation_stopped(self)
         else:
-            self.model.remove_observer_simulation_stopped(self)
+            self._model.remove_observer_simulation_stopped(self)
 
     def model_state_change(self, subject: BranchingProcessModel):
         """ Respond to changes in model state (e.g. running, extinct, timed-out) """

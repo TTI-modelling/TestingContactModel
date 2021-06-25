@@ -14,44 +14,25 @@ from household_contact_tracing.views.colors import node_colours, edge_colours
 class GraphView(SimulationView):
     """Graph View"""
     def __init__(self, model: BranchingProcessModel):
-        # Viewers own copies of controller and model (MVC pattern)
-        # ... but controller not required yet (no input collected from view)
-        # self.controller = controller
-        self.model = model
+        self._model = model
 
         # Register as observer
-        self.model.register_observer_state_change(self)
-        self.model.register_observer_simulation_stopped(self)
+        self._model.register_observer_state_change(self)
+        self._model.register_observer_simulation_stopped(self)
 
     def set_display(self, show: bool):
         if show:
-            self.model.register_observer_state_change(self)
-            self.model.register_observer_simulation_stopped(self)
+            self._model.register_observer_state_change(self)
+            self._model.register_observer_simulation_stopped(self)
         else:
-            self.model.remove_observer_state_change(self)
-            self.model.remove_observer_simulation_stopped(self)
-
-    def model_state_change(self, subject: BranchingProcessModel):
-        """ Respond to changes in model state (e.g. running, extinct, timed-out) """
-        pass
-
-    def model_step_increment(self, subject: BranchingProcessModel):
-        """ Respond to single step increment in simulation """
-        pass
-
-    def model_simulation_stopped(self, subject: BranchingProcessModel):
-        if self not in subject.observers_graph_change:
-            self.draw_network(subject.network)
-
-    def graph_change(self, subject: BranchingProcessModel):
-        """ Respond to changes in graph (nodes/households network) """
-        self.draw_network(subject.network)
+            self._model.remove_observer_state_change(self)
+            self._model.remove_observer_simulation_stopped(self)
 
     def set_show_increment_graphs(self, show_all):
         if show_all:
-            self.model.register_observer_graph_change(self)
+            self._model.register_observer_graph_change(self)
         else:
-            self.model.remove_observer_graph_change(self)
+            self._model.remove_observer_graph_change(self)
 
     @staticmethod
     def draw_network(network: Network):
@@ -88,3 +69,19 @@ class GraphView(SimulationView):
         plt.legend(circles, labels, loc="upper left", bbox_to_anchor=(1, 0.85), title="Nodes")
 
         plt.show()
+
+    def model_state_change(self, subject: BranchingProcessModel):
+        """ Respond to changes in model state (e.g. running, extinct, timed-out) """
+        pass
+
+    def model_step_increment(self, subject: BranchingProcessModel):
+        """ Respond to single step increment in simulation """
+        pass
+
+    def model_simulation_stopped(self, subject: BranchingProcessModel):
+        if self not in subject.observers_graph_change:
+            self.draw_network(subject.network)
+
+    def graph_change(self, subject: BranchingProcessModel):
+        """ Respond to changes in graph (nodes/households network) """
+        self.draw_network(subject.network)

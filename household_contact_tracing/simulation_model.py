@@ -2,9 +2,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import os
 
-from household_contact_tracing.views.simulation_view import SimulationView
 from household_contact_tracing.simulation_states import SimulationState, BranchingProcessState, \
     ReadyState
+
+from household_contact_tracing.network import Network
 
 
 class SimulationModel(ABC):
@@ -49,47 +50,53 @@ class SimulationModel(ABC):
 
     # Register observers
 
-    def register_observer_state_change(self, observer: SimulationView):
+    def register_observer_state_change(self, observer: 'SimulationView'):
         """ Register as observer for changes in model state (e.g. running, extinct, timed-out)
         Arguments:
             observer -- the object to be added to the state change observers list
+                Note - Forward referencing ('SimulationView') is used to allow type checking and avoid
+                circular dependency  https://www.python.org/dev/peps/pep-0484/#forward-references
         """
         if observer not in self._observers_state_change:
             self._observers_state_change.append(observer)
 
-    def register_observer_simulation_stopped(self, observer: SimulationView):
+    def register_observer_simulation_stopped(self, observer: 'SimulationView'):
         """ Register as observer for when simulation stops
         Arguments:
             observer -- the object to be added to the simulation stopped observers list
+                Note - Forward referencing ('SimulationView') is used to allow type checking and avoid
+                circular dependency  https://www.python.org/dev/peps/pep-0484/#forward-references
         """
         if observer not in self._observers_simulation_stopped:
             self._observers_simulation_stopped.append(observer)
 
-    def register_observer_step_increment(self, observer: SimulationView):
+    def register_observer_step_increment(self, observer: 'SimulationView'):
         """ Register as observer for increment in simulation
         Arguments:
             observer -- the object to be added to the increment observers list
+                Note - Forward referencing ('SimulationView') is used to allow type checking and avoid
+                circular dependency  https://www.python.org/dev/peps/pep-0484/#forward-references
         """
         if observer not in self._observers_step_increment:
             self._observers_step_increment.append(observer)
 
     # Remove observers
 
-    def remove_observer_state_change(self, observer: SimulationView):
+    def remove_observer_state_change(self, observer: 'SimulationView'):
         """ Remove as observer for changes in model state (e.g. running, extinct, timed-out) """
         try:
             self._observers_state_change.remove(observer)
         except ValueError:
             pass
 
-    def remove_observer_simulation_stopped(self, observer: SimulationView):
+    def remove_observer_simulation_stopped(self, observer: 'SimulationVie'):
         """ Remove as observer for when simulation stops """
         try:
             self._observers_simulation_stopped.remove(observer)
         except ValueError:
             pass
 
-    def remove_observer_step_increment(self, observer: SimulationView):
+    def remove_observer_step_increment(self, observer: 'SimulationView'):
         """ Remove as observer for increment in simulation """
         try:
             self._observers_step_increment.remove(observer)
@@ -123,19 +130,22 @@ class BranchingProcessModel(SimulationModel):
 
     Attributes
     ----------
-    state (BranchingProcessModel): The current state of the simulation
-    network (Network): The network that stores the model data
+        state (BranchingProcessModel): The current state of the simulation
+        network (Network): The network that stores the model data
 
     Methods
     -------
-    run_simulation(self, max_time: int, infection_threshold: int) -> None:
-        runs the simulation
+        run_simulation(self, max_time: int, infection_threshold: int) -> None:
+            runs the simulation
 
     """
 
     def __init__(self):
         # Call superclass constructor
         super().__init__()
+
+        # Set network
+        self.network = Network()
 
         # Set observer lists
         self.observers_graph_change = []
@@ -157,18 +167,26 @@ class BranchingProcessModel(SimulationModel):
 
     # Register observers
 
-    def register_observer_graph_change(self, observer: SimulationView):
-        """ Register as observer for changes in model graph (nodes/households network)
+    def register_observer_graph_change(self, observer: 'SimulationView'):
+        """ Register as observer for changes in model graph
 
-        Arguments:
-            observer -- the object to be added to the graph change observers list
+            Arguments:
+                observer -- the object to be added to the graph change observers list
+                    Note - Forward referencing ('SimulationView') is used to allow type checking and avoid
+                    circular dependency  https://www.python.org/dev/peps/pep-0484/#forward-references
         """
         if observer not in self.observers_graph_change:
             self.observers_graph_change.append(observer)
 
     # Remove observers
-    def remove_observer_graph_change(self, observer: SimulationView):
-        """ Remove as observer for graph changes """
+    def remove_observer_graph_change(self, observer: 'SimulationView'):
+        """ Remove as observer for graph changes
+
+            Arguments:
+                observer -- the object to be added to the graph change observers list
+                    Note - Forward referencing ('SimulationView') is used to allow type checking and avoid
+                    circular dependency  https://www.python.org/dev/peps/pep-0484/#forward-references
+        """
         try:
             self.observers_graph_change.remove(observer)
         except ValueError:
@@ -176,7 +194,13 @@ class BranchingProcessModel(SimulationModel):
 
     # Notify Observers
     def notify_observers_graph_change(self, modifier=None):
-        """ Notify observer about changes in graph (nodes/households network) """
+        """ Notify observer about changes in graph
+
+            Arguments:
+                observer -- the object to be added to the graph change observers list
+                    Note - Forward referencing ('SimulationView') is used to allow type checking and avoid
+                    circular dependency  https://www.python.org/dev/peps/pep-0484/#forward-references
+        """
         for observer in self.observers_graph_change:
             if observer != modifier:
                 observer.graph_change(self)

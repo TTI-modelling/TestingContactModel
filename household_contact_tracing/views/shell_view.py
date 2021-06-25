@@ -4,13 +4,34 @@ from household_contact_tracing.simulation_model import BranchingProcessModel
 
 class ShellView(SimulationView):
     """
-        Shell View (for now I just print out everything that I'm registered to observe)
+        Shell View: Prints out everything that it is registered to observe (as a string).
+
+        Attributes
+        ----------
+        _model (BranchingProcessModel): The branching process model who's data is being displayed to the user
+
+
+        Methods
+        -------
+
+        set_display(self, display: bool)
+            choose whether to show these 'shell' (text printouts) to the user
+
+        graph_change(self, subject: BranchingProcessModel)
+            Respond to changes in graph (nodes/households network)
+
+        model_state_change(self, subject: BranchingProcessModel):
+            Respond to changes in model state (e.g. running, extinct, timed-out)
+
+        model_step_increment(self, subject: BranchingProcessModel):
+            Respond to increment in simulation
+
+        model_simulation_stopped(self, subject: BranchingProcessModel)
+            Respond to end of simulation run
+
     """
 
     def __init__(self, model: BranchingProcessModel):
-        # Viewers can also own copies of controller and model (MVC pattern)
-        # ... but controller not required yet (no input collected from view)
-        #self.controller = controller
         self._model = model
 
         # Register default observers
@@ -18,6 +39,15 @@ class ShellView(SimulationView):
         self._model.register_observer_simulation_stopped(self)
 
     def set_display(self, show: bool):
+        """
+        Sets whether shell view (printed text outputs) be displayed or not.
+
+            Parameters:
+                show (bool): To display this view, set to True
+
+            Returns:
+                None
+        """
         if show:
             self._model.register_observer_graph_change(self)
             self._model.register_observer_state_change(self)
@@ -30,16 +60,49 @@ class ShellView(SimulationView):
             self._model.remove_observer_simulation_stopped(self)
 
     def graph_change(self, subject: BranchingProcessModel):
-        """ Respond to changes in graph (nodes/households network) """
+        """
+        Respond to changes in graph (nodes/households network)
+
+            Parameters:
+                subject (SimulationModel): The simulation model being displayed by this simulation view.
+
+            Returns:
+                None
+        """
         print('Graph changed')
 
     def model_state_change(self, subject: BranchingProcessModel):
-        """ Respond to changes in model state (e.g. running, extinct, timed-out) """
+        """
+        Respond to changes in model state (e.g. running, extinct, timed-out)
+
+            Parameters:
+                subject (SimulationModel): The simulation model being displayed by this simulation view.
+
+            Returns:
+                None
+        """
         print('State change: New state: {}'.format(subject.state))
 
     def model_step_increment(self, subject: BranchingProcessModel):
-        """ Respond to increment in simulation """
+        """
+        Respond to single step increment in simulation
+
+            Parameters:
+                subject (SimulationModel): The simulation model being displayed by this simulation view.
+
+            Returns:
+                None
+        """
         print('Model has been incremented by one step')
 
     def model_simulation_stopped(self, subject: BranchingProcessModel):
+        """
+        Respond to end of simulation run
+
+            Parameters:
+                subject (SimulationModel): The simulation model being displayed by this simulation view.
+
+            Returns:
+                None
+        """
         print('Simulation has stopped running')

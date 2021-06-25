@@ -1,4 +1,4 @@
-"""Mappings of colors to node and edge types to be used in views."""
+"""Mappings of colors to node and edge types to be used in graphic views."""
 from dataclasses import dataclass
 
 from household_contact_tracing.network import EdgeType, NodeType

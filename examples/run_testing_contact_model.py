@@ -41,6 +41,7 @@ def example_1():
     model.prob_pcr_positive = prob_testing_positive_function
     controller = BranchingProcessController(model)
     controller.graph_pyvis_view.set_display(True)
+    controller.timeline_view.set_display(True)
     controller.graph_pyvis_view.open_in_browser = True
     controller.graph_view.set_display(True)
     controller.run_simulation(15)
@@ -96,7 +97,7 @@ def recreate_pytest_1():
 
     controller = BranchingProcessController(model=model)
     controller.shell_view.set_display(False)
-    controller.timeline_view.set_display(False)
+    controller.timeline_view.set_display(True)
     controller.graph_pyvis_view.set_display(False)
     controller.graph_view.set_display(True)
     controller.run_simulation(2)
