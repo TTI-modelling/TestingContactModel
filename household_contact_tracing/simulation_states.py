@@ -4,19 +4,19 @@ from abc import ABC
 
 class SimulationState(ABC):
     """
-        Simulation State Abstract class (State pattern)
+        Simulation State.  Abstract class (follows 'State' design pattern)
         For all simulations (not just e.g. Branching process models)
 
         Attributes
         ----------
-        name (str): name of the state (replicates subclass name)
-        allowed (list): list of state names that can be entered, following from this current state
-        info (dict): extra information about the state
+            name (str): name of the state (replicates subclass name)
+            allowed (list): list of state names that can be switched to if changing directly from current state
+            info (dict): extra information about the state
 
         Methods
         -------
-        switch(self, state, **state_info)
-            switch to a new state (state) and store useful info about the new state (state_info)
+            switch(self, state, **state_info)
+                switch to a new state (state) and store useful info about the new state (state_info)
 
     """
 
@@ -28,7 +28,16 @@ class SimulationState(ABC):
         self._simulation_model = simulation_model
 
     def switch(self, state, **state_info):
-        """ Switch to new state """
+        """
+        Switch to a new state if new state is allowed (for current state)
+            (If not, raise ValueError)
+
+            Parameters:
+                state (SimulationState): The new state to be switched to
+
+            Returns:
+                None
+        """
         if state.name in self.allowed:
             self.__class__ = state
             self.info = state_info
@@ -45,7 +54,6 @@ class SimulationState(ABC):
 class BranchingProcessState(SimulationState):
     """
         Branching Process simulation states Abstract class (State pattern)
-        Included to allow other BranchingProcess states sub-classes
     """
     pass
 
