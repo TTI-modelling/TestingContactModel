@@ -50,53 +50,47 @@ class SimulationModel(ABC):
 
     # Register observers
 
-    def register_observer_state_change(self, observer: 'SimulationView'):
+    def register_observer_state_change(self, observer):
         """ Register as observer for changes in model state (e.g. running, extinct, timed-out)
         Arguments:
-            observer -- the object to be added to the state change observers list
-                Note - Forward referencing ('SimulationView') is used to allow type checking and avoid
-                circular dependency  https://www.python.org/dev/peps/pep-0484/#forward-references
+            observer -- the SimulationView object to be added to the state change observers list
         """
         if observer not in self._observers_state_change:
             self._observers_state_change.append(observer)
 
-    def register_observer_simulation_stopped(self, observer: 'SimulationView'):
+    def register_observer_simulation_stopped(self, observer):
         """ Register as observer for when simulation stops
         Arguments:
-            observer -- the object to be added to the simulation stopped observers list
-                Note - Forward referencing ('SimulationView') is used to allow type checking and avoid
-                circular dependency  https://www.python.org/dev/peps/pep-0484/#forward-references
+            observer -- the SimulationView object to be added to the state change observers list
         """
         if observer not in self._observers_simulation_stopped:
             self._observers_simulation_stopped.append(observer)
 
-    def register_observer_step_increment(self, observer: 'SimulationView'):
+    def register_observer_step_increment(self, observer):
         """ Register as observer for increment in simulation
         Arguments:
-            observer -- the object to be added to the increment observers list
-                Note - Forward referencing ('SimulationView') is used to allow type checking and avoid
-                circular dependency  https://www.python.org/dev/peps/pep-0484/#forward-references
+            observer -- the SimulationView object to be added to the state change observers list
         """
         if observer not in self._observers_step_increment:
             self._observers_step_increment.append(observer)
 
     # Remove observers
 
-    def remove_observer_state_change(self, observer: 'SimulationView'):
+    def remove_observer_state_change(self, observer):
         """ Remove as observer for changes in model state (e.g. running, extinct, timed-out) """
         try:
             self._observers_state_change.remove(observer)
         except ValueError:
             pass
 
-    def remove_observer_simulation_stopped(self, observer: 'SimulationVie'):
+    def remove_observer_simulation_stopped(self, observer):
         """ Remove as observer for when simulation stops """
         try:
             self._observers_simulation_stopped.remove(observer)
         except ValueError:
             pass
 
-    def remove_observer_step_increment(self, observer: 'SimulationView'):
+    def remove_observer_step_increment(self, observer):
         """ Remove as observer for increment in simulation """
         try:
             self._observers_step_increment.remove(observer)
@@ -167,25 +161,21 @@ class BranchingProcessModel(SimulationModel):
 
     # Register observers
 
-    def register_observer_graph_change(self, observer: 'SimulationView'):
+    def register_observer_graph_change(self, observer):
         """ Register as observer for changes in model graph
 
             Arguments:
-                observer -- the object to be added to the graph change observers list
-                    Note - Forward referencing ('SimulationView') is used to allow type checking and avoid
-                    circular dependency  https://www.python.org/dev/peps/pep-0484/#forward-references
+                observer -- the SimulationView object to be added to the state change observers list
         """
         if observer not in self.observers_graph_change:
             self.observers_graph_change.append(observer)
 
     # Remove observers
-    def remove_observer_graph_change(self, observer: 'SimulationView'):
+    def remove_observer_graph_change(self, observer):
         """ Remove as observer for graph changes
 
             Arguments:
-                observer -- the object to be added to the graph change observers list
-                    Note - Forward referencing ('SimulationView') is used to allow type checking and avoid
-                    circular dependency  https://www.python.org/dev/peps/pep-0484/#forward-references
+                observer -- the SimulationView object to be added to the state change observers list
         """
         try:
             self.observers_graph_change.remove(observer)
@@ -197,9 +187,7 @@ class BranchingProcessModel(SimulationModel):
         """ Notify observer about changes in graph
 
             Arguments:
-                observer -- the object to be added to the graph change observers list
-                    Note - Forward referencing ('SimulationView') is used to allow type checking and avoid
-                    circular dependency  https://www.python.org/dev/peps/pep-0484/#forward-references
+                observer -- the SimulationView object to be added to the state change observers list
         """
         for observer in self.observers_graph_change:
             if observer != modifier:
