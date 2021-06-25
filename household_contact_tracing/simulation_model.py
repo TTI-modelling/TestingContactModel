@@ -42,35 +42,47 @@ class SimulationModel(ABC):
         return self.__ROOT_DIR
 
     def _simulation_stopped(self):
-        """ The simulation has stopped running """
+        """ Procedures to be performed when simulation has stopped running """
         self.notify_observers_simulation_stopped()
 
     def _completed_step_increment(self):
-        """ Completed incrementing simulation by one step """
+        """ Procedures to be performed when completed incrementing simulation by one step """
         self.notify_observers_step_increment()
 
     # Register observers
 
     def register_observer_state_change(self, observer):
         """ Register as observer for changes in model state (e.g. running, extinct, timed-out)
-        Arguments:
-            observer -- the SimulationView object to be added to the state change observers list
+
+            Arguments:
+                observer -- the SimulationView object to be added to the state change observers list
+
+            Returns:
+                None
         """
         if observer not in self._observers_state_change:
             self._observers_state_change.append(observer)
 
     def register_observer_simulation_stopped(self, observer):
         """ Register as observer for when simulation stops
-        Arguments:
-            observer -- the SimulationView object to be added to the state change observers list
+
+            Arguments:
+                observer -- the SimulationView object to be added to the simulation stopped observers list
+
+            Returns:
+                None
         """
         if observer not in self._observers_simulation_stopped:
             self._observers_simulation_stopped.append(observer)
 
     def register_observer_step_increment(self, observer):
         """ Register as observer for increment in simulation
-        Arguments:
-            observer -- the SimulationView object to be added to the state change observers list
+
+            Arguments:
+                observer -- the SimulationView object to be added to the step increment observers list
+
+            Returns:
+                None
         """
         if observer not in self._observers_step_increment:
             self._observers_step_increment.append(observer)
@@ -78,21 +90,42 @@ class SimulationModel(ABC):
     # Remove observers
 
     def remove_observer_state_change(self, observer):
-        """ Remove as observer for changes in model state (e.g. running, extinct, timed-out) """
+        """ Remove observer from list of observers of changes in model state (e.g. running, extinct, timed-out)
+
+            Arguments:
+                observer -- the SimulationView object to be removed from the state change observers list
+
+            Returns:
+                None
+        """
         try:
             self._observers_state_change.remove(observer)
         except ValueError:
             pass
 
     def remove_observer_simulation_stopped(self, observer):
-        """ Remove as observer for when simulation stops """
+        """ Remove observer from list of observers of when simulation has stopped
+
+            Arguments:
+                observer -- the SimulationView object to be removed from the simulation stopped observers list
+
+            Returns:
+                None
+        """
         try:
             self._observers_simulation_stopped.remove(observer)
         except ValueError:
             pass
 
     def remove_observer_step_increment(self, observer):
-        """ Remove as observer for increment in simulation """
+        """Remove observer from list of observers of increment in simulation
+
+            Arguments:
+                observer -- the SimulationView object to be removed from the step increment observers list
+
+            Returns:
+                None
+        """
         try:
             self._observers_step_increment.remove(observer)
         except ValueError:
@@ -101,19 +134,40 @@ class SimulationModel(ABC):
     # Notify Observers
 
     def notify_observers_state_change(self, modifier=None):
-        """ Notify observer about changes in model state (e.g. running, extinct, timed-out)  """
+        """ Notify observers about changes in model state (e.g. running, extinct, timed-out)
+
+            Arguments:
+                modifier (object): object that caused state change - to be ignored
+
+            Returns:
+                None
+        """
         for observer in self._observers_state_change:
             if observer != modifier:
                 observer.model_state_change(self)
 
     def notify_observers_simulation_stopped(self, modifier=None):
-        """ Notify observer about when simulation has stopped """
+        """ Notify observers about when simulation has stopped
+
+            Arguments:
+                modifier (object): object that caused simulation to stop - to be ignored
+
+            Returns:
+                None
+        """
         for observer in self._observers_simulation_stopped:
             if observer != modifier:
                 observer.model_simulation_stopped(self)
 
     def notify_observers_step_increment(self, modifier=None):
-        """ Notify observer about  increment in simulation """
+        """ Notify observers about increment in simulation
+
+            Arguments:
+                modifier (object): object that caused step increment - to be ignored
+
+            Returns:
+                None
+        """
         for observer in self._observers_step_increment:
             if observer != modifier:
                 observer.model_step_increment(self)
@@ -150,14 +204,24 @@ class BranchingProcessModel(SimulationModel):
 
     @property
     def state(self) -> BranchingProcessState:
+        """ Get the current state of the simulation """
         return self._state
 
     @abstractmethod
     def run_simulation(self, max_time: int, infection_threshold: int) -> None:
-        """ Run the simulation until it stops (e.g times out, or too many infectious nodes) """
+        """
+        Run the simulation until it stops (e.g times out, too many infectious nodes or goes extinct)
+
+            Parameters:
+                max_time (int): The maximum number of iterations (eg. days) to be run (simulation stops if reached)
+                infection_threshold (int): The maximum number of infectious nodes (simulation stops if reached)
+
+            Returns:
+                None
+        """
 
     def graph_changed(self):
-        """ The graph has changed """
+        """ Procedures to be performed when the network/graph has changed """
         self.notify_observers_graph_change()
 
     # Register observers
@@ -167,6 +231,9 @@ class BranchingProcessModel(SimulationModel):
 
             Arguments:
                 observer -- the SimulationView object to be added to the state change observers list
+
+            Returns:
+                None
         """
         if observer not in self.observers_graph_change:
             self.observers_graph_change.append(observer)
@@ -176,7 +243,10 @@ class BranchingProcessModel(SimulationModel):
         """ Remove as observer for graph changes
 
             Arguments:
-                observer -- the SimulationView object to be added to the state change observers list
+                observer -- the SimulationView object to be removed from the state change observers list
+
+            Returns:
+                None
         """
         try:
             self.observers_graph_change.remove(observer)
@@ -185,10 +255,13 @@ class BranchingProcessModel(SimulationModel):
 
     # Notify Observers
     def notify_observers_graph_change(self, modifier=None):
-        """ Notify observer about changes in graph
+        """ Notify observers about changes in graph
 
             Arguments:
-                observer -- the SimulationView object to be added to the state change observers list
+                modifier (object): object that caused graph change - to be ignored
+
+            Returns:
+                None
         """
         for observer in self.observers_graph_change:
             if observer != modifier:

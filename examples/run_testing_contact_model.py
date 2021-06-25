@@ -2,7 +2,7 @@ import os
 
 from household_contact_tracing.behaviours.intervention.isolation import DailyTestingIsolation
 from household_contact_tracing.network import PositivePolicy
-from household_contact_tracing.simulation_controller import BranchingProcessController
+from household_contact_tracing.branching_process_controller import BranchingProcessController
 from household_contact_tracing.branching_process_models import IndividualTracingDailyTesting
 
 
