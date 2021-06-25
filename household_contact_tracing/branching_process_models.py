@@ -4,7 +4,6 @@ from copy import deepcopy
 
 from household_contact_tracing.infection import Infection
 from household_contact_tracing.intervention import Intervention
-from household_contact_tracing.network import Network
 from household_contact_tracing.simulation_model import BranchingProcessModel
 from household_contact_tracing.simulation_states import RunningState, ExtinctState,\
     MaxNodesInfectiousState, TimedOutState
@@ -26,16 +25,14 @@ class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
 
         Attributes
         ----------
-        network : Network
-            the persistent storage of model data
-
         infection: Infection
             the processes/behaviours relating to the spread of infection
+        intervention: Intervention
+            the processes/behaviours relating to interventions to contain the infection
 
 
         Methods
         -------
-
         run_simulation(self, max_time: int, infection_threshold: int = 1000) -> None
             Runs the simulation up to a maximum number of increments and max allowed number of
             infected nodes.
@@ -48,7 +45,7 @@ class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
 
     def __init__(self, params: dict):
         """Initializes a household branching process epidemic. Various contact tracing strategies
-        can be utilized in an attempt to control the epidemic.
+            can be utilized in an attempt to control the epidemic.
 
         Args:
             params (dict): A dictionary of parameters that are used in the model.
@@ -59,9 +56,6 @@ class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
         self.validate_parameters(params, os.path.join(self.root_dir, self.schema_path))
         # Call parent init
         BranchingProcessModel.__init__(self)
-
-        # Set network
-        self.network = Network()
 
         # Set strategies (Strategy pattern)
         self.infection = self._initialise_infection()
