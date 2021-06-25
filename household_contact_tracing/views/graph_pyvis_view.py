@@ -13,10 +13,52 @@ from household_contact_tracing.views.colors import node_colours, edge_colours
 
 
 class GraphPyvisView(SimulationView):
-    """ Graph View using Pyvis library:
-        https://pyvis.readthedocs.io/en/latest/tutorial.html
+    """
+        Graph view for visually displaying network as a Pyvis graph.
+        Uses Pyvis library: https://pyvis.readthedocs.io/en/latest/tutorial.html
+
+        Attributes
+        ----------
+            _model (BranchingProcessModel):
+                The branching process model who's data is being displayed to the user
+            _open_in_browser (bool):
+                Whether to open a browser tab and display the graph
+            _filename (str):
+                The file spec used to save the output file.
+
+
+        Methods
+        -------
+
+            set_display(self, display: bool)
+                choose whether to show these 'shell' (text printouts) to the user
+
+            set_show_increment_graphs(self, show_all):
+                Sets whether to display this graph view every time the graph is incremented.
+
+            graph_change(self, subject: BranchingProcessModel)
+                Respond to changes in graph (nodes/households network)
+
+            model_state_change(self, subject: BranchingProcessModel):
+                Respond to changes in model state (e.g. running, extinct, timed-out)
+
+            model_step_increment(self, subject: BranchingProcessModel):
+                Respond to increment in simulation
+
+            model_simulation_stopped(self, subject: BranchingProcessModel)
+                Respond to end of simulation run
+
     """
     def __init__(self, model: BranchingProcessModel):
+        """
+        Constructor for GraphPyvisView
+
+            Parameters:
+                model (BranchingProcessModel): The branching process model who's data is being displayed to the user
+
+            Returns:
+                new GraphPyvisView
+        """
         self._model = model
 
         self.filename = os.path.join(os.path.dirname(self._model.root_dir),
@@ -30,42 +72,104 @@ class GraphPyvisView(SimulationView):
 
     @property
     def open_in_browser(self):
+        """ Get open_in_browser (whether to open a browser tab and display the graph) """
         return self._open_in_browser
 
     @open_in_browser.setter
     def open_in_browser(self, open_in_browser: bool):
+        """ Set open_in_browser (whether to open a browser tab and display the graph) """
         self._open_in_browser = open_in_browser
 
     def set_display(self, show: bool):
+        """
+        Sets whether this pyvis graph view is displayed or not.
+
+            Parameters:
+                show (bool): To display this view, set to True
+
+            Returns:
+                None
+        """
         if show:
             self._model.register_observer_simulation_stopped(self)
         else:
             self._model.remove_observer_simulation_stopped(self)
 
-    def model_state_change(self, subject: BranchingProcessModel):
-        """ Respond to changes in model state (e.g. running, extinct, timed-out) """
-        pass
+    def set_show_increment_graphs(self, show_all):
+        """
+        Sets whether to display this graph view every time the graph is incremented.
 
-    def model_step_increment(self, subject: BranchingProcessModel):
-        """ Respond to single step increment in simulation """
-        pass
+            Parameters:
+                show_all (bool): To display this view, set to True
 
-    def model_simulation_stopped(self, subject: BranchingProcessModel):
-        if self not in subject.observers_graph_change:
-            self.draw_network(subject.network)
-
-    def graph_change(self, subject: BranchingProcessModel):
-        """ Respond to changes in graph (nodes/households network) """
-        pass
-
-    def set_show_all_graphs(self, show_all):
+            Returns:
+                None
+        """
         if show_all:
             self._model.register_observer_graph_change(self)
         else:
             self._model.remove_observer_graph_change(self)
 
+    def model_state_change(self, subject: BranchingProcessModel):
+        """
+        Respond to changes in model state (e.g. running, extinct, timed-out)
+
+            Parameters:
+                subject (BranchingProcessModel): The branching process model being displayed by this simulation view.
+
+            Returns:
+                None
+        """
+        pass
+
+    def model_step_increment(self, subject: BranchingProcessModel):
+        """
+        Respond to single step increment in simulation
+
+            Parameters:
+                subject (BranchingProcessModel): The branching process model being displayed by this simulation view.
+
+            Returns:
+                None
+        """
+        pass
+
+    def model_simulation_stopped(self, subject: BranchingProcessModel):
+        """
+        Respond to end of simulation run
+
+            Parameters:
+                subject (BranchingProcessModel): The branching process model being displayed by this simulation view.
+
+            Returns:
+                None
+        """
+        if self not in subject.observers_graph_change:
+            self.draw_network(subject.network)
+
+    def graph_change(self, subject: BranchingProcessModel):
+        """
+        Respond to changes in graph (nodes/households network)
+
+            Parameters:
+                subject (SimulationModel): The branching process model being displayed by this simulation view.
+
+            Returns:
+                None
+        """
+        pass
+
     def draw_network(self, network: Network):
-        """Draws the network generated by the model."""
+        """
+        Draws the network generated by the model using Pyvis and saves to temp directory.
+        (Also displays in a new browser tab if self._open_in_browser == True)
+
+            Parameters:
+                network (Network): The network to be drawn and displayed.
+
+            Returns:
+                None
+        """
 
         nt = pvNetwork('1000px', '1000px')
 
@@ -89,6 +193,16 @@ class GraphPyvisView(SimulationView):
 
     @staticmethod
     def _adapt_nodes(graph: nx.Graph):
+        """
+        Adapts the network graph (nx.graph) to correct format for pyvis display.
+
+            Parameters:
+                graph (networkx.Graph): The network graph to be copied and adjusted.
+
+            Returns:
+                graph (networkx.Graph)
+        """
+
         result = graph.copy()
 
         for node in list(result.nodes(data=True)):
@@ -117,20 +231,22 @@ class GraphPyvisView(SimulationView):
         return result
 
     def _add_legend(self):
+        """ Add a legend to the HTML graph output """
         # load the file
         with open(self.filename) as inf:
             txt = inf.read()
             soup = bs(txt, "html.parser")
 
-        self.create_html_table(edge_colours, soup, 'Edges')
-        self.create_html_table(node_colours, soup, 'Nodes')
+        self._create_html_table(edge_colours, soup, 'Edges')
+        self._create_html_table(node_colours, soup, 'Nodes')
 
         # save the file again
-        with open(self.filename, "w") as outf:
-            outf.write(str(soup))
+        with open(self.filename, "w") as out_file:
+            out_file.write(str(soup))
 
     @staticmethod
-    def create_html_table(network_colour_dict: dict, soup: bs, title: str):
+    def _create_html_table(network_colour_dict: dict, soup: bs, title: str):
+        """ Add a (HTML) table to the legend for the HTML graph output """
         # create new link
         new_table = soup.new_tag("table")
         # insert it into the document

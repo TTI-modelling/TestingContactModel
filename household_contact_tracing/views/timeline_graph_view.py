@@ -10,44 +10,67 @@ from household_contact_tracing.views.colors import node_colours
 
 class TimelineGraphView(SimulationView):
     """
-        Timeline View: A really simple proof-of-concept, could be used as a template.
-        Shows how views are now decoupled from model code and each other.
+        Timeline View: A really simple proof-of-concept time series graph,
+            could be used as a template for more detailed / relevant time series graphs / views.
 
         Attributes
         ----------
-        _model (BranchingProcessModel): The branching process model who's data is being displayed to the user
+            _model (BranchingProcessModel):
+                The branching process model who's data is being displayed to the user
+            _node_type_counts (DataFrame):
+                The DataFrame used to store the node type counts at each simulation iteration
 
 
         Methods
         -------
 
-        set_display(self, display: bool)
-            choose whether to show these 'shell' (text printouts) to the user
+            set_display(self, display: bool)
+                choose whether to show these 'shell' (text printouts) to the user
 
-        graph_change(self, subject: BranchingProcessModel)
-            Respond to changes in graph (nodes/households network)
+            graph_change(self, subject: BranchingProcessModel)
+                Respond to changes in graph (nodes/households network)
 
-        model_state_change(self, subject: BranchingProcessModel):
-            Respond to changes in model state (e.g. running, extinct, timed-out)
+            model_state_change(self, subject: BranchingProcessModel):
+                Respond to changes in model state (e.g. running, extinct, timed-out)
 
-        model_step_increment(self, subject: BranchingProcessModel):
-            Respond to increment in simulation
+            model_step_increment(self, subject: BranchingProcessModel):
+                Respond to increment in simulation
 
-        model_simulation_stopped(self, subject: BranchingProcessModel)
-            Respond to end of simulation run
+            model_simulation_stopped(self, subject: BranchingProcessModel)
+                Respond to end of simulation run
 
     """
 
     def __init__(self, model: BranchingProcessModel):
+        """
+        Constructor for TimelineGraphView
+
+            Parameters:
+                model (BranchingProcessModel): The branching process model who's data is being displayed to the user
+
+            Returns:
+                new TimelineGraphView
+        """
+        # Set the model
         self._model = model
 
-        self.node_type_counts = pd.DataFrame(columns=[node.name for node in node_colours.keys()])
+        # Initialise the DataFrame used to store the node type counts at each simulation iteration
+        self._node_type_counts = pd.DataFrame(columns=[node.name for node in node_colours.keys()])
 
         # Register as observer
         self._model.register_observer_simulation_stopped(self)
         self._model.register_observer_step_increment(self)
 
     def set_display(self, show: bool):
+        """
+        Sets whether this timeline view (time-series graph) is displayed or not.
+
+            Parameters:
+                show (bool): To display this view, set to True
+
+            Returns:
+                None
+        """
         if show:
             self._model.register_observer_simulation_stopped(self)
             self._model.register_observer_step_increment(self)
@@ -56,34 +79,74 @@ class TimelineGraphView(SimulationView):
             self._model.remove_observer_step_increment(self)
 
     def model_state_change(self, subject: BranchingProcessModel):
-        """ Respond to changes in model state (e.g. running, extinct, timed-out) """
+        """
+        Respond to changes in model state (e.g. running, extinct, timed-out)
+
+            Parameters:
+                subject (BranchingProcessModel): The branching process model being displayed by this simulation view.
+
+            Returns:
+                None
+        """
         pass
 
     def graph_change(self, subject: BranchingProcessModel):
-        """ Respond to changes in graph (nodes/households network) """
+        """
+        Respond to changes in graph (nodes/households network)
+
+            Parameters:
+                subject (BranchingProcessModel): The branching process model being displayed by this simulation view.
+
+            Returns:
+                None
+        """
         pass
 
     def model_step_increment(self, subject: BranchingProcessModel):
-        """ Respond to single step increment in simulation """
-        self.increment_timeline(subject.network)
+        """
+        Respond to single step increment in simulation
+
+            Parameters:
+                subject (BranchingProcessModel): The branching process model being displayed by this simulation view.
+
+            Returns:
+                None
+        """
+        self._increment_timeline(subject.network)
 
     def model_simulation_stopped(self, subject: BranchingProcessModel):
+        """
+        Respond to end of simulation run
+
+            Parameters:
+                subject (BranchingProcessModel): The branching process model being displayed by this simulation view.
+
+            Returns:
+                None
+        """
         self.draw_timeline()
 
     def draw_timeline(self):
-        """ Draws the timeline graph, generated by the model."""
+        """
+        Draw the timeline graph, generated by the model. Uses pyplot plot() and show() method
+
+        """
         colours = {node.name: colour.colour for node, colour in node_colours.items()}
-        if len(self.node_type_counts.index):
-            axes = self.node_type_counts.plot(subplots=True, legend=False,
+        if len(self._node_type_counts.index):
+            axes = self._node_type_counts.plot(subplots=True, legend=False,
                                               color=colours, figsize=(6, 14),
                                               layout=(math.ceil(len(colours)/2), 2),
-                                              ylim=(0, self.node_type_counts.to_numpy().max()))
-            for index, node_type in enumerate(self.node_type_counts.columns):
+                                              ylim=(0, self._node_type_counts.to_numpy().max()))
+            for index, node_type in enumerate(self._node_type_counts.columns):
                 title = node_type
                 axes[index // 2][index % 2].set_title(title)
             plt.tight_layout()
             plt.show()
 
-    def increment_timeline(self, network):
+    def _increment_timeline(self, network):
+        """
+        Update the DataFrame used to record the counts of node types at each simulation increment
+
+        """
         node_counts = {node.name: network.count_nodes(node) for node in node_colours.keys()}
-        self.node_type_counts = self.node_type_counts.append(node_counts, ignore_index=True)
+        self._node_type_counts = self._node_type_counts.append(node_counts, ignore_index=True)

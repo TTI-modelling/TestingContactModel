@@ -8,30 +8,40 @@ class ShellView(SimulationView):
 
         Attributes
         ----------
-        _model (BranchingProcessModel): The branching process model who's data is being displayed to the user
+            _model (BranchingProcessModel): The branching process model who's data is being displayed to the user
 
 
         Methods
         -------
 
-        set_display(self, display: bool)
-            choose whether to show these 'shell' (text printouts) to the user
+            set_display(self, display: bool)
+                choose whether to show these 'shell' (text printouts) to the user
 
-        graph_change(self, subject: BranchingProcessModel)
-            Respond to changes in graph (nodes/households network)
+            graph_change(self, subject: BranchingProcessModel)
+                Respond to changes in graph (nodes/households network)
 
-        model_state_change(self, subject: BranchingProcessModel):
-            Respond to changes in model state (e.g. running, extinct, timed-out)
+            model_state_change(self, subject: BranchingProcessModel):
+                Respond to changes in model state (e.g. running, extinct, timed-out)
 
-        model_step_increment(self, subject: BranchingProcessModel):
-            Respond to increment in simulation
+            model_step_increment(self, subject: BranchingProcessModel):
+                Respond to increment in simulation
 
-        model_simulation_stopped(self, subject: BranchingProcessModel)
-            Respond to end of simulation run
+            model_simulation_stopped(self, subject: BranchingProcessModel)
+                Respond to end of simulation run
 
     """
 
     def __init__(self, model: BranchingProcessModel):
+        """
+        Constructor for ShellView
+
+            Parameters:
+                model (BranchingProcessModel): The branching process model who's data is being displayed to the user
+
+            Returns:
+                new ShellView
+        """
+
         self._model = model
 
         # Register default observers
@@ -40,7 +50,7 @@ class ShellView(SimulationView):
 
     def set_display(self, show: bool):
         """
-        Sets whether shell view (printed text outputs) be displayed or not.
+        Sets whether this shell view's outputs (printed string output) are displayed or not.
 
             Parameters:
                 show (bool): To display this view, set to True
@@ -64,7 +74,7 @@ class ShellView(SimulationView):
         Respond to changes in graph (nodes/households network)
 
             Parameters:
-                subject (SimulationModel): The simulation model being displayed by this simulation view.
+                subject (BranchingProcessModel): The branching process model being displayed by this simulation view.
 
             Returns:
                 None
@@ -76,7 +86,7 @@ class ShellView(SimulationView):
         Respond to changes in model state (e.g. running, extinct, timed-out)
 
             Parameters:
-                subject (SimulationModel): The simulation model being displayed by this simulation view.
+                subject (BranchingProcessModel): The branching process model being displayed by this simulation view.
 
             Returns:
                 None
@@ -88,7 +98,7 @@ class ShellView(SimulationView):
         Respond to single step increment in simulation
 
             Parameters:
-                subject (SimulationModel): The simulation model being displayed by this simulation view.
+                subject (BranchingProcessModel): The branching process model being displayed by this simulation view.
 
             Returns:
                 None
@@ -100,7 +110,7 @@ class ShellView(SimulationView):
         Respond to end of simulation run
 
             Parameters:
-                subject (SimulationModel): The simulation model being displayed by this simulation view.
+                subject (BranchingProcessModel): The branching process model being displayed by this simulation view.
 
             Returns:
                 None
