@@ -103,14 +103,12 @@ def recreate_pytest_1():
 
     # Re-initialise and re-run model multiple times and save result to specified file
     # instead of default ('/temp/sumulation_ouput_[todays date].csv')
-    #/home/ann/Code/TTI/TestingContactModel/temp
-    #/home/ann/Code/TTI/TestingContactModel/temp/my_test.csv
     save_path = os.path.join('..', 'temp', 'my_test.csv')
 
     for idx in range(0,10):
         controller = BranchingProcessController(model=IndividualTracingDailyTesting(params))
         controller.csv_view.filename = save_path
-        controller.run_simulation(20, 5)
+        controller.run_simulation(20)
 
 
 if __name__ == "__main__":
