@@ -20,8 +20,8 @@ class CSVFileView(SimulationView):
             self._filename = filename
         else:
             self._filename = os.path.join(os.path.dirname(self.model.root_dir),
-                                         'temp',
-                                         'simulation_output_{}.csv'.format(datetime.datetime.now().strftime("%Y%m%d")))
+                                          'temp',
+                                          'simulation_output_{}.csv'.format(datetime.datetime.now().strftime("%Y%m%d")))
         # Register as observer
         self.model.register_observer_simulation_stopped(self)
 
