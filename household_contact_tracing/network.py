@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import Optional, Iterator, List, Tuple, Dict, Callable
-from typing import Iterator
 import networkx as nx
 from enum import Enum
 import numpy
