@@ -2,10 +2,10 @@ import json
 from abc import ABC
 
 
-class SimulationState(ABC):
+class BranchingProcessState(ABC):
     """
-        Simulation State.  Abstract class (follows 'State' design pattern)
-        For all simulations (not just e.g. Branching process models)
+        Branching Process State.  Abstract class (follows 'State' design pattern)
+        States representing the possible states of Branching Process simulation models
 
         Attributes
         ----------
@@ -33,7 +33,7 @@ class SimulationState(ABC):
             (If not, raise ValueError)
 
             Parameters:
-                state (SimulationState): The new state to be switched to
+                state (BranchingProcessState): The new state to be switched to
 
             Returns:
                 None
@@ -49,13 +49,6 @@ class SimulationState(ABC):
         return json.dumps(
             {'name': self.name,
              'info': self.info})
-
-
-class BranchingProcessState(SimulationState):
-    """
-        Branching Process simulation states Abstract class (State pattern)
-    """
-    pass
 
 
 class ReadyState(BranchingProcessState):

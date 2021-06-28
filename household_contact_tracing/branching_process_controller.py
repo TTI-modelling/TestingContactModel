@@ -1,4 +1,4 @@
-from household_contact_tracing.simulation_model import BranchingProcessModel
+from household_contact_tracing.branching_process_model import BranchingProcessModel
 from household_contact_tracing.views.shell_view import ShellView
 from household_contact_tracing.views.csv_file_view import CSVFileView
 from household_contact_tracing.views.graph_view import GraphView

@@ -7,7 +7,7 @@ import webbrowser
 from bs4 import BeautifulSoup as bs
 
 from household_contact_tracing.views.branching_process_view import BranchingProcessView
-from household_contact_tracing.simulation_model import BranchingProcessModel
+from household_contact_tracing.branching_process_model import BranchingProcessModel
 
 
 class GraphPyvisView(BranchingProcessView):
