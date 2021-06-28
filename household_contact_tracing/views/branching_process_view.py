@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 
-from household_contact_tracing.simulation_model import SimulationModel
+from household_contact_tracing.simulation_model import BranchingProcessModel
 
 
 class BranchingProcessView(ABC):
     """
-        Simulation View (Abstract) (MVC pattern)
+        Branching process View (Abstract) (MVC pattern)
         This is the abstract parent of all view classes. Sub-class for adding new views
-        (displays of simulation outputs).
+        (displays of branching process model outputs).
 
         Methods (Abstract)
         ----------
@@ -17,16 +17,16 @@ class BranchingProcessView(ABC):
 
             MVC related abstract methods. Responses to change events broadcast by the model:
 
-            graph_change(self, subject: SimulationModel)
+            graph_change(self, subject: BranchingProcessModel)
                 Respond to changes in graph (nodes/households network)
 
-            model_state_change(self, subject: SimulationModel)
+            model_state_change(self, subject: BranchingProcessModel)
                 Respond to changes in model state (e.g. running, extinct, timed-out)
 
-            model_step_increment(self, subject: SimulationModel)
+            model_step_increment(self, subject: BranchingProcessModel)
                 Respond to single step increment in simulation
 
-            model_simulation_stopped(self, subject: SimulationModel)
+            model_simulation_stopped(self, subject: BranchingProcessModel)
                 Respond to simulation stopping
     """
 
@@ -44,12 +44,12 @@ class BranchingProcessView(ABC):
         pass
 
     @abstractmethod
-    def graph_change(self, subject: SimulationModel):
+    def graph_change(self, subject: BranchingProcessModel):
         """
         Respond to changes in graph (nodes/households network)
 
             Parameters:
-                subject (SimulationModel): The simulation model being displayed by this simulation view.
+                subject (BranchingProcessModel): The simulation model being displayed by this simulation view.
 
             Returns:
                 None
@@ -57,12 +57,12 @@ class BranchingProcessView(ABC):
         pass
 
     @abstractmethod
-    def model_state_change(self, subject: SimulationModel):
+    def model_state_change(self, subject: BranchingProcessModel):
         """
         Respond to changes in model state (e.g. running, extinct, timed-out)
 
             Parameters:
-                subject (SimulationModel): The simulation model being displayed by this simulation view.
+                subject (BranchingProcessModel): The simulation model being displayed by this simulation view.
 
             Returns:
                 None
@@ -70,12 +70,12 @@ class BranchingProcessView(ABC):
         pass
 
     @abstractmethod
-    def model_step_increment(self, subject: SimulationModel):
+    def model_step_increment(self, subject: BranchingProcessModel):
         """
         Respond to single step increment in simulation
 
             Parameters:
-                subject (SimulationModel): The simulation model being displayed by this simulation view.
+                subject (BranchingProcessModel): The simulation model being displayed by this simulation view.
 
             Returns:
                 None
@@ -83,12 +83,12 @@ class BranchingProcessView(ABC):
         pass
 
     @abstractmethod
-    def model_simulation_stopped(self, subject: SimulationModel):
+    def model_simulation_stopped(self, subject: BranchingProcessModel):
         """
         Respond to simulation stopping
 
             Parameters:
-                subject (SimulationModel): The simulation model being displayed by this simulation view.
+                subject (BranchingProcessModel): The simulation model being displayed by this simulation view.
 
             Returns:
                 None
