@@ -2,7 +2,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import os
 
-from household_contact_tracing.simulation_states import SimulationState, BranchingProcessState, \
+from household_contact_tracing.branching_process_state import BranchingProcessState, BranchingProcessState, \
     ReadyState
 
 from household_contact_tracing.network import Network
@@ -33,7 +33,7 @@ class SimulationModel(ABC):
 
     @property
     @abstractmethod
-    def state(self) -> SimulationState:
+    def state(self) -> BranchingProcessState:
         """ Get the current state of the model """
 
     @property
