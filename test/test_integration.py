@@ -10,7 +10,7 @@ import pytest
 from household_contact_tracing.network import EdgeType, NodeType, Network, PositivePolicy
 from household_contact_tracing.branching_process_controller import BranchingProcessController
 import household_contact_tracing.branching_process_models as bpm
-from household_contact_tracing.simulation_model import SimulationModel
+from household_contact_tracing.branching_process_model import BranchingProcessModel
 
 
 @pytest.fixture
@@ -46,7 +46,7 @@ class TestSimpleHousehold:
     """
 
     @staticmethod
-    def run_simulation(params: dict, days=10) -> SimulationModel:
+    def run_simulation(params: dict, days=10) -> BranchingProcessModel:
         """Run the Household model for 10 days with the given params and return the
         model."""
         controller = BranchingProcessController(bpm.HouseholdLevelTracing(params))
@@ -244,7 +244,8 @@ class TestSimpleHousehold:
         network = model.network
         node_imperfect = [node.propensity_imperfect_isolation for node in network.all_nodes()]
         assert any(node_imperfect)
-        node_contact_rate_reduction = [model.infection.contact_rate_reduction.get_contact_rate_reduction(node) for node in network.all_nodes()]
+        node_contact_rate_reduction = \
+            [model.infection.contact_rate_reduction.get_contact_rate_reduction(node) for node in network.all_nodes()]
         # People who are isolating
         assert 1 in node_contact_rate_reduction
         # People who are imperfectly isolating
@@ -294,7 +295,7 @@ class TestIndividualTracing:
     However, contacts of household members are not traced unless they develop symptoms."""
 
     @staticmethod
-    def run_simulation(params: dict, days=10) -> SimulationModel:
+    def run_simulation(params: dict, days=10) -> BranchingProcessModel:
         """Run the IndividualTracing model for 10 days with the given params and return the
         model."""
         controller = BranchingProcessController(bpm.IndividualLevelTracing(params))
@@ -344,7 +345,7 @@ class TestIndividualTracingDailyTesting:
     traced contacts quarantining, they take daily tests."""
 
     @staticmethod
-    def run_simulation(params: dict, days=10) -> SimulationModel:
+    def run_simulation(params: dict, days=10) -> BranchingProcessModel:
         """Run the IndividualTracingDailyTesting model for 10 days with the given params and
         return the model."""
         controller = BranchingProcessController(bpm.IndividualTracingDailyTesting(params))

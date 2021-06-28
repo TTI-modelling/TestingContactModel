@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from household_contact_tracing.simulation_model import BranchingProcessModel
+from household_contact_tracing.branching_process_model import BranchingProcessModel
 
 
 class BranchingProcessView(ABC):

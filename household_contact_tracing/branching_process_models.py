@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from household_contact_tracing.infection import Infection
 from household_contact_tracing.intervention import Intervention
-from household_contact_tracing.simulation_model import BranchingProcessModel
+from household_contact_tracing.branching_process_model import BranchingProcessModel
 from household_contact_tracing.branching_process_state import RunningState, ExtinctState,\
     MaxNodesInfectiousState, TimedOutState
 from household_contact_tracing.parameterised import Parameterised
