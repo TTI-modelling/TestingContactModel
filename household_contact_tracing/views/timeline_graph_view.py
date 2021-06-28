@@ -3,11 +3,11 @@ import math
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from household_contact_tracing.views.simulation_view import SimulationView
+from household_contact_tracing.views.branching_process_view import BranchingProcessView
 from household_contact_tracing.simulation_model import BranchingProcessModel
 
 
-class TimelineGraphView(SimulationView):
+class TimelineGraphView(BranchingProcessView):
     """
         Timeline View: A really simple proof-of-concept time series graph,
             could be used as a template for more detailed / relevant time series graphs / views.

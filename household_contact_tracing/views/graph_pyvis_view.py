@@ -6,11 +6,11 @@ import os
 import webbrowser
 from bs4 import BeautifulSoup as bs
 
-from household_contact_tracing.views.simulation_view import SimulationView
+from household_contact_tracing.views.branching_process_view import BranchingProcessView
 from household_contact_tracing.simulation_model import BranchingProcessModel
 
 
-class GraphPyvisView(SimulationView):
+class GraphPyvisView(BranchingProcessView):
     """
         Graph view for visually displaying network as a Pyvis graph.
         Uses Pyvis library: https://pyvis.readthedocs.io/en/latest/tutorial.html

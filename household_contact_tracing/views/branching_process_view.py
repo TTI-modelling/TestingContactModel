@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from household_contact_tracing.simulation_model import SimulationModel
 
 
-class SimulationView(ABC):
+class BranchingProcessView(ABC):
     """
         Simulation View (Abstract) (MVC pattern)
         This is the abstract parent of all view classes. Sub-class for adding new views

@@ -2,11 +2,11 @@ import os
 import pandas as pd
 import datetime
 
-from household_contact_tracing.views.simulation_view import SimulationView
+from household_contact_tracing.views.branching_process_view import BranchingProcessView
 from household_contact_tracing.simulation_model import BranchingProcessModel
 
 
-class CSVFileView(SimulationView):
+class CSVFileView(BranchingProcessView):
     """
         CSV file view for storing state change info as a csv file
         Shows how views are now decoupled from model code and each other.
