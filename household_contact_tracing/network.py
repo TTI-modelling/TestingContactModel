@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import Optional, Iterator, List, Tuple, Dict, Callable
-from typing import Iterator
 import networkx as nx
 from enum import Enum
 import numpy
+from dataclasses import dataclass
 
 from household_contact_tracing.parameterised import Parameterised
 
@@ -57,6 +57,18 @@ class PositivePolicy(Enum):
     only_quarantine = 3
 
 
+@dataclass
+class EdgeColour:
+    colour: str
+    label: str
+
+
+@dataclass
+class NodeColour:
+    colour: str
+    label: str
+
+
 class Network:
     """
         A class used to store contact tracing data in a graph/network format with nodes and their connecting edges.
@@ -84,6 +96,34 @@ class Network:
                  infecting_node: Optional[Node] = None, completed_isolation=False) -> Node:
 
     """
+
+    edge_colours = {EdgeType.default: EdgeColour("black", "Transmission, yet to be traced"),
+                    EdgeType.within_house: EdgeColour("blue", "Within household contact tracing"),
+                    EdgeType.between_house: EdgeColour("magenta",
+                                                       "Between household contact tracing"),
+                    EdgeType.failed_contact_tracing: EdgeColour("red", "Failed contact trace"),
+                    EdgeType.app_traced: EdgeColour("green", "App traced edge")
+                    }
+
+    node_colours = {NodeType.default: NodeColour("lightgrey", "Default"),
+                    NodeType.isolated: NodeColour('yellow', "Isolating"),
+                    NodeType.symptomatic_will_report_infection: NodeColour('lime',
+                                                                           "Symptomatic, will report"),
+                    NodeType.symptomatic_will_not_report_infection: NodeColour('green',
+                                                                               "Symptomatic, will not report"),
+                    NodeType.received_pos_test_pcr: NodeColour('grey', "Received positive PCR"),
+                    NodeType.received_neg_test_pcr: NodeColour('deeppink', "Received negative PCR"),
+                    NodeType.confirmatory_pos_pcr_test: NodeColour('turquoise',
+                                                                   "Positive confirmatory PCR"),
+                    NodeType.confirmatory_neg_pcr_test: NodeColour('tomato',
+                                                                   "Negative confirmatory PCR"),
+                    NodeType.received_pos_test_lfa: NodeColour('pink', "Positive LFA"),
+                    NodeType.being_lateral_flow_tested_isolated: NodeColour('blue',
+                                                                            "Being LFT and isolating"),
+                    NodeType.being_lateral_flow_tested_not_isolated: NodeColour('orange',
+                                                                                "Being LFT and not isolating"),
+                    NodeType.asymptomatic: NodeColour('olive', 'Asymptomatic')
+                    }
 
     def __init__(self):
         self.graph = nx.Graph()
@@ -402,13 +442,17 @@ class Household:
         self.id = house_id
         self.size = house_size                  # Size of the household
         self.susceptibles = house_size - 1      # How many susceptibles remain in the household
-        self.isolated = False                   # Has the household been isolated, so there can be no more infections from this household
+        # Has the household been isolated, so there can be no more infections from this household
+        self.isolated = False
         self.isolated_time = float('inf')       # When the house was isolated
         self.propensity_trace_app = propensity_trace_app
-        self.contact_traced = False             # If the house has been contact traced, it is isolated as soon as anyone in the house shows symptoms
-        self.time_until_contact_traced = float('inf')  # The time until quarantine, calculated from contact tracing processes on connected households
+        # If the house has been contact traced, it is isolated as soon as anyone in the house shows symptoms
+        self.contact_traced = False
+        # The time until quarantine, calculated from contact tracing processes on connected households
+        self.time_until_contact_traced = float('inf')
         self.contact_traced_households: List[Household] = []  # The list of households contact traced from this one
-        self.being_contact_traced_from: Optional[Household] = None   # If the house if being contact traced, this is the first Household that will get there
+        # If the house if being contact traced, this is the first Household that will get there
+        self.being_contact_traced_from: Optional[Household] = None
         self.propagated_contact_tracing = False  # The house has not yet propagated contact tracing
         self.contact_tracing_index = 0          # The house is which step of the contact tracing process
         self.infected_by = infected_by       # Which house infected the household
