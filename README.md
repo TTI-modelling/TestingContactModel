@@ -11,10 +11,9 @@ The sections below are:
 - [Research](#research)
   - [Abstract](#abstract)
   - [Authors](#authors)
-- [Testing](#testing) 
-  - [Unit testing](#unit-testing)
+- [Testing](#testing)
 - [Logging](#logging)
-- [Design](#design)  
+- [Software Design](#software design)  
 - [Contributing](#contributing)
 - [Copyright and Licensing](#copyright--licensing)
 

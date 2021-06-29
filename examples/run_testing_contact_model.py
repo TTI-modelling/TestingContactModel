@@ -1,7 +1,5 @@
 import os
 
-from household_contact_tracing.behaviours.intervention.isolation import DailyTestingIsolation
-from household_contact_tracing.network import PositivePolicy
 from household_contact_tracing.branching_process_controller import BranchingProcessController
 from household_contact_tracing.branching_process_models import IndividualTracingDailyTesting
 
@@ -34,7 +32,7 @@ def example_1():
               "self_isolation_duration": 10,
               "lateral_flow_testing_duration": 14,
               "LFA_testing_requires_confirmatory_PCR": False,
-              "household_positive_policy": PositivePolicy.only_quarantine}
+              "household_positive_policy": "only_quarantine"}
 
     model = IndividualTracingDailyTesting(params)
     model.prob_lfa_positive = prob_testing_positive_function
@@ -77,7 +75,7 @@ def recreate_pytest_1():
               "household_pairwise_survival_prob": 0.2,
               "propensity_risky_behaviour_lfa_testing": 0,
               "global_contact_reduction_risky_behaviour": 0,
-              "household_positive_policy": PositivePolicy.lfa_testing_no_quarantine
+              "household_positive_policy": "lfa_testing_no_quarantine"
               }
 
     model = IndividualTracingDailyTesting(params)

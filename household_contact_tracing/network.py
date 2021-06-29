@@ -44,19 +44,6 @@ class TestType(Enum):
     lfa = 1
 
 
-class PositivePolicy(Enum):
-    """What happens to the contacts of a Household if a Household member tests positive.
-    lfa_testing_no_quarantine: Household contacts start LFA testing, but do not quarantine
-      unless they develop symptoms
-    lfa_testing_and_quarantine: Household contacts start LFA testing, and quarantine.
-    only_quarantine: Household contacts do not start LFA testing, quarantine.
-      They will book a PCR test if they develop symptoms.
-    """
-    lfa_testing_no_quarantine = 1
-    lfa_testing_and_quarantine = 2
-    only_quarantine = 3
-
-
 @dataclass
 class EdgeColour:
     colour: str
@@ -590,17 +577,25 @@ class Household:
             if node.will_uptake_isolation:
                 node.isolated = True
 
-    def apply_positive_policy(self, time: int, household_positive_policy: PositivePolicy):
-        """We apply different policies to the household contacts of a discovered case."""
+    def apply_positive_policy(self, time: int, household_positive_policy: str):
+        """Depending on the positive policy, different interventions are made to the household
+        contacts of a discovered case.
+
+        lfa_testing_no_quarantine: Household contacts start LFA testing, but do not quarantine
+          unless they develop symptoms.
+        lfa_testing_and_quarantine: Household contacts start LFA testing and quarantine.
+        only_quarantine: Household contacts do not start LFA testing, quarantine. They will book
+          a PCR test if they develop symptoms.
+        """
 
         # set the household attributes to declare that we have already applied the policy
         self.applied_household_positive_policy = True
 
-        if household_positive_policy == PositivePolicy.lfa_testing_no_quarantine:
+        if household_positive_policy == "lfa_testing_no_quarantine":
             self.start_lateral_flow_testing_household(time)
-        elif household_positive_policy == PositivePolicy.lfa_testing_and_quarantine:
+        elif household_positive_policy == "lfa_testing_and_quarantine":
             self.start_lateral_flow_testing_household_and_quarantine(time)
-        elif household_positive_policy == PositivePolicy.only_quarantine:
+        elif household_positive_policy == "only_quarantine":
             self.isolate_household(time)
         else:
             raise Exception("household_positive_policy not recognised.")

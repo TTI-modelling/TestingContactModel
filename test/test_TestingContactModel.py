@@ -3,7 +3,6 @@ import pytest
 
 from household_contact_tracing.behaviours.intervention.isolation import DailyTestingIsolation
 from household_contact_tracing.branching_process_models import IndividualTracingDailyTesting
-from household_contact_tracing.network import PositivePolicy
 
 default_params = {"outside_household_infectivity_scaling": 0.3,
                   "contact_tracing_success_prob": 0.7,
@@ -19,7 +18,7 @@ default_params = {"outside_household_infectivity_scaling": 0.3,
                   "household_pairwise_survival_prob": 0.2,
                   "propensity_risky_behaviour_lfa_testing": 0,
                   "global_contact_reduction_risky_behaviour": 0,
-                  "household_positive_policy": PositivePolicy.lfa_testing_no_quarantine
+                  "household_positive_policy": "lfa_testing_no_quarantine"
                   }
 
 
@@ -254,7 +253,7 @@ def test_traced_nodes_are_lateral_flow_tested(simple_model_high_test_prob):
 def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: IndividualTracingDailyTesting):
 
     model = simple_model_high_test_prob
-    model.household_positive_policy = PositivePolicy.lfa_testing_and_quarantine
+    model.household_positive_policy = "lfa_testing_and_quarantine"
 
     model.time = 5
 
@@ -297,7 +296,7 @@ def simple_model_lfa_testing_and_quarantine():
             return 0
 
     params = copy.deepcopy(default_params)
-    params["household_positive_policy"] = PositivePolicy.lfa_testing_and_quarantine
+    params["household_positive_policy"] = "lfa_testing_and_quarantine"
 
     model = IndividualTracingDailyTesting(params)
     model.prob_pcr_positive = prob_testing_positive_pcr_func
@@ -312,7 +311,7 @@ def test_start_lateral_flow_testing_household_and_quarantine(
     behaviour so if a member of a household tests positive self isolate and start LFA testing.
     """
     model = simple_model_lfa_testing_and_quarantine
-    model.household_positive_policy = PositivePolicy.lfa_testing_and_quarantine
+    model.household_positive_policy = "lfa_testing_and_quarantine"
 
     model.time = 5
 
@@ -356,7 +355,7 @@ def simple_model_no_lfa_testing_only_quarantine():
 
     params = copy.deepcopy(default_params)
 
-    params["household_positive_policy"] = PositivePolicy.only_quarantine
+    params["household_positive_policy"] = "only_quarantine"
 
     model = IndividualTracingDailyTesting(params)
     model.prob_pcr_positive = prob_testing_positive_pcr_func
@@ -372,7 +371,7 @@ def test_household_contacts_quarantine_only(
     behaviour so if a member of a household tests positive self isolate and start LFA testing.
     """
     model = simple_model_lfa_testing_and_quarantine
-    model.household_positive_policy = PositivePolicy.lfa_testing_and_quarantine
+    model.household_positive_policy = "lfa_testing_and_quarantine"
 
     model.time = 5
 

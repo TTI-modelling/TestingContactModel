@@ -11,7 +11,8 @@
       "type": "boolean"
     },
     "household_positive_policy": {
-      "description": ""
+      "description": "What happens to the contacts of a Household if a Household member tests positive.",
+      "enum": ["lfa_testing_no_quarantine", "lfa_testing_and_quarantine", "only_quarantine"]
     },
     "number_of_days_prior_to_LFA_result_to_trace": {
       "description": "",
