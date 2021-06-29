@@ -397,7 +397,6 @@ def test_risky_behaviour_attributes_default(simple_model: simple_model):
     """Tests that the default behaviour is no more risky behaviour
     """
 
-    print('output:', simple_model.network.node(1).propensity_risky_behaviour_lfa_testing)
     assert not simple_model.network.node(1).propensity_risky_behaviour_lfa_testing
 
 
