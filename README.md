@@ -169,9 +169,26 @@ Martyn Fyles and Elizabeth Fearon
 A set of python pytest test files can be found in the `test` directory, and can be run from the shell 
 (once the necessary requirements are installed) with the command: `pytest`
 
+The `test_integration.py` file contains a number of integration tests which run typical simulation scenarios.
+The rest of the tests are unit tests though coverage is limited at the moment.
+
 
 ## Logging
-[Todo]
+Output is handled by the logging library *loguru*. Loguru handles both printing to stdout and more detailed logging
+to a log file. Loguru messages have a severity level which determines where they are output to. Messages with a 
+severity of *debug* and up are printed to the log file and messages with a severity of *info* and up are printed to 
+stdout. The upshot of this is that if you want a message to be logged but not output to stdout use the *debug* level 
+and if you want a message to print to stdout use the *info* level.
+
+```
+from loguru import logging
+
+logging.info("I will be printed to both stdout and the log file.")
+logging.debug("I will be printed only to the log file.")
+```
+
+The setup of the logger is done in the `household_contact_tracing/__init__.py` file. This should not need adjusting 
+unless you want to alter the setup of the log file. 
 
 ## Software Design
 
