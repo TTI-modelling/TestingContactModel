@@ -1,3 +1,5 @@
+from loguru import logger
+
 from household_contact_tracing.views.branching_process_view import BranchingProcessView
 from household_contact_tracing.branching_process_model import BranchingProcessModel
 
@@ -79,7 +81,7 @@ class ShellView(BranchingProcessView):
             Returns:
                 None
         """
-        print('Graph changed')
+        logger.debug('Graph changed')
 
     def model_state_change(self, subject: BranchingProcessModel):
         """
@@ -91,7 +93,7 @@ class ShellView(BranchingProcessView):
             Returns:
                 None
         """
-        print('State change: New state: {}'.format(subject.state))
+        logger.debug(f'State change: New state: {subject.state}')
 
     def model_step_increment(self, subject: BranchingProcessModel):
         """
@@ -103,7 +105,7 @@ class ShellView(BranchingProcessView):
             Returns:
                 None
         """
-        print('Model has been incremented by one step')
+        logger.debug('Model has been incremented by one step')
 
     def model_simulation_stopped(self, subject: BranchingProcessModel):
         """
@@ -115,4 +117,4 @@ class ShellView(BranchingProcessView):
             Returns:
                 None
         """
-        print('Simulation has stopped running')
+        logger.debug('Simulation has stopped running')
