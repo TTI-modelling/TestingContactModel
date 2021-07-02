@@ -4,9 +4,10 @@ import os
 
 from household_contact_tracing.branching_process_state import BranchingProcessState, ReadyState
 from household_contact_tracing.network import Network
+from household_contact_tracing.parameterised import Parameterised
 
 
-class BranchingProcessModel(ABC):
+class BranchingProcessModel(ABC, Parameterised):
     """
     An abstract base class used to represent all branching process simulation models.
 
