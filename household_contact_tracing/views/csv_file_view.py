@@ -15,9 +15,10 @@ class CSVFileView(BranchingProcessView):
         ----------
             _model (BranchingProcessModel):
                 The branching process model who's data is being displayed to the user
-            _filename (str):
+            filename (str):
                 The file spec used to save the output file.
-
+            display_params(self) -> list[str]:
+                Get display_params (the model parameters to be displayed in the csv file).
 
         Methods
         -------
@@ -55,6 +56,7 @@ class CSVFileView(BranchingProcessView):
         """
 
         self._model = model
+        self._display_params = []
 
         # Initialise the filename, used to save the output file
         if filename:
@@ -81,6 +83,16 @@ class CSVFileView(BranchingProcessView):
         # Todo check file name is (without directory path) is valid.
         else:
             raise IsADirectoryError('Directory {} does not exist'.format(os.path.dirname(filename)))
+
+    @property
+    def display_params(self) -> list[str]:
+        """ Get display_params (the model parameters to be displayed in the csv file). """
+        return self._display_params
+
+    @display_params.setter
+    def display_params(self, params: list[str]):
+        """ Set display_params (the model parameters to be displayed in the csv file). """
+        self._display_params = params
 
     def set_display(self, show: bool):
         """
@@ -135,6 +147,9 @@ class CSVFileView(BranchingProcessView):
 
         dict_flattened = {'run_finished': str(datetime.datetime.now()),
                           'end_state': subject.state.name}
+        for param in self._display_params:
+            dict_flattened[param] = subject.get_param_value(param)
+
         for key in subject.state.info:
             dict_flattened[key] = [subject.state.info[key]]
 

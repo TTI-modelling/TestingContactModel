@@ -1,4 +1,5 @@
-import sys, os
+import sys
+import os
 sys.path.append("../") # REPLACE WITH PATH TO THE 'household_contact_tracing' PACKAGE.
 
 import household_contact_tracing.branching_process_models as bpm
@@ -63,4 +64,5 @@ save_path = os.path.join('..', 'temp', 'my_test.csv')
 for idx in range(0, 10):
     controller = BranchingProcessController(bpm.IndividualLevelTracing(params))
     controller.csv_view.filename = save_path
+    controller.csv_view.display_params = ['number_of_days_to_trace_backwards', 'number_of_days_to_trace_forwards']
     controller.run_simulation(5)

@@ -18,6 +18,8 @@ class Parameterised:
                 Class method: Create the starting infectives
             update_params(self, params: dict):
                 Update instance variables with anything in params.
+            get_param_value(self, param_name: str):
+                Get the value of the parameter with param_name as key (if exists). If it doesn't exist, returns None
 
     """
 
@@ -47,3 +49,10 @@ class Parameterised:
             for param_name in self.__dict__:
                 if param_name in params:
                     self.__dict__[param_name] = params[param_name]
+
+    def get_param_value(self, param_name: str):
+        """ Get the value of the parameter with param_name as key (if exists)
+            If it doesn't exist, returns None
+        """
+        if self.params and param_name in self.params:
+            return self.params[param_name]
