@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import datetime
+from typing import List
 
 from household_contact_tracing.views.branching_process_view import BranchingProcessView
 from household_contact_tracing.branching_process_model import BranchingProcessModel
@@ -85,12 +86,12 @@ class CSVFileView(BranchingProcessView):
             raise IsADirectoryError('Directory {} does not exist'.format(os.path.dirname(filename)))
 
     @property
-    def display_params(self) -> list[str]:
+    def display_params(self) -> List[str]:
         """ Get display_params (the model parameters to be displayed in the csv file). """
         return self._display_params
 
     @display_params.setter
-    def display_params(self, params: list[str]):
+    def display_params(self, params: List[str]):
         """ Set display_params (the model parameters to be displayed in the csv file). """
         self._display_params = params
 
