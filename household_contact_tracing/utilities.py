@@ -1,5 +1,6 @@
 from typing import Type, List
 from copy import deepcopy
+import itertools
 
 from household_contact_tracing.branching_process_models import HouseholdLevelTracing
 
@@ -22,21 +23,33 @@ def run_parameterised_simulation(model_type: Type[HouseholdLevelTracing], num_st
 
 
 def process_sequences(params: dict) -> List[dict]:
-    if "sequences" in params:
-        processed_params = process_combinatorial_sequences(params)
-    else:
+    if "sequences" not in params:
         processed_params = [params]
+    else:
+        sequences = params["sequences"]
+        if "nesting_type" in sequences:
+            if sequences["nesting_type"] == "combination":
+                processed_params = process_combinatorial_sequences(params)
+            elif sequences["nesting_type"] == "linear":
+                processed_params = process_linear_sequences(params)
+            else:
+                raise ParameterError(f"Unknown sequence nesting_type: "
+                                     f"'{sequences['nesting_type']}'.\n"
+                                     f"nesting_type must be 'linear' or 'combination'.")
+        else:
+            processed_params = process_linear_sequences(params)
+
     return processed_params
 
 
-def process_combinatorial_sequences(original_params: dict) -> List[dict]:
-    """Take sequences of parameters and combine them combinatorially returning the flattened
+def process_linear_sequences(original_params: dict) -> List[dict]:
+    """Take sequences of parameters and combine them linearly, returning the flattened
     parameter sets."""
     processed_params = []
     sequences = list(original_params["sequences"].values())
-    if not validate_sequences(sequences):
-        raise ParameterError(f"Invalid sequence parameters. All sequence parameters must be the "
-                             f"same length.")
+    if not validate_sequences_length(sequences):
+        raise ParameterError(f"Invalid sequence parameters. To combine parameters linearly, all "
+                             f"parameter sequences must be the same length.")
 
     for index in range(len(sequences[0])):
         param_set = deepcopy(original_params)
@@ -47,7 +60,25 @@ def process_combinatorial_sequences(original_params: dict) -> List[dict]:
     return processed_params
 
 
-def validate_sequences(sequences: List[list]):
+def process_combinatorial_sequences(original_params: dict) -> List[dict]:
+    """Take sequences of parameters and combine them """
+    processed_params = []
+    sequences = list(original_params["sequences"].values())
+    parameter_names = list(original_params["sequences"])
+
+    combinations = itertools.product(*sequences)
+
+    for param_set in combinations:
+        new_params = deepcopy(original_params)
+        del new_params["sequences"]
+        for name, value in zip(parameter_names, param_set):
+            new_params[name] = value
+        processed_params.append(new_params)
+
+    return processed_params
+
+
+def validate_sequences_length(sequences: List[list]):
     """Returns True if all lists in `sequences` are the same length. Else returns False."""
     for index, param in enumerate(sequences):
         if len(param) != len(sequences[0]):
