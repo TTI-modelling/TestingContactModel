@@ -26,15 +26,14 @@ def process_sequences(params: dict) -> List[dict]:
     if "sequences" not in params:
         processed_params = [params]
     else:
-        sequences = params["sequences"]
-        if "nesting_type" in sequences:
-            if sequences["nesting_type"] == "combination":
+        if "nesting_type" in params["sequences"]:
+            nesting_type = params["sequences"].pop("nesting_type")
+            if nesting_type == "combination":
                 processed_params = process_combinatorial_sequences(params)
-            elif sequences["nesting_type"] == "linear":
+            elif nesting_type == "linear":
                 processed_params = process_linear_sequences(params)
             else:
-                raise ParameterError(f"Unknown sequence nesting_type: "
-                                     f"'{sequences['nesting_type']}'.\n"
+                raise ParameterError(f"Unknown sequence nesting_type: '{nesting_type}'.\n"
                                      f"nesting_type must be 'linear' or 'combination'.")
         else:
             processed_params = process_linear_sequences(params)
@@ -80,7 +79,7 @@ def process_combinatorial_sequences(original_params: dict) -> List[dict]:
 
 def validate_sequences_length(sequences: List[list]):
     """Returns True if all lists in `sequences` are the same length. Else returns False."""
-    for index, param in enumerate(sequences):
+    for param in sequences:
         if len(param) != len(sequences[0]):
             return False
     return True
