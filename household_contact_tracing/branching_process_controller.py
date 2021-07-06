@@ -52,13 +52,8 @@ class BranchingProcessController:
 
     @property
     def model(self) -> BranchingProcessModel:
-        """ Set the branching process model used to store graph and perform simulation """
-        return self._model
-
-    @model.setter
-    def model(self, model: BranchingProcessModel):
         """ Get the branching process model used to store graph and perform simulation """
-        self._model = model
+        return self._model
 
     def set_graphic_displays(self, display: bool):
         """

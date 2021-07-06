@@ -104,9 +104,10 @@ def recreate_pytest_1():
     # instead of default ('/temp/sumulation_ouput_[todays date].csv')
     save_path = os.path.join('..', 'temp', 'my_test.csv')
 
-    for idx in range(0,10):
+    for idx in range(0, 10):
         controller = BranchingProcessController(model=IndividualTracingDailyTesting(params))
         controller.csv_view.filename = save_path
+        controller.csv_view.display_params = ["household_pairwise_survival_prob", "asymptomatic_relative_infectivity"]
         controller.run_simulation(20)
 
 

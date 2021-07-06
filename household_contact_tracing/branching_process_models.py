@@ -7,7 +7,6 @@ from household_contact_tracing.intervention import Intervention
 from household_contact_tracing.branching_process_model import BranchingProcessModel
 from household_contact_tracing.branching_process_state import RunningState, ExtinctState,\
     MaxNodesInfectiousState, TimedOutState
-from household_contact_tracing.parameterised import Parameterised
 from household_contact_tracing.behaviours.infection.new_household import NewHouseholdLevel, \
     NewHouseholdIndividualTracingDailyTesting
 from household_contact_tracing.behaviours.infection.contact_rate_reduction import \
@@ -17,7 +16,7 @@ import household_contact_tracing.behaviours.intervention.isolation as isolation
 import household_contact_tracing.behaviours.infection.new_infection as new_infection
 
 
-class HouseholdLevelTracing(BranchingProcessModel, Parameterised):
+class HouseholdLevelTracing(BranchingProcessModel):
     """
         A class used to represent a simulation of contact tracing of households only,
          (without contacting every individual and their contacts)
