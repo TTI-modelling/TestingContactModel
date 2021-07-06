@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import json
 from abc import ABC
+from typing import Type
 
 
 class BranchingProcessState(ABC):
@@ -27,13 +30,13 @@ class BranchingProcessState(ABC):
     def __init__(self, simulation_model):
         self._simulation_model = simulation_model
 
-    def switch(self, state, **state_info):
+    def switch(self, state: Type[BranchingProcessState], **state_info):
         """
         Switch to a new state if new state is allowed (for current state)
             (If not, raise ValueError)
 
             Parameters:
-                state (BranchingProcessState): The new state to be switched to
+                state: The new state to be switched to
 
             Returns:
                 None
