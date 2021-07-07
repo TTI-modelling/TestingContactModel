@@ -10,7 +10,7 @@ This readme provides additional documentation for developers looking to extend o
 The sections below are:
 - [Testing](#testing)
 - [Logging](#logging)
-- [Software Design](#software design)  
+- [Software Design](#software-design)  
 - [Contributing](#contributing)
 
 <!-- toc -->
@@ -87,6 +87,17 @@ fit in.  The following is intended as a guide, and assumes basic knowledge of OO
     using the `_initialise_infection()` or `_initialise_intervention()` function as appropriate, passing it to the 
     constructor.
    
+#### Views
+
+1. Add a new view and register it with the model, and add to the controller.
+    * Look at the views in the `household_contact_tracing/views` folder to see how these are created, copying the most 
+      appropriate one to use as a template. You will see that all views inherit from SimulationView
+      (`views/simulation_view.py`).  The views also contain a copy of the model, and use this to register themselves as 
+      observers of the model, signing up to events of interest, so that they can output any information back to the user.
+  
+    * Add the new view to the `BranchingProcessController` class (or other class inherited from `SimulationController). 
+      See others views added in that Controller class, to look at examples.  
+   
 ### Parameters
 Parameters are provided to the model when it is initialised. Parameters are provided in the form of a dictionary. 
 Each parameter provided has an endpoint somewhere in the code, usually in of the behaviour classes. All parameters
@@ -103,17 +114,6 @@ the moment, parameters not specified in the schema are allowed but in the future
 waiting on a stable implementation of a Python parser for JSON Schema draft 2020-12, which will allow use of the
 `unevaluated_properties` keyword. At the moment, if a parameter is mistyped, it will be silently ignored, and the 
 default value used instead.
-
-#### Views
-
-1. Add a new view and register it with the model, and add to the controller.
-    * Look at the views in the `household_contact_tracing/views` folder to see how these are created, copying the most 
-      appropriate one to use as a template. You will see that all views inherit from SimulationView
-      (`views/simulation_view.py`).  The views also contain a copy of the model, and use this to register themselves as 
-      observers of the model, signing up to events of interest, so that they can output any information back to the user.
-  
-    * Add the new view to the `BranchingProcessController` class (or other class inherited from `SimulationController). 
-      See others views added in that Controller class, to look at examples.  
   
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
