@@ -29,7 +29,7 @@ class GraphPyvisView(BranchingProcessView):
         -------
 
             set_display(self, display: bool)
-                choose whether to show these 'shell' (text printouts) to the user
+                choose whether to show the PyVis graphs to the user
 
             set_show_increment_graphs(self, show_all):
                 Sets whether to display this graph view every time the graph is incremented.

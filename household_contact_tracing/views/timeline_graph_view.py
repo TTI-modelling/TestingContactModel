@@ -9,8 +9,8 @@ from household_contact_tracing.branching_process_model import BranchingProcessMo
 
 class TimelineGraphView(BranchingProcessView):
     """
-        Timeline View: A really simple proof-of-concept time series graph,
-            could be used as a template for more detailed / relevant time series graphs / views.
+        Timeline View: A really simple proof-of-concept time series graph using matplotlib pyplot.
+            (Could be used as a template for more detailed / relevant time series graphs / views.)
 
         Attributes
         ----------
@@ -24,7 +24,7 @@ class TimelineGraphView(BranchingProcessView):
         -------
 
             set_display(self, display: bool)
-                choose whether to show these 'shell' (text printouts) to the user
+                choose whether to show the timeline graphs to the user
 
             graph_change(self, subject: BranchingProcessModel)
                 Respond to changes in graph (nodes/households network)

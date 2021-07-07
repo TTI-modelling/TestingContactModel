@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import datetime
 from typing import List
+from loguru import logger
 
 from household_contact_tracing.views.branching_process_view import BranchingProcessView
 from household_contact_tracing.branching_process_model import BranchingProcessModel
@@ -9,8 +10,8 @@ from household_contact_tracing.branching_process_model import BranchingProcessMo
 
 class CSVFileView(BranchingProcessView):
     """
-        CSV file view for storing state change info as a csv file
-        Shows how views are now decoupled from model code and each other.
+        CSV file view for storing state change info (and selected parameters) as a csv file
+
 
         Attributes
         ----------
@@ -19,13 +20,14 @@ class CSVFileView(BranchingProcessView):
             filename (str):
                 The file spec used to save the output file.
             display_params(self) -> list[str]:
-                Get display_params (the model parameters to be displayed in the csv file).
+                The model parameters to be displayed in the csv file. If any parameters in this list don't
+                exist (e.g mis-typed), they will be (silently) ignored.
 
         Methods
         -------
 
             set_display(self, display: bool)
-                choose whether to show these 'shell' (text printouts) to the user
+                choose whether to create/update the CSV file output
 
             graph_change(self, subject: BranchingProcessModel)
                 Respond to changes in graph (nodes/households network)
@@ -144,7 +146,7 @@ class CSVFileView(BranchingProcessView):
             Returns:
                 None
         """
-        # Add state info to CSV file
+        # Add state info and requested parameters (display_params) to CSV file
 
         dict_flattened = {'run_finished': str(datetime.datetime.now()),
                           'end_state': subject.state.name}
@@ -163,7 +165,7 @@ class CSVFileView(BranchingProcessView):
             df_history_states = pd.DataFrame()
         df_history_states = pd.concat([df_history_states, df_new_state])
         df_history_states.to_csv(self._filename, index=False)
-        print('Added final run results to file: {}'.format(self._filename))
+        logger.info('Added final run results to file: {}'.format(self._filename))
 
     def graph_change(self, subject: BranchingProcessModel):
         """

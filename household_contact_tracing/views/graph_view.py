@@ -11,7 +11,7 @@ from household_contact_tracing.branching_process_model import BranchingProcessMo
 
 class GraphView(BranchingProcessView):
     """
-        Graph view for visually displaying network as a pyplot graph.
+        Graph view for visually displaying network as a matplotlib pyplot graph.
 
         Attributes
         ----------

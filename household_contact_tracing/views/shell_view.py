@@ -7,6 +7,9 @@ from household_contact_tracing.branching_process_model import BranchingProcessMo
 class ShellView(BranchingProcessView):
     """
         Shell View: Prints out everything that it is registered to observe (as a string).
+                    Uses the loguru 'debug' logging mechanism to print output.  So outputs will only be shown in
+                    the log file. (See 'Logging' section in developer Readme)
+
 
         Attributes
         ----------
