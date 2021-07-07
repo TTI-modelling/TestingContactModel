@@ -12,9 +12,9 @@ The sections below are:
 - [Logging](#logging)
 - [Parameters](parameters)  
 - [Software Design](#software-design)
-- [Extending Functionality](extending-functionality)
-  - [Updating Behaviours](updating-behaviours)
-  - [Views](views)  
+- [Extending Functionality](#extending-functionality)
+  * [Updating Behaviours](#updating-behaviours)
+  * [Views](#views)  
 - [Contributing](#contributing)
 
 <!-- toc -->
