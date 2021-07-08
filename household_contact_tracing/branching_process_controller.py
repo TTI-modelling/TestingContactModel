@@ -1,9 +1,11 @@
+from household_contact_tracing.views.growth_rate_view import GrowthRateView
 from household_contact_tracing.branching_process_model import BranchingProcessModel
 from household_contact_tracing.views.shell_view import ShellView
 from household_contact_tracing.views.csv_file_view import CSVFileView
 from household_contact_tracing.views.graph_view import GraphView
 from household_contact_tracing.views.graph_pyvis_view import GraphPyvisView
 from household_contact_tracing.views.timeline_graph_view import TimelineGraphView
+from household_contact_tracing.views.growth_rate_view import GrowthRateView
 
 
 class BranchingProcessController:
@@ -47,6 +49,7 @@ class BranchingProcessController:
         self.timeline_view = TimelineGraphView(model)
         self.shell_view = ShellView(model)
         self.csv_view = CSVFileView(model)
+        self.growth_rate_view = GrowthRateView(model)
 
         self.set_graphic_displays(False)
 
