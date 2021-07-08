@@ -104,9 +104,8 @@ class Queue:
         new_applicant_df['time_joined_queue']      = ''
         new_applicant_df['time_swabbed']           = ''
         new_applicant_df['time_received_result']   = ''
-        new_applicant_df['time_will_leave_queue']  = ''
 
-        self.applicant_df.append(new_applicant_df, ignore_index = True)
+        self.applicant_df = self.applicant_df.append(new_applicant_df, ignore_index = True)
 
     def swab_applicants(self, 
         to_be_swabbed: list, 
@@ -131,7 +130,7 @@ class Queue:
         self.applicant_df.loc[to_be_swabbed, columns_to_update] = [False, self.time, False, True]
 
         # work out when they receive their result, and update the data
-        self.applicant_df.loc[to_be_swabbed, 'time_received_result'] = self.time + test_processing_delays
+        self.applicant_df.loc[to_be_swabbed, 'time_received_result'] = self.time + np.array(test_processing_delays)
 
         # update the queue_df table with the number of individuals processed today
         self.queue_df.loc[self.queue_df.time == self.time, ['number_swabbed_today']] = len(to_be_swabbed)
@@ -159,11 +158,11 @@ class Queue:
 
 
     @property
-    def current_applicants(self) -> int:
-        """Gets the number of individuals waiting to be swabbed.
+    def current_applicants(self) -> list:
+        """Gets the indexes of individuals waiting to be swabbed.
 
         Returns:
-            int: The number of individuals waiting to be swabbed
+            list: The indexes of individuals waiting to be swabbed
         """
         return list(self.applicant_df[self.applicant_df.waiting_to_be_swabbed].index)
 
@@ -213,7 +212,7 @@ class QueueController:
         pass
 
 
-class SimpleQueue(QueueController):
+class DeterministicQueue(QueueController):
 
     def __init__(
             self,
@@ -249,10 +248,9 @@ class SimpleQueue(QueueController):
         self.test_processing_delay_dist = test_processing_delay_dist
         self.symptom_onset_delay_dist   = symptom_onset_delay_dist
         self.max_time_in_queue          = max_time_in_queue
+        self.days_to_simulate           = days_to_simulate
 
         # ease of acccess stuff
-        self.queue_df       = self.queue.queue_df
-        self.applicant_df   = self.queue.applicant_df
         self.time           = self.queue.time
         
 
@@ -282,7 +280,7 @@ class SimpleQueue(QueueController):
         number_applicants = len(self.queue.current_applicants)
 
         # update queue_df with the number of applicants today
-        self.queue.queue_df.loc[self.queue_df.time == self.time, ['total_applications_today']] = [number_applicants]
+        self.queue.queue_df.loc[self.queue.queue_df.time == self.time, ['total_applications_today']] = [number_applicants]
 
         # how much swabbing capacity do we have remaining? The method
         remaining_swabbing_capacity = self.queue.todays_capacity - self.queue.number_swabs_performed_today
@@ -323,18 +321,18 @@ class SimpleQueue(QueueController):
         """
 
         # These people will leave the queue today
-        self.leavers = (self.applicant_df.time_will_leave_queue <= self.time) & (self.applicant_df.waiting_to_be_swabbed == True)
+        self.leavers = (self.queue.applicant_df.time_will_leave_queue <= self.time) & (self.queue.applicant_df.waiting_to_be_swabbed == True)
 
-        self.queue_df.loc[self.time, 'number_left_queue_not_tested'] = [sum(self.leavers)]
+        self.queue.queue_df.loc[self.time, 'number_left_queue_not_tested'] = [sum(self.leavers)]
 
         # Set their waiting to be swabbed status to False
-        self.applicant_df.loc[self.leavers, ['waiting_to_be_swabbed', 'left_queue_not_swabbed']] = [False, True]
+        self.queue.applicant_df.loc[self.leavers, ['waiting_to_be_swabbed', 'left_queue_not_swabbed']] = [False, True]
 
         # work out who will come back the next day
         # not left and not swabbed
-        returners_index = self.applicant_df.waiting_to_be_swabbed == True
+        returners_index = self.queue.applicant_df.waiting_to_be_swabbed == True
 
-        self.queue_df.loc[self.time, 'spillover_to_next_day'] = [sum(returners_index)]
+        self.queue.queue_df.loc[self.time, 'spillover_to_next_day'] = [sum(returners_index)]
 
     def simulate_one_day(self, verbose: bool = True):
         """
@@ -346,9 +344,21 @@ class SimpleQueue(QueueController):
         self.update_queue_leaver_status()
         self.process_queue()
 
+        self.time
+
         # make a nice little status update
         if verbose:
             print(f'Model time {self.time}, progress: {round((self.time + 1) / self.queue.days_to_simulate * 100)}%', end = '\r')
+
+    def run_simulation(self, verbose: bool = True):
+        """Runs the queueing process model.
+        """
+
+        while self.time < self.days_to_simulate:
+
+            self.simulate_one_day(verbose)
+
+            self.time += 1
 
 class QueueBranchingProcessController():
 
