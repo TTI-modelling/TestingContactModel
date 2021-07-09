@@ -55,6 +55,16 @@ class BranchingProcessController:
         """ Get the branching process model used to store graph and perform simulation """
         return self._model
 
+    @model.setter
+    def model(self, model: BranchingProcessModel):
+        """ Set the branching process model used to store graph and perform simulation """
+
+        # Copy observers across, to new model
+        model.copy_observers(self._model)
+
+        # Set new model
+        self._model = model
+
     def set_graphic_displays(self, display: bool):
         """
         Turn on or off all graphical output.
