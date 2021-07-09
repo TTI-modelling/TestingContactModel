@@ -6,11 +6,13 @@ from loguru import logger
 
 from household_contact_tracing.views.branching_process_view import BranchingProcessView
 from household_contact_tracing.branching_process_model import BranchingProcessModel
+from household_contact_tracing.file_checker import FileChecker
 
 
 class CSVFileView(BranchingProcessView):
     """
         CSV file view for storing state change info (and selected parameters) as a csv file
+        Inherits from FileChecker as ability to validate files is required.
 
 
         Attributes
@@ -81,11 +83,7 @@ class CSVFileView(BranchingProcessView):
         """ Set filename (the file spec used to save the output file).
             Checks whether directory path exists and raises IsADirectoryError if not
         """
-        if os.path.dirname(filename) and os.path.exists(os.path.dirname(filename)):
-            self._filename = filename
-        # Todo check file name is (without directory path) is valid.
-        else:
-            raise IsADirectoryError('Directory {} does not exist'.format(os.path.dirname(filename)))
+        self._filename = FileChecker.validate_file_spec(filename)
 
     @property
     def display_params(self) -> List[str]:
