@@ -108,6 +108,7 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
         
         controller = BranchingProcessController(HouseholdLevelTracing(params))
 
+        controller.csv_view.set_display(False)
         controller.run_simulation(max_time, max_active_infections)
 
         return controller.growth_rate_view.get_growth_rate()
@@ -132,6 +133,7 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
                     "name": "outside_household_infectivity_scaling",
                     "type": "range",
                     "bounds": outside_household_infectivity_scaling_range,
+                    "value_type": "float"
                 }
             ],
             evaluation_function = lambda p: self.evaluate_fit(p["outside_household_infectivity_scaling"]),
