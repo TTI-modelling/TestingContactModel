@@ -6,7 +6,7 @@ from household_contact_tracing.branching_process_models import IndividualTracing
 
 def main():
     example_1()
-    recreate_pytest_1()
+    example_2()
 
 def example_1():
 
@@ -47,7 +47,7 @@ def example_1():
     controller.graph_pyvis_view.set_display(False)
 
 
-def recreate_pytest_1():
+def example_2():
 
     def prob_lfa_positive(infectious_age):
         if infectious_age in [4, 5, 6]:
@@ -105,7 +105,7 @@ def recreate_pytest_1():
     save_path = os.path.join('..', 'temp', 'my_test.csv')
 
     for idx in range(0, 10):
-        controller = BranchingProcessController(model=IndividualTracingDailyTesting(params))
+        controller.model = IndividualTracingDailyTesting(params)
         controller.csv_view.filename = save_path
         controller.csv_view.display_params = ["household_pairwise_survival_prob", "asymptomatic_relative_infectivity"]
         controller.run_simulation(20)

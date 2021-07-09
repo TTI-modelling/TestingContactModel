@@ -86,6 +86,12 @@ class BranchingProcessModel(ABC, Parameterised):
                 None
         """
 
+    def copy_observers(self, model: BranchingProcessModel):
+        self._observers_graph_change = list(model._observers_graph_change)
+        self._observers_step_increment = list(model._observers_step_increment)
+        self._observers_state_change = list(model._observers_state_change)
+        self._observers_simulation_stopped = list(model._observers_simulation_stopped)
+
     def _simulation_stopped(self):
         """ Procedures to be performed when simulation has stopped running """
         self.notify_observers_simulation_stopped()
@@ -93,7 +99,6 @@ class BranchingProcessModel(ABC, Parameterised):
     def _completed_step_increment(self):
         """ Procedures to be performed when completed incrementing simulation by one step """
         self.notify_observers_step_increment()
-
 
     def graph_changed(self):
         """ Procedures to be performed when the network/graph has changed """

@@ -40,7 +40,7 @@ params['infection_reporting_prob'] = 0.5
 params['self_isolation_duration'] = 10
 
 # Re initialise with new parameters and Re-run
-controller = BranchingProcessController(bpm.HouseholdLevelTracing(params))
+controller.model = bpm.HouseholdLevelTracing(params)
 controller.run_simulation(10)
 
 # Add further parameters
@@ -51,7 +51,7 @@ params['recall_probability_fall_off'] = 1
 params['probable_infections_need_test'] = True
 
 # Create new model type
-controller = BranchingProcessController(bpm.IndividualLevelTracing(params))
+controller.model = bpm.IndividualLevelTracing(params)
 # Switch on a view (e.g. the timeline graph views)
 controller.timeline_view.set_display(True)
 controller.graph_view.set_display(True)
@@ -61,7 +61,7 @@ controller.run_simulation(10)
 # Repeat runs and output to a named CSV file
 save_path = os.path.join('..', 'temp', 'my_test.csv')
 for idx in range(0, 10):
-    controller = BranchingProcessController(bpm.IndividualLevelTracing(params))
+    controller.model = bpm.IndividualLevelTracing(params)
     controller.csv_view.filename = save_path
     controller.csv_view.display_params = ['number_of_days_to_trace_backwards',
                                           'number_of_days_to_trace_forwards']
