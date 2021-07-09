@@ -401,8 +401,7 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
         when a household that is under surveillance develops symptoms + gets tested.
         """
 
-        # TODO: Refactor this monster
-        # There are really 3 contact tracing algorithms going on here
+        # There are 2 contact tracing algorithms going on here
         # 1) Trace on non-confirmatory PCR result
         # 2) Trace on confirmatory PCR result
 
