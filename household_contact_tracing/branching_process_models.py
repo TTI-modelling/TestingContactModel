@@ -32,7 +32,7 @@ class HouseholdLevelTracing(BranchingProcessModel):
 
         Methods
         -------
-        run_simulation(self, max_time: int, infection_threshold: int = 1000) -> None
+        run_simulation(self, max_time: int, max_active_infections: int = 1000) -> None
             Runs the simulation up to a maximum number of increments and max allowed number of
             infected nodes.
 
@@ -100,7 +100,7 @@ class HouseholdLevelTracing(BranchingProcessModel):
         # increment time
         self.time += 1
 
-    def run_simulation(self, max_time: int, infection_threshold: int = 1000) -> None:
+    def run_simulation(self, max_time: int, max_active_infections: int = 1000) -> None:
         """ Runs the simulation:
                 Sets model state,
                 Announces start/stopped and step increments to observers
@@ -108,7 +108,7 @@ class HouseholdLevelTracing(BranchingProcessModel):
         Arguments:
             max_time -- The maximum number of step increments to perform (stops if self.time >=
               max_time). Self.time is cumulative throughout multiple calls to run_simulation.
-            infection_threshold -- The maximum number of infectious nodes allowed,
+            max_active_infections -- The maximum number of infectious nodes allowed,
               before stopping simulation
 
         Returns:
@@ -116,7 +116,7 @@ class HouseholdLevelTracing(BranchingProcessModel):
         """
 
         # Switch model to RunningState
-        self._state.switch(RunningState, max_time=max_time, infection_threshold=infection_threshold)
+        self._state.switch(RunningState, max_time=max_time, max_active_infections=max_active_infections)
 
         while type(self.state) is RunningState:
             prev_network = deepcopy(self.network)
@@ -144,7 +144,7 @@ class HouseholdLevelTracing(BranchingProcessModel):
                                   total_increments=self.time,
                                   non_recovered_nodes=0,
                                   total_nodes=self.network.node_count)
-            elif self.network.count_non_recovered_nodes() > infection_threshold:
+            elif self.network.count_non_recovered_nodes() > max_active_infections:
                 # Simulation ends if number of infectious nodes > threshold
                 self.state.switch(MaxNodesInfectiousState,
                                   total_increments=self.time,

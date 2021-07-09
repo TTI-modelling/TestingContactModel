@@ -28,7 +28,7 @@ class BranchingProcessController:
             set_graphic_displays(self, display: bool)
                 choose whether to show the graphical outputs
 
-            run_simulation(self, max_time: int = 20, infection_threshold: int = 5000)
+            run_simulation(self, max_time: int = 20, max_active_infections: int = 5000)
                 runs the simulation
 
     """
@@ -72,15 +72,15 @@ class BranchingProcessController:
         self.graph_pyvis_view.set_display(display)
         self.timeline_view.set_display(display)
 
-    def run_simulation(self, max_time: int = 20, infection_threshold: int = 5000):
+    def run_simulation(self, max_time: int = 20, max_active_infections: int = 5000):
         """
         Run the simulation until it stops (e.g times out, too many infectious nodes or goes extinct)
 
             Parameters:
                 max_time (int): The maximum number of iterations (eg. days) to be run (simulation stops if reached)
-                infection_threshold (int): The maximum number of infectious nodes (simulation stops if reached)
+                max_active_infections (int): The maximum number of infectious nodes (simulation stops if reached)
 
             Returns:
                 None
         """
-        self._model.run_simulation(max_time, infection_threshold)
+        self._model.run_simulation(max_time, max_active_infections)

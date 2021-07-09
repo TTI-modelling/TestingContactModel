@@ -20,7 +20,7 @@ class BranchingProcessModel(ABC, Parameterised):
 
     Methods
     -------
-        run_simulation(self, max_time: int, infection_threshold: int) -> None:
+        run_simulation(self, max_time: int, max_active_infections: int) -> None:
             runs the simulation
 
     """
@@ -74,13 +74,13 @@ class BranchingProcessModel(ABC, Parameterised):
         return self.__ROOT_DIR
 
     @abstractmethod
-    def run_simulation(self, max_time: int, infection_threshold: int) -> None:
+    def run_simulation(self, max_time: int, max_active_infections: int) -> None:
         """
         Run the simulation until it stops (e.g times out, too many infectious nodes or goes extinct)
 
             Parameters:
                 max_time (int): The maximum number of iterations (eg. days) to be run (simulation stops if reached)
-                infection_threshold (int): The maximum number of infectious nodes (simulation stops if reached)
+                max_active_infections (int): The maximum number of infectious nodes (simulation stops if reached)
 
             Returns:
                 None

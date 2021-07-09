@@ -1,7 +1,8 @@
 # Code to estimate the growth rate of a simulated branching process
-
 from household_contact_tracing.views.branching_process_view import BranchingProcessView
 from household_contact_tracing.branching_process_model import BranchingProcessModel
+from household_contact_tracing.branching_process_state import MaxNodesInfectiousState, ReadyState, RunningState, ExtinctState
+from household_contact_tracing.exceptions import Error, ModelStateError
 
 class GrowthRateView(BranchingProcessView):
 
@@ -91,6 +92,38 @@ class GrowthRateView(BranchingProcessView):
             for t in range(self._model.time)
         ])
 
-    def estimate_growth_rate(self):
+    def estimate_growth_rate(self, discard_first_n_days: int = 10):
+        """Uses Poisson regression to estimate the growth rate of the epidemic.
+        The first few days of a simulation are typically discarded while the process becomes mixed
+        after it's artificial initial conditions
 
-        print('estimating growth rate')
+        Args:
+            discard_first_n_days (int, optional): estimate growth rate from data after the first n days. Defaults to 10.
+        """
+
+        if isinstance(self._model.state, ReadyState):
+            raise ModelStateError(self._model.state, 'Simulation has not started yet. Cannot estimate growth rate.')
+
+        # we work out how many 
+        time = self._model.time
+        elligible_dates = time - discard_first_n_days
+
+        if elligible_dates < 2:
+            # there is not enough data to estimate the growth rate
+
+            if isinstance(self._model.state, RunningState):
+                raise Error("""Cannot estimate growth rate due to insufficient elligible dates.
+                This simulation is still running, consider continuing the simulation before estimating the growth rate.""")
+
+            if isinstance(self._model.state, ExtinctState):
+                raise Error("""Cannot estimate growth rate due to insufficient elligible dates.
+                This simulation went extinct, possibly before discard_first_n_days. Consider starting the simulation with more infections""")
+
+            if isinstance(self._model.state, MaxNodesInfectiousState):
+                raise Error("""Cannot estimate growth rate due to insufficient elligible dates.
+                This simulation exceeded the maximum number of infectious nodes. Consider raising""")
+
+
+
+
+
