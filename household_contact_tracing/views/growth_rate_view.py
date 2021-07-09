@@ -5,6 +5,7 @@ from household_contact_tracing.branching_process_state import MaxNodesInfectious
 from household_contact_tracing.exceptions import Error, ModelStateError
 import statsmodels.api as sm
 import numpy as np
+
 class GrowthRateView(BranchingProcessView):
 
     """
@@ -65,7 +66,7 @@ class GrowthRateView(BranchingProcessView):
 
     def set_display(self, show: bool):
         """
-        Sets whether this pyvis graph view is displayed or not.
+        Sets whether this view is displayed or not.
 
             Parameters:
                 show (bool): To display this view, set to True
