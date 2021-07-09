@@ -20,11 +20,11 @@ class NewInfection(ABC, Parameterised):
 
         Attributes
         ----------
+        Todo: fill in descriptions of each attribute
         network: ContactTracingNetwork
             The store of Nodes and households used in the simulation
-        symptom_reporting_delay (int todo?)
+        symptom_reporting_delay
             Delay in symptom reporting
-        Todo: descriptions of each attribute
         incubation_period_delay
         asymptomatic_prob
         infection_reporting_prob
