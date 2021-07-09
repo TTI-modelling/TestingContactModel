@@ -60,6 +60,8 @@ controller.run_simulation(10)
 
 # Repeat runs and output to a named CSV file
 save_path = os.path.join('..', 'temp', 'my_test.csv')
+controller.timeline_view.set_display(False)
+controller.graph_view.set_display(False)
 for idx in range(0, 10):
     controller.model = bpm.IndividualLevelTracing(params)
     controller.csv_view.filename = save_path

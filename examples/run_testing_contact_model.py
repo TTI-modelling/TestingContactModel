@@ -43,8 +43,9 @@ def example_1():
     controller.graph_pyvis_view.open_in_browser = True
     controller.graph_view.set_display(True)
     controller.run_simulation(15)
-    controller.run_simulation(25)
     controller.graph_pyvis_view.set_display(False)
+    controller.run_simulation(20)
+
 
 
 def example_2():
@@ -85,14 +86,6 @@ def example_2():
     model.infection.new_outside_household_infection(time=0, infecting_node=model.network.node(1))
     model.intervention.increment_tracing.prob_pcr_positive = prob_pcr_positive
 
-    model.intervention.increment_tracing.attempt_contact_trace_of_household(
-        house_to=model.network.household(2),
-        house_from=model.network.household(1),
-        days_since_contact_occurred=0,
-        contact_trace_delay=0,
-        time=0
-    )
-
     controller = BranchingProcessController(model=model)
     controller.shell_view.set_display(False)
     controller.timeline_view.set_display(True)
@@ -102,11 +95,11 @@ def example_2():
 
     # Re-initialise and re-run model multiple times and save result to specified file
     # instead of default ('/temp/sumulation_ouput_[todays date].csv')
-    save_path = os.path.join('..', 'temp', 'my_test.csv')
-
+    controller.csv_view.filename = os.path.join('..', 'temp', 'my_test.csv')
+    controller.timeline_view.set_display(False)
+    controller.graph_view.set_display(False)
     for idx in range(0, 10):
         controller.model = IndividualTracingDailyTesting(params)
-        controller.csv_view.filename = save_path
         controller.csv_view.display_params = ["household_pairwise_survival_prob", "asymptomatic_relative_infectivity"]
         controller.run_simulation(20)
 
