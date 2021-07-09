@@ -12,3 +12,5 @@ pandas
 beautifulsoup4==4.9.3
 pyvis==0.1.9
 statsmodels
+torch
+ax
