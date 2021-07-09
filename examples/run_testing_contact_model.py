@@ -89,7 +89,6 @@ def example_2():
     controller = BranchingProcessController(model=model)
     controller.shell_view.set_display(False)
     controller.timeline_view.set_display(True)
-    controller.graph_pyvis_view.set_display(False)
     controller.graph_view.set_display(True)
     controller.run_simulation(2)
 

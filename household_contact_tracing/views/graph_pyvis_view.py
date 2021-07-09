@@ -65,7 +65,6 @@ class GraphPyvisView(BranchingProcessView):
         self._open_in_browser = False
 
         # Register as observer
-        self._model.register_observer_state_change(self)
         self._model.register_observer_simulation_stopped(self)
 
     @property
