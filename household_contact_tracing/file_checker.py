@@ -11,8 +11,14 @@ class FileChecker:
 
         Methods
         -------
-            validate_filename(cls, filename)
+            validate_file_spec(cls, file_spec)
                 Class method: Validate filename
+
+            filename_valid(cls, file_spec)
+                Class method: Validate the filename part of an input file spec string.
+
+            dir_name_exists(cls, dir_or_filename: str) -> str:
+                Class method: Check that the directory name or file name in input string exists.
     """
 
     @classmethod

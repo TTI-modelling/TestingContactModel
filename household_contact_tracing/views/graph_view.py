@@ -74,8 +74,9 @@ class GraphView(BranchingProcessView):
         else:
             self._model.remove_observer_state_change(self)
             self._model.remove_observer_simulation_stopped(self)
+            self._model.remove_observer_graph_change(self)
 
-    def set_show_increment_graphs(self, show_all):
+    def set_show_increment_graphs(self, show_all: bool):
         """
         Sets whether to display this graph view every time the graph is incremented.
 

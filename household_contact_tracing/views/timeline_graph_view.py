@@ -74,7 +74,7 @@ class TimelineGraphView(BranchingProcessView):
             self._model.register_observer_simulation_stopped(self)
             self._model.register_observer_step_increment(self)
         else:
-            self._model.remove_observer_graph_change(self)
+            self._model.remove_observer_simulation_stopped(self)
             self._model.remove_observer_step_increment(self)
 
     def model_state_change(self, subject: BranchingProcessModel):
