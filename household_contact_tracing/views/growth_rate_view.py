@@ -3,7 +3,6 @@ from household_contact_tracing.views.branching_process_view import BranchingProc
 from household_contact_tracing.branching_process_model import BranchingProcessModel
 from household_contact_tracing.branching_process_state import MaxNodesInfectiousState, ReadyState, RunningState, ExtinctState
 from household_contact_tracing.exceptions import Error, ModelStateError
-from sklearn import linear_model
 import statsmodels.api as sm
 import numpy as np
 class GrowthRateView(BranchingProcessView):
