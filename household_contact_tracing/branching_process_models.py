@@ -285,6 +285,7 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
     def simulate_one_step(self):
         """ Simulates one day of the infection and contact tracing.
         """
+        self.intervention.increment_tracing.receive_pcr_test_results(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         self.intervention.isolation.isolate_self_reporting_cases(self.time)
         # isolate self-reporting-nodes while they wait for tests

@@ -355,14 +355,14 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
         """For nodes who would receive a PCR test result today, update"""
 
         if self.lfa_tested_nodes_book_pcr_on_symptom_onset:
-            super().receive_pcr_test_results(time, self.prob_pcr_positive)
+            super().receive_pcr_test_results(time)
         else:
             for node in self.network.all_nodes():
                 if node.time_of_reporting + node.testing_delay == time:
                     if not node.contact_traced:
                         if not node.received_result:
                             if not node.being_lateral_flow_tested:
-                                self.pcr_test_node(node, time, self.prob_pcr_positive)
+                                self.pcr_test_node(node, time)
 
     def increment_contact_tracing(self, time: int):
         for node in self.network.all_nodes():
