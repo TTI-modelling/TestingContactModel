@@ -61,7 +61,7 @@ def Queue_swab_applicants_fixture():
     return pd.read_pickle('./test/fixtures/queueing_processes/Queue_swab_applicants.pickle')
 
 def test_Queue_swab_applicants(simple_queue, Queue_swab_applicants_fixture):
-    """Adds some applicants, swabs some of the and checks the applicant df
+    """Adds some applicants, processes some of the and checks the applicant df
     """
     simple_queue.add_new_applicants(['A', 'B', 'C'], [1,2,3], 6)
     simple_queue.swab_applicants([1, 2], [1,2])
@@ -72,7 +72,7 @@ def test_Queue_swab_applicants(simple_queue, Queue_swab_applicants_fixture):
 def test_Queue_current_applicants(simple_queue):
     """Checks that the waiting to be processed indexes are returned.
 
-    Add 3 people to the queue, swab 2
+    Add 3 people to the queue, process 2
     """
     simple_queue.add_new_applicants(['A', 'B', 'C'], [1,2,3], 6)
     simple_queue.swab_applicants([1, 2], [1,2])
@@ -99,7 +99,7 @@ def test_DeterministicQueue_add_new_test_seekers(DeterministicQueue_add_new_test
     Checks that the add_new_test_seekers method correctly modifies the dataframe
     by adding test seekers based upon the demand
     """
-    def test_processing_delay_dist():
+    def processing_delay_dist():
         return 1
 
     def symptom_onset_delay_dist():
@@ -110,7 +110,7 @@ def test_DeterministicQueue_add_new_test_seekers(DeterministicQueue_add_new_test
         demand                      = [10]*10,
         capacity                    = [10]*10,
         max_time_in_queue           = 10,
-        test_processing_delay_dist  = test_processing_delay_dist,
+        processing_delay_dist  = processing_delay_dist,
         symptom_onset_delay_dist    = symptom_onset_delay_dist
     )
 
