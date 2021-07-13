@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameter schema",
+  "description": "A schema for validating the parameters used as a simulation input",
+  "type": "object",
+  "allOf": [{"$ref": "schemas/uk_model.json#/properties"}],
+
+  "properties": {
+    "LFA_testing_requires_confirmatory_PCR": {
+      "description": "",
+      "type": "boolean"
+    },
+    "household_positive_policy": {
+      "description": "What happens to the contacts of a Household if a Household member tests positive.",
+      "enum": ["lfa_testing_no_quarantine", "lfa_testing_and_quarantine", "only_quarantine"]
+    },
+    "number_of_days_prior_to_LFA_result_to_trace": {
+      "description": "",
+      "type": "number"
+    },
+    "lateral_flow_testing_duration": {
+      "description": "",
+      "type": "number"
+    },
+    "node_daily_prob_lfa_test": {
+      "description": "",
+      "type": "boolean"
+    },
+    "proportion_with_propensity_miss_lfa_tests": {
+      "description": "",
+      "type": "string"
+    },
+    "node_prob_will_take_up_lfa_testing": {
+      "description": "",
+      "type": "number"
+    },
+    "propensity_risky_behaviour_lfa_testing": {
+      "description": "",
+      "type": "number"
+    },
+    "global_contact_reduction_risky_behaviour": {
+      "description": "",
+      "type": "number"
+    },
+    "lfa_tested_nodes_book_pcr_on_symptom_onset": {
+      "description": "",
+      "type": "boolean"
+    }
+  }
+}

@@ -81,6 +81,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*/.ipynb_checkpoints/*
 
 # IPython
 profile_default/
@@ -143,3 +144,6 @@ household_contact_tracing.code-workspace
 *desktop.ini
 Notebooks/Dev/CapacityTesting.ipynb
 /.idea/*
+
+# Temp files
+temp/*
