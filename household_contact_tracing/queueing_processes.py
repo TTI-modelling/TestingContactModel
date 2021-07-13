@@ -52,13 +52,13 @@ class Queue:
         })
 
         # create some empty columns for storing results
-        self.queue_df['new_applicants'] = ''
-        self.queue_df['spillover_to_next_day'] = ''
-        self.queue_df['total_applications_today'] = ''
-        self.queue_df['capacity_exceeded'] = ''
-        self.queue_df['capacity_exceeded_by'] = ''
-        self.queue_df['number_processed_today'] = ''
-        self.queue_df['number_left_queue_not_tested'] = ''
+        self.queue_df['new_applicants']                 = ''
+        self.queue_df['spillover_to_next_day']          = ''
+        self.queue_df['total_applications_today']       = ''
+        self.queue_df['capacity_exceeded']              = ''
+        self.queue_df['capacity_exceeded_by']           = ''
+        self.queue_df['number_processed_today']         = ''
+        self.queue_df['number_left_queue_not_tested']   = ''
 
 
     def create_applicants_df(self):
@@ -68,33 +68,31 @@ class Queue:
         self.applicant_df = pd.DataFrame()
 
         # create empty columns for applicants
-        self.applicant_df['id']                     = ''
-        self.applicant_df['processed']                = ''
-        self.applicant_df['waiting_to_be_processed']  = ''
-        self.applicant_df['left_queue_not_processed'] = ''
-        self.applicant_df['time_symptom_onset']     = ''
-        self.applicant_df['time_joined_queue']      = ''
-        self.applicant_df['time_processed']           = ''
-        self.applicant_df['time_received_result']   = ''
-        self.applicant_df['time_will_leave_queue']  = ''
+        self.applicant_df['id']                         = ''
+        self.applicant_df['processed']                  = ''
+        self.applicant_df['waiting_to_be_processed']    = ''
+        self.applicant_df['left_queue_not_processed']   = ''
+        self.applicant_df['time_symptom_onset']         = ''
+        self.applicant_df['time_joined_queue']          = ''
+        self.applicant_df['time_processed']             = ''
+        self.applicant_df['time_received_result']       = ''
+        self.applicant_df['time_will_leave_queue']      = ''
 
     def add_new_applicants(
             self,
             ids: list,
             time: int,
             symptom_onset_times: list,
-            max_time_in_queue: int
+            queue_leaving_times: list
         ):
         """
         Adds new applicants to the queue.
         """
 
-        queue_leaving_times = np.array(symptom_onset_times) + max_time_in_queue
-
         new_applicant_df = pd.DataFrame(
             {
                 'id': ids,
-                'symptom_onset': symptom_onset_times,
+                'time_symptom_onset': symptom_onset_times,
                 'time_will_leave_queue': queue_leaving_times
             }
         )
@@ -103,10 +101,9 @@ class Queue:
         new_applicant_df['processed']                = False
         new_applicant_df['waiting_to_be_processed']  = True # default value, initially the queue is empty
         new_applicant_df['left_queue_not_processed'] = ''
-        new_applicant_df['time_symptom_onset']     = ''
-        new_applicant_df['time_joined_queue']      = time
+        new_applicant_df['time_joined_queue']        = time
         new_applicant_df['time_processed']           = ''
-        new_applicant_df['time_received_result']   = ''
+        new_applicant_df['time_received_result']     = ''
 
         self.applicant_df = self.applicant_df.append(new_applicant_df, ignore_index = True)
 
@@ -266,14 +263,19 @@ class DeterministicQueue(QueueController):
 
         For this model, the new test seekers at each time point are defined a priori.
         """
+        symptom_onset_times = [
+                self.time - self.symptom_onset_delay_dist() for _ in range(self.demand[self.time])
+        ]
+
+        queue_leaving_times = [
+            onset_time + self.max_time_in_queue for onset_time in symptom_onset_times
+        ]
 
         self.queue.add_new_applicants(
-            ids = self.demand[self.time],
+            ids = [''] * self.demand[self.time],
             time = self.time,
-            symptom_onset_times = [
-                self.symptom_onset_delay_dist() for _ in range(self.demand[self.time])
-            ],
-            max_time_in_queue = self.max_time_in_queue
+            symptom_onset_times = symptom_onset_times,
+            queue_leaving_times = queue_leaving_times
         )
 
     def select_applicants_for_processing(self, remaining_processing_capacity: int) -> list:
