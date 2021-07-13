@@ -302,7 +302,7 @@ class DeterministicQueue(QueueController):
                 self.queue.applicant_df.sort_values('time_joined_queue')[0:remaining_processing_capacity]
             )
 
-    def process_queue_random_selection(self):
+    def process_queue(self):
         """
         Performs processing of individuals up to capacity, and updates the dataframes that store the calculations.
         """
@@ -369,7 +369,7 @@ class DeterministicQueue(QueueController):
 
         self.queue.queue_df.loc[self.time, 'spillover_to_next_day'] = [sum(returners_index)]
 
-    def simulate_one_day(self, verbose: bool = True):
+    def simulate_one_day(self):
         """
         Simulates one day of the queue.
         """
@@ -377,21 +377,17 @@ class DeterministicQueue(QueueController):
         # steps required to simulate one day
         self.add_new_test_seekers()
         self.update_queue_leaver_status()
-        self.process_queue_random_selection()
+        self.process_queue()
 
-        self.time
+        self.queue.time += 1
 
-        # make a nice little status update
-        if verbose:
-            print(f'Model time {self.time}, progress: {round((self.time + 1) / self.queue.days_to_simulate * 100)}%', end = '\r')
-
-    def run_simulation(self, verbose: bool = True):
+    def run_simulation(self):
         """Runs the queueing process model.
         """
 
         while self.time < self.days_to_simulate:
 
-            self.simulate_one_day(verbose)
+            self.simulate_one_day()
 
             self.time += 1
 
@@ -431,9 +427,9 @@ class QueueAnalyzer():
         self.applicant_df = queue.applicant_df
         self.queue_df = queue.queue_df
 
-    def get_prob_getting_tested(self, time_joined_queue: int):
+    def get_prob_getting_processed(self, time_joined_queue: int):
         """
-        Returns the probability of getting tested if you join the queue on a specified day
+        Returns the probability of getting processed if you join the queue on a specified day
         
         Args:
             time_joined_queue (int): The day of interest
