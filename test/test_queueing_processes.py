@@ -56,7 +56,7 @@ def test_Queue_new_applicants(simple_queue, Queue_new_applicants_fixture):
 
 @pytest.fixture
 def Queue_swab_applicants_fixture():
-    """Loads a fixture where some applicants have been swabbed.
+    """Loads a fixture where some applicants have been processed.
     """
     return pd.read_pickle('./test/fixtures/queueing_processes/Queue_swab_applicants.pickle')
 
@@ -70,7 +70,7 @@ def test_Queue_swab_applicants(simple_queue, Queue_swab_applicants_fixture):
 
 
 def test_Queue_current_applicants(simple_queue):
-    """Checks that the waiting to be swabbed indexes are returned.
+    """Checks that the waiting to be processed indexes are returned.
 
     Add 3 people to the queue, swab 2
     """

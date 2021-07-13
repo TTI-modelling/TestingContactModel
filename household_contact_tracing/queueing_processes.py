@@ -55,7 +55,7 @@ class Queue:
         self.queue_df['total_applications_today'] = ''
         self.queue_df['capacity_exceeded'] = ''
         self.queue_df['capacity_exceeded_by'] = ''
-        self.queue_df['number_swabbed_today'] = ''
+        self.queue_df['number_processed_today'] = ''
         self.queue_df['number_left_queue_not_tested'] = ''
 
 
@@ -67,12 +67,12 @@ class Queue:
 
         # create empty columns for applicants
         self.applicant_df['id']                     = ''
-        self.applicant_df['swabbed']                = ''
-        self.applicant_df['waiting_to_be_swabbed']  = ''
-        self.applicant_df['left_queue_not_swabbed'] = ''
+        self.applicant_df['processed']                = ''
+        self.applicant_df['waiting_to_be_processed']  = ''
+        self.applicant_df['left_queue_not_processed'] = ''
         self.applicant_df['time_symptom_onset']     = ''
         self.applicant_df['time_joined_queue']      = ''
-        self.applicant_df['time_swabbed']           = ''
+        self.applicant_df['time_processed']           = ''
         self.applicant_df['time_received_result']   = ''
         self.applicant_df['time_will_leave_queue']  = ''
 
@@ -97,43 +97,43 @@ class Queue:
         )
 
         # initialise other columns with default values
-        new_applicant_df['swabbed']                = False
-        new_applicant_df['waiting_to_be_swabbed']  = True # default value, initially the queue is empty
-        new_applicant_df['left_queue_not_swabbed'] = ''
+        new_applicant_df['processed']                = False
+        new_applicant_df['waiting_to_be_processed']  = True # default value, initially the queue is empty
+        new_applicant_df['left_queue_not_processed'] = ''
         new_applicant_df['time_symptom_onset']     = ''
         new_applicant_df['time_joined_queue']      = ''
-        new_applicant_df['time_swabbed']           = ''
+        new_applicant_df['time_processed']           = ''
         new_applicant_df['time_received_result']   = ''
 
         self.applicant_df = self.applicant_df.append(new_applicant_df, ignore_index = True)
 
     def swab_applicants(self, 
-        to_be_swabbed: list, 
+        to_be_processed: list, 
         test_processing_delays: list):
         """For a list of applicants who were successful in getting thorugh the queue, update their variables associated with swabbing
         Args:
-            to_be_swabbed (list): A list of integers, referring the rows of the applicant_dataframe that will get processed
+            to_be_processed (list): A list of integers, referring the rows of the applicant_dataframe that will get processed
         """
         
         # The columns that will be updated
         columns_to_update = [
-            'waiting_to_be_swabbed',
-            'time_swabbed',
-            'left_queue_not_swabbed',
-            'swabbed'
+            'waiting_to_be_processed',
+            'time_processed',
+            'left_queue_not_processed',
+            'processed'
         ]
 
-        # record an attribtue of which individuals were swabbed today for use later
-        self.todays_swabbed_index = to_be_swabbed
+        # record an attribtue of which individuals were processed today for use later
+        self.todays_processed_index = to_be_processed
 
-        # update the above status to show they have been swabbed
-        self.applicant_df.loc[to_be_swabbed, columns_to_update] = [False, self.time, False, True]
+        # update the above status to show they have been processed
+        self.applicant_df.loc[to_be_processed, columns_to_update] = [False, self.time, False, True]
 
         # work out when they receive their result, and update the data
-        self.applicant_df.loc[to_be_swabbed, 'time_received_result'] = self.time + np.array(test_processing_delays)
+        self.applicant_df.loc[to_be_processed, 'time_received_result'] = self.time + np.array(test_processing_delays)
 
         # update the queue_df table with the number of individuals processed today
-        self.queue_df.loc[self.queue_df.time == self.time, ['number_swabbed_today']] = len(to_be_swabbed)
+        self.queue_df.loc[self.queue_df.time == self.time, ['number_processed_today']] = len(to_be_processed)
 
 
     def update_queue_leaver_status(self):
@@ -141,7 +141,7 @@ class Queue:
         """
 
         # These people will leave the queue today
-        self.leavers = (self.applicant_df.time_will_leave_queue <= self.time) & (self.applicant_df.waiting_to_be_swabbed == True)
+        self.leavers = (self.applicant_df.time_will_leave_queue <= self.time) & (self.applicant_df.waiting_to_be_processed == True)
 
 
         # record the number of people who carry over to the next day
@@ -153,18 +153,18 @@ class Queue:
         #
         self.queue_df.loc[self.time, ['spillover_to_next_day', 'number_left_queue_not_tested']] = [spillover_to_next_day, sum(self.leavers)]
 
-        # Set their waiting to be swabbed status to False
-        self.applicant_df.loc[self.leavers, ['waiting_to_be_swabbed', 'left_queue_not_swabbed']] = [False, True]
+        # Set their waiting to be processed status to False
+        self.applicant_df.loc[self.leavers, ['waiting_to_be_processed', 'left_queue_not_processed']] = [False, True]
 
 
     @property
     def current_applicants(self) -> list:
-        """Gets the indexes of individuals waiting to be swabbed.
+        """Gets the indexes of individuals waiting to be processed.
 
         Returns:
-            list: The indexes of individuals waiting to be swabbed
+            list: The indexes of individuals waiting to be processed
         """
-        return list(self.applicant_df[self.applicant_df.waiting_to_be_swabbed].index)
+        return list(self.applicant_df[self.applicant_df.waiting_to_be_processed].index)
 
 
     @property
@@ -187,7 +187,7 @@ class Queue:
             int: The number of swabs that have been performed today
         """
 
-        return sum(self.applicant_df.time_swabbed == self.time)
+        return sum(self.applicant_df.time_processed == self.time)
 
 
 # controller layout 
@@ -287,19 +287,19 @@ class DeterministicQueue(QueueController):
 
         # is todays remaining capacity exceeded?
         if number_applicants <= remaining_swabbing_capacity:
-            # if capacity not exceeded, then everyone gets swabbed
+            # if capacity not exceeded, then everyone gets processed
 
             test_delays = [
                 self.test_processing_delay_dist() for _ in range(number_applicants)
             ]
 
             self.queue.swab_applicants(
-                to_be_swabbed = self.queue.current_applicants,
+                to_be_processed = self.queue.current_applicants,
                 test_processing_delays = test_delays)
 
         else:
             # Then swabbing capacity is being exceeded. We swab up to capacity.
-            # We must select who gets swabbed, at the moment there is only one method
+            # We must select who gets processed, at the moment there is only one method
             # implemented that does this, that picks a subset without replacement
 
             successful_applicants = npr.choice(
@@ -313,7 +313,7 @@ class DeterministicQueue(QueueController):
             ]
 
             self.queue.swab_applicants(
-                to_be_swabbed = successful_applicants,
+                to_be_processed = successful_applicants,
                 test_processing_delays = test_delays)
 
     def update_queue_leaver_status(self):
@@ -321,16 +321,16 @@ class DeterministicQueue(QueueController):
         """
 
         # These people will leave the queue today
-        self.leavers = (self.queue.applicant_df.time_will_leave_queue <= self.time) & (self.queue.applicant_df.waiting_to_be_swabbed == True)
+        self.leavers = (self.queue.applicant_df.time_will_leave_queue <= self.time) & (self.queue.applicant_df.waiting_to_be_processed == True)
 
         self.queue.queue_df.loc[self.time, 'number_left_queue_not_tested'] = [sum(self.leavers)]
 
-        # Set their waiting to be swabbed status to False
-        self.queue.applicant_df.loc[self.leavers, ['waiting_to_be_swabbed', 'left_queue_not_swabbed']] = [False, True]
+        # Set their waiting to be processed status to False
+        self.queue.applicant_df.loc[self.leavers, ['waiting_to_be_processed', 'left_queue_not_processed']] = [False, True]
 
         # work out who will come back the next day
-        # not left and not swabbed
-        returners_index = self.queue.applicant_df.waiting_to_be_swabbed == True
+        # not left and not processed
+        returners_index = self.queue.applicant_df.waiting_to_be_processed == True
 
         self.queue.queue_df.loc[self.time, 'spillover_to_next_day'] = [sum(returners_index)]
 
@@ -374,14 +374,14 @@ class QueueBranchingProcessController():
         branching process model.
 
         Returns:
-            dict: output dict, with the ids and number of swabbed individuals
+            dict: output dict, with the ids and number of processed individuals
         """
 
-        swabbed_individuals = self.queue.applicant_df.loc[self.queue.todays_swabbed_index]
+        processed_individuals = self.queue.applicant_df.loc[self.queue.todays_processed_index]
 
         output = {
             'leaving_the_queue_node_ids': self.queue.todays_leavers,
-            'swabbed_individuals': swabbed_individuals
+            'processed_individuals': processed_individuals
         }
         
         return output
@@ -403,9 +403,9 @@ class QueueAnalyzer():
         Args:
             time_entered_queue (int): The day of interest
         """
-        valid_individuals = (self.queue.applicant_df.time_entered_queue == time_entered_queue) & (self.applicant_df.waiting_to_be_swabbed == False)
-        left_queue_not_swabbed = self.applicant_df[valid_individuals].left_queue_not_swabbed
-        return 1 - left_queue_not_swabbed.mean()
+        valid_individuals = (self.queue.applicant_df.time_entered_queue == time_entered_queue) & (self.applicant_df.waiting_to_be_processed == False)
+        left_queue_not_processed = self.applicant_df[valid_individuals].left_queue_not_processed
+        return 1 - left_queue_not_processed.mean()
 
     def get_delays_for(self, time_entered_queue: int, delay_from_column: str, delay_to_column: str):
         """
@@ -416,7 +416,7 @@ class QueueAnalyzer():
             delay_from_column (str): The earliest timepoint
             delay_to_column (str): The latest timepoint
         """
-        day_index = (self.applicant_df.time_entered_queue == time_entered_queue) & (self.applicant_df.swabbed == True)
+        day_index = (self.applicant_df.time_entered_queue == time_entered_queue) & (self.applicant_df.processed == True)
         delay_from_column = self.applicant_df.loc[day_index, delay_from_column]
         delay_to_column = self.applicant_df.loc[day_index, delay_to_column]
         return delay_to_column - delay_from_column
