@@ -35,7 +35,7 @@ class BranchingProcessController:
 
     """
 
-    def __init__(self, model: BranchingProcessModel, additional_views: Optional[List[BranchingProcessView]]):
+    def __init__(self, model: BranchingProcessModel, additional_views: Optional[List[BranchingProcessView]] = []):
         """
         Constructor for BranchingProcessController
 
