@@ -87,10 +87,10 @@ class BranchingProcessModel(ABC, Parameterised):
         """
 
     def copy_observers(self, model: BranchingProcessModel):
-        self._observers_graph_change = list(model._observers_graph_change)
-        self._observers_step_increment = list(model._observers_step_increment)
-        self._observers_state_change = list(model._observers_state_change)
-        self._observers_simulation_stopped = list(model._observers_simulation_stopped)
+        self._observers_graph_change = model._observers_graph_change
+        self._observers_step_increment = model._observers_step_increment
+        self._observers_state_change = model._observers_state_change
+        self._observers_simulation_stopped = model._observers_simulation_stopped
 
     def _simulation_stopped(self):
         """ Procedures to be performed when simulation has stopped running """

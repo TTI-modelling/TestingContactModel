@@ -15,12 +15,12 @@ class ContactRateReduction(ABC, Parameterised):
 
         Attributes
         ----------
-        reduce_contacts_by
-            Todo
-        global_contact_reduction_imperfect_quarantine
-            Todo
-        global_contact_reduction_risky_behaviour
-            todo
+            reduce_contacts_by
+                Todo
+            global_contact_reduction_imperfect_quarantine
+                Todo
+            global_contact_reduction_risky_behaviour
+                todo
 
         Methods
         -------
