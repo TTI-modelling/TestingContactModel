@@ -15,6 +15,7 @@ class GrowthRateView(BranchingProcessView):
     def __init__(self, model: BranchingProcessModel):
         
         self._model = model
+        self.show = False
 
     def model_state_change(self, subject: BranchingProcessModel):
         """
@@ -26,6 +27,7 @@ class GrowthRateView(BranchingProcessView):
             Returns:
                 None
         """
+        # nothing to do here, usually it only makes sense to estimate the growth rate after the simulation is complete.
         pass
 
     def model_step_increment(self, subject: BranchingProcessModel):
@@ -38,6 +40,7 @@ class GrowthRateView(BranchingProcessView):
             Returns:
                 None
         """
+        # nothing to do here, usually it only makes sense to estimate the growth rate after the simulation is complete.
         pass
 
     def model_simulation_stopped(self, subject: BranchingProcessModel):
@@ -50,7 +53,8 @@ class GrowthRateView(BranchingProcessView):
             Returns:
                 None
         """
-        pass
+        if self.show:
+            self._estimate_growth_rate()
 
     def graph_change(self, subject: BranchingProcessModel):
         """
@@ -62,6 +66,7 @@ class GrowthRateView(BranchingProcessView):
             Returns:
                 None
         """
+        # nothing to do here, usually it only makes sense to estimate the growth rate after the simulation is complete.
         pass
 
     def set_display(self, show: bool):
@@ -74,7 +79,7 @@ class GrowthRateView(BranchingProcessView):
             Returns:
                 None
         """
-        pass
+        self.show = show
 
     def get_infection_times(self):
         """
@@ -158,7 +163,7 @@ class GrowthRateView(BranchingProcessView):
         
         return self.glm_poisson.params[0]
 
-    def growth_rate_summary(self, discard_first_n_days: int = 10, alpha: float = 0.05):
+    def growth_rate_summary(self, discard_first_n_days: int = 10, alpha: float = 0.05, glm_summary: bool = False):
         """Returns the growth rate of the simulated epidemic, estimated using poisson regression.
 
         The first few days of a simulation are typically discarded while the process becomes mixed
@@ -176,8 +181,8 @@ class GrowthRateView(BranchingProcessView):
         doubling_time       = np.log(2) / np.log(1 + growth_rate)
         doubling_time_ci    = np.log(2) / np.log(1 + np.array(growth_rate_ci))
 
-        print('GLM regression summary:')
-        print(self.glm_poisson.summary())
+        if glm_summary:
+            print(self.glm_poisson.summary())
         print(f'{num_eligible_dates} time periods were used to estimate the growth rate.')
         print(f'The estimated growth rate was {round(growth_rate*100, 2)}% ({100*(1-alpha)}% CI: {round(growth_rate_ci[0]*100,2)}-{round(growth_rate_ci[1]*100,2)}%) per day.')
         print(f'The estimated doubling time is {round(doubling_time, 2)} ({100*(1-alpha)}% CI: {round(doubling_time_ci[1],2)}-{round(doubling_time_ci[0],2)}) days.')
