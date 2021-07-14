@@ -189,16 +189,16 @@ class IndividualLevelTracing(HouseholdLevelTracing):
     @staticmethod
     def default_prob_lfa_positive(infectious_age):
         """Default LFA test result probability."""
-        if infectious_age in [4, 5, 6]:
-            return 1
+        if infectious_age in [2, 3, 4, 5, 6, 7]:
+            return 0.75
         else:
             return 0
 
     @staticmethod
     def default_prob_pcr_positive(infectious_age):
         """Default PCR test result probability."""
-        if infectious_age in [4, 5, 6]:
-            return 0
+        if infectious_age in [1, 2, 3, 4, 5, 6, 7, 8]:
+            return 1
         else:
             return 0
 
