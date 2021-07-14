@@ -184,9 +184,8 @@ class IncrementTracingHouseholdLevel(IncrementTracing):
 class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
 
     def __init__(self, network: Network, params: dict):
-
         super().__init__(network, params)
-        self.prob_pcr_positive = self.default_prob_pcr_positive
+        self._prob_pcr_positive = None
 
     @property
     def prob_pcr_positive(self) -> Callable[[int], float]:
@@ -196,18 +195,10 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
     def prob_pcr_positive(self, fn: Callable[[int], float]):
         self._prob_pcr_positive = fn
 
-    @staticmethod
-    def default_prob_pcr_positive(infectious_age):
-        """Default PCR test result probability."""
-        if infectious_age in [4, 5, 6]:
-            return 0
-        else:
-            return 0
-
-    def pcr_test_node(self, node: Node, time: int, prob_pcr_positive: Callable):
+    def pcr_test_node(self, node: Node, time: int):
         node.received_result = True
         infectious_age_when_tested = time - node.testing_delay - node.time_infected
-        prob_positive_result = prob_pcr_positive(infectious_age_when_tested)
+        prob_positive_result = self.prob_pcr_positive(infectious_age_when_tested)
         node.avenue_of_testing = TestType.pcr
 
         if np.random.binomial(1, prob_positive_result) == 1:
@@ -216,20 +207,20 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
         else:
             node.received_positive_test_result = False
 
-    def receive_pcr_test_results(self, time: int, prob_pcr_positive: Callable):
+    def receive_pcr_test_results(self, time: int):
         # self reporting infections
         for node in self.network.all_nodes():
             if node.time_of_reporting + node.testing_delay == time:
                 if not node.contact_traced:
                     if not node.received_result:
-                        self.pcr_test_node(node, time, prob_pcr_positive)
+                        self.pcr_test_node(node, time)
 
         # contact traced nodes
         for node in self.network.all_nodes():
             if node.symptom_onset_time + node.testing_delay == time:
                 if node.contact_traced:
                     if not node.received_result:
-                        self.pcr_test_node(node, time, prob_pcr_positive)
+                        self.pcr_test_node(node, time)
 
     def increment_contact_tracing(self, time: int):
 
@@ -249,7 +240,7 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
 
         # Isolate all households under observation that now display symptoms (excludes those who will not take up
         # intervention if prob <1)
-        self.receive_pcr_test_results(time, self.prob_pcr_positive)
+        self.receive_pcr_test_results(time)
 
         for node in self.network.all_nodes():
             if node.symptom_onset_time <= time:
@@ -360,18 +351,18 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
 
 class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
 
-    def receive_pcr_test_results(self, time: int, prob_pcr_positive: Callable):
+    def receive_pcr_test_results(self, time: int):
         """For nodes who would receive a PCR test result today, update"""
 
         if self.lfa_tested_nodes_book_pcr_on_symptom_onset:
-            super().receive_pcr_test_results(time, prob_pcr_positive)
+            super().receive_pcr_test_results(time)
         else:
             for node in self.network.all_nodes():
                 if node.time_of_reporting + node.testing_delay == time:
                     if not node.contact_traced:
                         if not node.received_result:
                             if not node.being_lateral_flow_tested:
-                                self.pcr_test_node(node, time, prob_pcr_positive)
+                                self.pcr_test_node(node, time)
 
     def increment_contact_tracing(self, time: int):
         for node in self.network.all_nodes():

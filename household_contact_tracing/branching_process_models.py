@@ -161,10 +161,12 @@ class IndividualLevelTracing(HouseholdLevelTracing):
         contacting every individual and their contacts, whether they have tested positive or not.
     """
     def __init__(self, params: dict):
-        super().__init__(params)
         # Set the test probabilities to default values - may be overridden by user later
         self._prob_lfa_positive = self.default_prob_lfa_positive
         self._prob_pcr_positive = self.default_prob_pcr_positive
+
+        # Run super constructor. Note: This must be run after above, as above attributes required.
+        super().__init__(params)
 
     @property
     def prob_lfa_positive(self) -> Callable[[int], float]:
@@ -181,20 +183,22 @@ class IndividualLevelTracing(HouseholdLevelTracing):
     @prob_pcr_positive.setter
     def prob_pcr_positive(self, fn: Callable[[int], float]):
         self._prob_pcr_positive = fn
-
-    @staticmethod
-    def default_prob_pcr_positive(infectious_age):
-        """Default PCR test result probability."""
-        if infectious_age in [4, 5, 6]:
-            return 0
-        else:
-            return 0
+        self.intervention.increment_tracing.prob_pcr_positive = fn
+        self.intervention.isolation.prob_pcr_positive = fn
 
     @staticmethod
     def default_prob_lfa_positive(infectious_age):
         """Default LFA test result probability."""
         if infectious_age in [4, 5, 6]:
             return 1
+        else:
+            return 0
+
+    @staticmethod
+    def default_prob_pcr_positive(infectious_age):
+        """Default PCR test result probability."""
+        if infectious_age in [4, 5, 6]:
+            return 0
         else:
             return 0
 
@@ -210,10 +214,17 @@ class IndividualLevelTracing(HouseholdLevelTracing):
 
     def _initialise_intervention(self):
         """ Initialise an Intervention class, passing in the required behaviours into its constructor """
-        return Intervention(self.network,
-                            isolation.IndividualIsolation,
-                            increment.IncrementTracingIndividualLevel,
-                            self.params)
+        new_intervention = Intervention(self.network,
+                                        isolation.IndividualIsolation,
+                                        increment.IncrementTracingIndividualLevel,
+                                        self.params)
+
+        # Set a new positive pcr probability function
+        new_intervention.increment_tracing.prob_pcr_positive = self.prob_pcr_positive
+        new_intervention.isolation.prob_pcr_positive = self.prob_pcr_positive
+
+        return new_intervention
+
 
     def simulate_one_step(self):
         """Simulates one day of the infection and contact tracing."""
@@ -225,8 +236,6 @@ class IndividualLevelTracing(HouseholdLevelTracing):
         # isolate self-reporting-nodes while they wait for tests
         self.intervention.isolation.update_households_contact_traced(self.time)
         self.intervention.isolation.update_isolation(self.time)
-        # Set a new positive pcr probability function and propagate contact tracing
-        self.intervention.increment_tracing.prob_pcr_positive = self.prob_pcr_positive
         for step in range(5):
             self.intervention.increment_tracing.increment_contact_tracing(self.time)
         # node recoveries
@@ -259,16 +268,24 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
                          new_infection.NewInfectionIndividualTracingDailyTesting,
                          ContactRateReductionIndividualTracingDaily,
                          self.params)
+
     def _initialise_intervention(self):
         """ Initialise an Intervention class, passing in the required behaviours into its constructor """
-        return Intervention(self.network,
-                            isolation.DailyTestingIsolation,
-                            increment.IncrementTracingIndividualDailyTesting,
-                            self.params)
+        new_intervention =  Intervention(self.network,
+                                         isolation.DailyTestingIsolation,
+                                         increment.IncrementTracingIndividualDailyTesting,
+                                         self.params)
+
+        # Set a new positive pcr probability function
+        new_intervention.increment_tracing.prob_pcr_positive = self.prob_pcr_positive
+        new_intervention.isolation.prob_pcr_positive = self.prob_pcr_positive
+
+        return new_intervention
 
     def simulate_one_step(self):
         """ Simulates one day of the infection and contact tracing.
         """
+        self.intervention.increment_tracing.receive_pcr_test_results(self.time)
         # isolate nodes reached by tracing, isolate nodes due to self-reporting
         self.intervention.isolation.isolate_self_reporting_cases(self.time)
         # isolate self-reporting-nodes while they wait for tests
@@ -276,7 +293,7 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
         self.intervention.isolation.update_isolation(self.time)
         # isolate self reporting nodes
         positive_nodes = self.intervention.lft_nodes(self.time, self.prob_lfa_positive)
-        self.intervention.isolation.act_on_positive_LFA_tests(self.time, self.prob_pcr_positive, positive_nodes)
+        self.intervention.isolation.act_on_positive_LFA_tests(self.time, positive_nodes)
         # if we require PCR tests, to confirm infection we act on those
         if self.intervention.increment_tracing.LFA_testing_requires_confirmatory_PCR:
             self.intervention.increment_tracing.act_on_confirmatory_pcr_results(self.time)
