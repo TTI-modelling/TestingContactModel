@@ -3,8 +3,6 @@ Contains queueing process objects that are used to model testing delays and prob
 not being able to get testing when there are constrained processing resource.
 Processing resources can refer to either swabbing capacity, or genetic sequencing capacity.
 '''
-# TODO consider moving away from dataframes for the applicants. Allocating all the memory beforehand could be restrictive,#
-# Also not sure if dataframes are the fastest if we are constantly writing to them
 
 from datetime import time
 import pandas as pd
@@ -223,7 +221,7 @@ class DeterministicQueue(QueueController):
             max_time_in_queue: int,
             processing_delay_dist: Callable,
             symptom_onset_delay_dist: Callable,
-            selection_method: str): # TODO: add to description
+            selection_method: str):
         """A simple queueing process object that does not interact with a branching process model.
 
         The test demand and capacity are pre-determined, and the model works out what happens to the queue.
@@ -390,6 +388,209 @@ class DeterministicQueue(QueueController):
             self.simulate_one_day()
 
             self.time += 1
+
+
+class DeterministicQueueVariantSequencing(QueueController):
+
+    def __init__(
+            self,
+            days_to_simulate: int,
+            demand: List[int],
+            demand_variant: list[int],
+            capacity: List[int],
+            max_time_in_queue: int,
+            processing_delay_dist: Callable,
+            symptom_onset_delay_dist: Callable,
+            selection_method: str):
+        """A simple queueing process object that does not interact with a branching process model.
+
+        The test demand and capacity are pre-determined, and the model works out what happens to the queue.
+
+        Args:
+            days_to_simulate (int): Number of simulation steps to be performed
+            demand (List[int]): The number of new test seekers at each time step.
+            capacity (List[int]): The processing capacity of the queue at each time step.
+            max_time_in_queue (int): How long since symptom onset that an individual can remain in the queue 
+                                     they become ineligible for testing 
+            processing_delay_dist (Callable): A callable that returns integer test processing delays
+            symptom_onset_delay_dist (Callable): A callable the returns integer delays of the time from symptom onset to booking a test.
+            selection_method ('uniform', 'newest'): Method for selecting which applicants to process when demand exceeds capacity.
+        """
+
+        # initialise the queue
+        self.queue = Queue(
+            days_to_simulate        = days_to_simulate,
+            capacity                = capacity
+        )
+
+        # add an empty column to store variant status
+        self.queue.applicant_df['variant'] = ''
+
+        # set parameters
+        self.demand                     = demand
+        self.demand_variant             = demand_variant
+        self.processing_delay_dist      = processing_delay_dist
+        self.symptom_onset_delay_dist   = symptom_onset_delay_dist
+        self.max_time_in_queue          = max_time_in_queue
+        self.days_to_simulate           = days_to_simulate
+        self.selection_method           = selection_method
+
+        # ease of acccess stuff
+        self.time           = self.queue.time
+        
+
+    def add_new_queue_joiners(self):
+        """
+        Adds new test seekers to the queue.
+
+        For this model, the new test seekers at each time point are defined a priori.
+        """
+        total_new_joiners = self.demand[self.time] + self.demand_variant[self.time]
+
+        symptom_onset_times = [
+                self.time - self.symptom_onset_delay_dist() for _ in range(total_new_joiners)
+        ]
+
+        queue_leaving_times = [
+            onset_time + self.max_time_in_queue for onset_time in symptom_onset_times
+        ]
+
+        self.queue.add_new_applicants(
+            ids = [''] * total_new_joiners,
+            time = self.time,
+            symptom_onset_times = symptom_onset_times,
+            queue_leaving_times = queue_leaving_times
+        )
+
+        # work out which of the new joiners are variants
+        variant_ids = npr.choice(
+            a = list(range(total_new_joiners)), 
+            size = self.demand_variant[self.time], 
+            replace = False)
+
+        # by default cases are not variants
+        variant_status = [False]*total_new_joiners
+        for _ in variant_ids:
+            variant_status[_] = True
+
+        # set the variant status on the applicant dataframe column
+        todays_joiner_index = self.queue.applicant_df.time_joined_queue == self.time
+        self.queue.applicant_df.loc[todays_joiner_index, 'variant'] = variant_status
+
+
+    def select_applicants_for_processing(self, remaining_processing_capacity: int) -> list:
+        """Given the current demand and remaining testing capacity, compute which individuals get selected for testing.
+
+        Args:
+            current_queue_applicants (list): A list of id's of individuals who are waiting to get processed.
+            remaining_processing_capacity (int): The remaining capacity for individuals to get processed.
+
+        Returns:
+            list: The list of processed individuals.
+        """
+        
+        if self.selection_method == 'uniform':
+            return(
+                npr.choice(
+                    a       = self.queue.current_applicants,
+                    size    = remaining_processing_capacity,
+                    replace = False
+                )
+            )
+        elif self.selection_method == 'newest':
+            return(
+                self.queue.applicant_df.sort_values('time_joined_queue')[0:remaining_processing_capacity]
+            )
+
+    def process_queue(self):
+        """
+        Performs processing of individuals up to capacity, and updates the dataframes that store the calculations.
+        """
+        
+        # Note: this method is set up so that it can be called multiple times in one day
+        # in case new applicants are added multiple times in a day. This is sometimes useful
+
+        number_applicants = len(self.queue.current_applicants)
+
+        # update queue_df with the number of applicants today
+        self.queue.queue_df.loc[self.queue.queue_df.time == self.time, ['total_applications_today']] = [number_applicants]
+
+        # how much processing capacity do we have remaining? The method
+        remaining_processing_capacity = self.queue.todays_capacity - self.queue.number_processes_performed_today
+
+        # is todays remaining capacity exceeded?
+        if number_applicants <= remaining_processing_capacity:
+            # if capacity not exceeded, then everyone gets processed
+
+            processing_delays = [
+                self.processing_delay_dist() for _ in range(number_applicants)
+            ]
+
+            self.queue.swab_applicants(
+                to_be_processed = self.queue.current_applicants,
+                processing_delays = processing_delays)
+
+        else:
+            # Then processing capacity is being exceeded. We process up to capacity.
+            # We must select who gets processed, at the moment there is only one method
+            # implemented that does this, that picks a subset without replacement
+
+            self.select_applicants_for_processing(remaining_processing_capacity)
+
+            successful_applicants = npr.choice(
+                a       = self.queue.current_applicants,
+                size    = remaining_processing_capacity,
+                replace = False
+            )
+
+            processing_delays = [
+                self.processing_delay_dist() for _ in range(remaining_processing_capacity)
+            ]
+
+            self.queue.swab_applicants(
+                to_be_processed = successful_applicants,
+                processing_delays = processing_delays)
+
+    def update_queue_leaver_status(self):
+        """These individuals have been in the queue too long. They are no longer trying/able to get a swab.
+        """
+
+        # These people will leave the queue today
+        self.leavers = (self.queue.applicant_df.time_will_leave_queue <= self.time) & (self.queue.applicant_df.waiting_to_be_processed == True)
+
+        self.queue.queue_df.loc[self.time, 'number_left_queue_not_tested'] = [sum(self.leavers)]
+
+        # Set their waiting to be processed status to False
+        self.queue.applicant_df.loc[self.leavers, ['waiting_to_be_processed', 'left_queue_not_processed']] = [False, True]
+
+        # work out who will come back the next day
+        # not left and not processed
+        returners_index = self.queue.applicant_df.waiting_to_be_processed == True
+
+        self.queue.queue_df.loc[self.time, 'spillover_to_next_day'] = [sum(returners_index)]
+
+    def simulate_one_day(self):
+        """
+        Simulates one day of the queue.
+        """
+
+        # steps required to simulate one day
+        self.add_new_queue_joiners()
+        self.update_queue_leaver_status()
+        self.process_queue()
+
+        self.queue.time += 1
+
+    def run_simulation(self):
+        """Runs the queueing process model.
+        """
+
+        while self.time < self.days_to_simulate:
+
+            self.simulate_one_day()
+
+            self.time += 1
+
 
 class QueueBranchingProcessController():
 
