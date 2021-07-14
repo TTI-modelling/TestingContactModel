@@ -1,12 +1,14 @@
 import os
+from copy import copy
 
 from household_contact_tracing.branching_process_controller import BranchingProcessController
 from household_contact_tracing.branching_process_models import IndividualTracingDailyTesting
 
 
 def main():
-    example_1()
-    example_2()
+    #example_1()
+    #example_2()
+    example_3()
 
 def example_1():
 
@@ -101,6 +103,55 @@ def example_2():
         controller.model = IndividualTracingDailyTesting(params)
         controller.csv_view.display_params = ["household_pairwise_survival_prob", "asymptomatic_relative_infectivity"]
         controller.run_simulation(20)
+
+
+# define some easy to look at test sensitivity functions
+def prob_testing_positive_function_pcr(time_relative_to_symptom_onset):
+    # Prevents people testing positive as soon as they get it
+    if time_relative_to_symptom_onset in [4, 5, 6]:
+        return 0.75
+    else:
+        return 0
+
+def prob_testing_positive_function_lfa(time_relative_to_symptom_onset):
+    # Prevents people testing positive as soon as they get it
+    if time_relative_to_symptom_onset in [4, 5, 6]:
+        return 0 # this is unrealistic, but it makes it easier to see nodes being lfa tested since they wont
+                 # move to the isolation status due to lfa testing
+    else:
+        return 0
+
+
+def example_3():
+    params = {"outside_household_infectivity_scaling": 0.3,
+              "contact_tracing_success_prob": 0.7,
+              "overdispersion": 0.32,
+              "asymptomatic_prob": 0.2,
+              "asymptomatic_relative_infectivity": 0.35,
+              "infection_reporting_prob": 0.5,
+              "LFA_testing_requires_confirmatory_PCR": False,
+              "reduce_contacts_by": 0.5,
+              "test_delay": 1,
+              "contact_trace_delay": 1,
+              "incubation_period_delay": 5,
+              "symptom_reporting_delay": 1,
+              "starting_infections": 5,
+              "household_pairwise_survival_prob": 0.2,
+              "self_isolation_duration": 10,
+              "lateral_flow_testing_duration": 14,
+              "propensity_risky_behaviour_lfa_testing": 0,
+              "global_contact_reduction_risky_behaviour": 0,
+              "household_positive_policy": "lfa_testing_no_quarantine"
+              }
+
+    model = IndividualTracingDailyTesting(params)
+    model.prob_lfa_positive = prob_testing_positive_function_lfa
+    model.prob_pcr_positive = prob_testing_positive_function_pcr
+    controller = BranchingProcessController(model)
+
+    controller.graph_view.set_display(True)
+    controller.timeline_view.set_display(True)
+    controller.run_simulation(16)
 
 
 if __name__ == "__main__":
