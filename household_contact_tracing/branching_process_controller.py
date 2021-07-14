@@ -1,3 +1,5 @@
+from typing import List, Optional
+from household_contact_tracing.views.branching_process_view import BranchingProcessView
 from household_contact_tracing.views.growth_rate_view import GrowthRateView
 from household_contact_tracing.branching_process_model import BranchingProcessModel
 from household_contact_tracing.views.shell_view import ShellView
@@ -33,7 +35,7 @@ class BranchingProcessController:
 
     """
 
-    def __init__(self, model: BranchingProcessModel):
+    def __init__(self, model: BranchingProcessModel, additional_views: Optional[List[BranchingProcessView]]):
         """
         Constructor for BranchingProcessController
 
@@ -50,6 +52,12 @@ class BranchingProcessController:
         self.shell_view = ShellView(model)
         self.csv_view = CSVFileView(model)
         self.growth_rate_view = GrowthRateView(model)
+
+        # initialise any views that are required, but included as defaults
+        for view in additional_views:
+            
+            initialised_view = view(model)
+            setattr(self, initialised_view.view_name, initialised_view)
 
         self.set_graphic_displays(False)
 
