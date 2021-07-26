@@ -114,11 +114,12 @@ class HouseholdLevelTracing(BranchingProcessModel):
         Returns:
             None
         """
+        self.state_criteria = state_criteria
 
-        self.set_default_state_criteria(state_criteria)
+        self.set_default_state_criteria()
 
         # Switch model to RunningState
-        self._state.switch(RunningState, state_criteria)
+        self._state.switch(RunningState, self.state_criteria)
 
         while type(self.state) is RunningState:
             prev_network = deepcopy(self.network)
@@ -133,53 +134,48 @@ class HouseholdLevelTracing(BranchingProcessModel):
             # Call parent completed step
             super()._completed_step_increment()
 
-            self.evaluate_model_state(state_criteria)
+            self.evaluate_model_state()
 
         # Tell parent simulation stopped
         super()._simulation_stopped()
 
-    def evaluate_model_state(self, state_criteria: dict):
+    def evaluate_model_state(self, ):
         """Determine whether the state of the model has changed by evaluating the data from the last simulation step
         against criteria which trigger a change of state."""
 
-        if self.time >= state_criteria["max_time"]:
+        if self.time >= self.state_criteria["max_time"]:
             # Simulation ends if max_time is reached
-            self.state.switch(TimedOutState,
-                              total_increments=self.time,
-                              non_recovered_nodes=self.network.count_non_recovered_nodes(),
-                              total_nodes=self.network.node_count
-                              )
-        elif self.network.count_non_recovered_nodes() == state_criteria["min_non_recovered_nodes"]:
+            self.state.switch(TimedOutState, {"total_increments": self.time,
+                                              "non_recovered_nodes": self.network.count_non_recovered_nodes(),
+                                              "total_nodes": self.network.node_count})
+        elif self.network.count_non_recovered_nodes() == self.state_criteria["min_non_recovered_nodes"]:
             # Simulation ends if no more infectious nodes
-            self.state.switch(ExtinctState,
-                              total_increments=self.time,
-                              non_recovered_nodes=self.network.count_non_recovered_nodes(),
-                              total_nodes=self.network.node_count)
-        elif self.network.count_non_recovered_nodes() > state_criteria["infection_threshold"]:
+            self.state.switch(ExtinctState, {"total_increments": self.time,
+                                             "non_recovered_nodes": self.network.count_non_recovered_nodes(),
+                                             "total_nodes": self.network.node_count})
+        elif self.network.count_non_recovered_nodes() > self.state_criteria["infection_threshold"]:
             # Simulation ends if number of infectious nodes > threshold
-            self.state.switch(MaxNodesInfectiousState,
-                              total_increments=self.time,
-                              non_recovered_nodes=0,
-                              total_nodes=self.network.node_count)
+            self.state.switch(MaxNodesInfectiousState, {"total_increments": self.time,
+                                                        "non_recovered_nodes": 0,
+                                                        "total_nodes": self.network.node_count})
 
-    @staticmethod
-    def set_default_state_criteria(state_criteria: dict):
+    def set_default_state_criteria(self):
         """Set default values for the state criteria if they have not yet been set."""
         valid_state_criteria = ["max_time", "min_non_recovered_nodes", "infection_threshold"]
 
-        for criterion in state_criteria:
+        for criterion in self.state_criteria:
             if criterion not in valid_state_criteria:
                 raise ParameterError(f"Criterion '{criterion}', is not a valid state criterion.\n"
                                      f"Valid state criteria are: {valid_state_criteria}.")
 
-        if "infection_threshold" not in state_criteria:
-            state_criteria["infection_threshold"] = 10000
+        if "infection_threshold" not in self.state_criteria:
+            self.state_criteria["infection_threshold"] = 10000
 
-        if "max_time" not in state_criteria:
-            state_criteria["max_time"] = math.inf
+        if "max_time" not in self.state_criteria:
+            self.state_criteria["max_time"] = math.inf
 
-        if "min_non_recovered_nodes" not in state_criteria:
-            state_criteria["min_non_recovered_nodes"] = 0
+        if "min_non_recovered_nodes" not in self.state_criteria:
+            self.state_criteria["min_non_recovered_nodes"] = 0
 
 
 class IndividualLevelTracing(HouseholdLevelTracing):

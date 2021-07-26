@@ -1,16 +1,17 @@
-from typing import Type, List
+from __future__ import annotations
+from typing import Type, List, TYPE_CHECKING
 from copy import deepcopy
 import itertools
 
-from household_contact_tracing.branching_process_models import HouseholdLevelTracing
+if TYPE_CHECKING:
+    from household_contact_tracing.branching_process_models import HouseholdLevelTracing
 
 
 class ParameterError(Exception):
     """Raised if simulation parameters cannot be parsed."""
 
 
-def run_parameterised_simulation(model_type: Type[HouseholdLevelTracing], num_steps: int,
-                                 params: dict):
+def run_parameterised_simulation(model_type: Type[HouseholdLevelTracing], num_steps: int, params: dict):
     """Assume sequence nesting is combinatorial at first."""
     processed_params = process_sequences(params)
 

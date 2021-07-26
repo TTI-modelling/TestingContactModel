@@ -42,6 +42,7 @@ class BranchingProcessModel(ABC, Parameterised):
 
         # Set state
         self._state = ReadyState(self)
+        self.state_criteria = []
 
     @property
     def state(self) -> BranchingProcessState:
