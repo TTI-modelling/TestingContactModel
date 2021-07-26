@@ -17,7 +17,7 @@ def run_parameterised_simulation(model_type: Type[HouseholdLevelTracing], num_st
     model_results = []
     for param_set in processed_params:
         model = model_type(param_set)
-        model.run_simulation(num_steps, 1000)
+        model.run_simulation({"max_time": num_steps, "infection_threshold": 1000})
         model_results.append(model)
     print(len(model_results))
 

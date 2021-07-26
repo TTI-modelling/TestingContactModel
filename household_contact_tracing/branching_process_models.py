@@ -1,3 +1,4 @@
+import math
 import os
 from typing import Callable
 from copy import deepcopy
@@ -14,6 +15,7 @@ from household_contact_tracing.behaviours.infection.contact_rate_reduction impor
 import household_contact_tracing.behaviours.intervention.increment_tracing as increment
 import household_contact_tracing.behaviours.intervention.isolation as isolation
 import household_contact_tracing.behaviours.infection.new_infection as new_infection
+from household_contact_tracing.utilities import ParameterError
 
 
 class HouseholdLevelTracing(BranchingProcessModel):
@@ -100,23 +102,23 @@ class HouseholdLevelTracing(BranchingProcessModel):
         # increment time
         self.time += 1
 
-    def run_simulation(self, max_time: int, infection_threshold: int = 1000) -> None:
+    def run_simulation(self, state_criteria: dict) -> None:
         """ Runs the simulation:
                 Sets model state,
                 Announces start/stopped and step increments to observers
 
         Arguments:
-            max_time -- The maximum number of step increments to perform (stops if self.time >=
-              max_time). Self.time is cumulative throughout multiple calls to run_simulation.
-            infection_threshold -- The maximum number of infectious nodes allowed,
-              before stopping simulation
+            state_criteria: Named variables which are evaluated each step of the model to determine
+              whether the state of the model will change.
 
         Returns:
             None
         """
 
+        self.set_default_state_criteria(state_criteria)
+
         # Switch model to RunningState
-        self._state.switch(RunningState, max_time=max_time, infection_threshold=infection_threshold)
+        self._state.switch(RunningState, state_criteria)
 
         while type(self.state) is RunningState:
             prev_network = deepcopy(self.network)
@@ -131,28 +133,53 @@ class HouseholdLevelTracing(BranchingProcessModel):
             # Call parent completed step
             super()._completed_step_increment()
 
-            if self.time >= max_time:
-                # Simulation ends if max_time is reached
-                self.state.switch(TimedOutState,
-                                  total_increments=self.time,
-                                  non_recovered_nodes=self.network.count_non_recovered_nodes(),
-                                  total_nodes=self.network.node_count
-                                  )
-            elif self.network.count_non_recovered_nodes() == 0:
-                # Simulation ends if no more infectious nodes
-                self.state.switch(ExtinctState,
-                                  total_increments=self.time,
-                                  non_recovered_nodes=0,
-                                  total_nodes=self.network.node_count)
-            elif self.network.count_non_recovered_nodes() > infection_threshold:
-                # Simulation ends if number of infectious nodes > threshold
-                self.state.switch(MaxNodesInfectiousState,
-                                  total_increments=self.time,
-                                  non_recovered_nodes=0,
-                                  total_nodes=self.network.node_count)
+            self.evaluate_model_state(state_criteria)
 
         # Tell parent simulation stopped
         super()._simulation_stopped()
+
+    def evaluate_model_state(self, state_criteria: dict):
+        """Determine whether the state of the model has changed by evaluating the data from the last simulation step
+        against criteria which trigger a change of state."""
+
+        if self.time >= state_criteria["max_time"]:
+            # Simulation ends if max_time is reached
+            self.state.switch(TimedOutState,
+                              total_increments=self.time,
+                              non_recovered_nodes=self.network.count_non_recovered_nodes(),
+                              total_nodes=self.network.node_count
+                              )
+        elif self.network.count_non_recovered_nodes() == state_criteria["min_non_recovered_nodes"]:
+            # Simulation ends if no more infectious nodes
+            self.state.switch(ExtinctState,
+                              total_increments=self.time,
+                              non_recovered_nodes=self.network.count_non_recovered_nodes(),
+                              total_nodes=self.network.node_count)
+        elif self.network.count_non_recovered_nodes() > state_criteria["infection_threshold"]:
+            # Simulation ends if number of infectious nodes > threshold
+            self.state.switch(MaxNodesInfectiousState,
+                              total_increments=self.time,
+                              non_recovered_nodes=0,
+                              total_nodes=self.network.node_count)
+
+    @staticmethod
+    def set_default_state_criteria(state_criteria: dict):
+        """Set default values for the state criteria if they have not yet been set."""
+        valid_state_criteria = ["max_time", "min_non_recovered_nodes", "infection_threshold"]
+
+        for criterion in state_criteria:
+            if criterion not in valid_state_criteria:
+                raise ParameterError(f"Criterion '{criterion}', is not a valid state criterion.\n"
+                                     f"Valid state criteria are: {valid_state_criteria}.")
+
+        if "infection_threshold" not in state_criteria:
+            state_criteria["infection_threshold"] = 10000
+
+        if "max_time" not in state_criteria:
+            state_criteria["max_time"] = math.inf
+
+        if "min_non_recovered_nodes" not in state_criteria:
+            state_criteria["min_non_recovered_nodes"] = 0
 
 
 class IndividualLevelTracing(HouseholdLevelTracing):
@@ -250,10 +277,10 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
 
     def _initialise_intervention(self):
         """ Initialise an Intervention class, passing in the required behaviours into its constructor """
-        new_intervention =  Intervention(self.network,
-                                         isolation.DailyTestingIsolation,
-                                         increment.IncrementTracingIndividualDailyTesting,
-                                         self.params)
+        new_intervention = Intervention(self.network,
+                                        isolation.DailyTestingIsolation,
+                                        increment.IncrementTracingIndividualDailyTesting,
+                                        self.params)
 
         # Set a new positive pcr probability function
         new_intervention.increment_tracing.prob_pcr_positive = self.prob_pcr_positive
