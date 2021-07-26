@@ -226,27 +226,6 @@ class IndividualLevelTracing(HouseholdLevelTracing):
         return new_intervention
 
 
-    def simulate_one_step(self):
-        """Simulates one day of the infection and contact tracing."""
-
-        # Perform one day of the infection
-        self.infection.increment(self.time)
-        # isolate nodes reached by tracing, isolate nodes due to self-reporting
-        self.intervention.isolation.isolate_self_reporting_cases(self.time)
-        # isolate self-reporting-nodes while they wait for tests
-        self.intervention.isolation.update_households_contact_traced(self.time)
-        self.intervention.isolation.update_isolation(self.time)
-        for step in range(5):
-            self.intervention.increment_tracing.increment_contact_tracing(self.time)
-        # node recoveries
-        self.infection.perform_recoveries(self.time)
-        # release nodes from quarantine or intervention if the time has arrived
-        self.intervention.completed_isolation(self.time)
-        self.intervention.completed_quarantine(self.time)
-        # increment time
-        self.time += 1
-
-
 class IndividualTracingDailyTesting(IndividualLevelTracing):
     """A class used to represent a simulation of contact tracing of households along with
     contacting every individual and their contacts, whether they have tested positive or not, along
