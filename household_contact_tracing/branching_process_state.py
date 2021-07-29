@@ -30,13 +30,14 @@ class BranchingProcessState(ABC):
     def __init__(self, simulation_model):
         self._simulation_model = simulation_model
 
-    def switch(self, state: Type[BranchingProcessState], **state_info):
+    def switch(self, state: Type[BranchingProcessState], state_info: dict):
         """
         Switch to a new state if new state is allowed (for current state)
             (If not, raise ValueError)
 
             Parameters:
                 state: The new state to be switched to
+                state_info: A dictionary of information about the model at the time of the change of state.
 
             Returns:
                 None

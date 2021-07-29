@@ -42,6 +42,7 @@ class BranchingProcessModel(ABC, Parameterised):
 
         # Set state
         self._state = ReadyState(self)
+        self.state_criteria = []
 
     @property
     def state(self) -> BranchingProcessState:
@@ -74,13 +75,13 @@ class BranchingProcessModel(ABC, Parameterised):
         return self.__ROOT_DIR
 
     @abstractmethod
-    def run_simulation(self, max_time: int, infection_threshold: int) -> None:
+    def run_simulation(self, state_criteria: dict) -> None:
         """
         Run the simulation until it stops (e.g times out, too many infectious nodes or goes extinct)
 
             Parameters:
-                max_time (int): The maximum number of iterations (eg. days) to be run (simulation stops if reached)
-                infection_threshold (int): The maximum number of infectious nodes (simulation stops if reached)
+                state_criteria: Named variables which are evaluated each step of the model to determine
+                  whether the state of the model will change.
 
             Returns:
                 None
