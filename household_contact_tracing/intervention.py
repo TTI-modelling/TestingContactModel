@@ -54,7 +54,7 @@ class Intervention(Parameterised):
 
         positive_nodes = []
         for node in self.network.all_nodes():
-            if node.being_lateral_flow_tested:
+            if node.lfd_testing.being_lateral_flow_tested:
                 if node.will_lfa_test_today(self.node_daily_prob_lfa_test):
                     if not node.received_positive_test_result:
                         if node.lfa_test_node(time, prob_lfa_positive):
@@ -110,8 +110,8 @@ class Intervention(Parameterised):
                 infection_status = node.infection_status(time)
                 if infection_status in [InfectionStatus.known_infection,
                                         InfectionStatus.self_recognised_infection]:
-                    if node.avenue_of_testing == TestType.lfa:
-                        if time >= node.positive_test_time + self.self_isolation_duration:
+                    if node.lfd_testing.avenue_of_testing == TestType.lfa:
+                        if time >= node.lfd_testing.positive_test_time + self.self_isolation_duration:
                             node.isolated = False
                             node.completed_isolation = True
                     else:
@@ -137,7 +137,9 @@ class Intervention(Parameterised):
         """
 
         for node in self.network.all_nodes():
-            if time >= node.time_started_lfa_testing + self.lateral_flow_testing_duration \
-                    and node.being_lateral_flow_tested:
-                node.being_lateral_flow_tested = False
-                node.completed_lateral_flow_testing_time = time
+            # Todo: Check Ann's addition of node.lfd_testing.time_started_lfa_testing (not null) condition
+            if node.lfd_testing.time_started_lfa_testing and\
+                    time >= node.lfd_testing.time_started_lfa_testing + self.lateral_flow_testing_duration \
+                    and node.lfd_testing.being_lateral_flow_tested:
+                node.lfd_testing.being_lateral_flow_tested = False
+                node.lfd_testing.completed_lateral_flow_testing_time = time

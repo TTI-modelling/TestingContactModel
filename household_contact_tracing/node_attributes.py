@@ -15,7 +15,7 @@ class InfectionAttributes(NodeAttributes):
 
     """
 
-    def __init__(self, **attributes):
+    def __init__(self, attributes):
         self.asymptomatic = None
         self.infecting_node = None
         self.isolated = None
@@ -34,8 +34,8 @@ class LFDTestingAttributes(NodeAttributes):
 
     """
 
-    def __init__(self, **attributes):
-        self.avenue_of_testing = None
+    def __init__(self, attributes):
+        self.avenue_of_testing: Optional[int] = None
         self.being_lateral_flow_tested = None
         self.positive_test_time = None
         self.taken_confirmatory_PCR_test = None
@@ -57,7 +57,7 @@ class LFDTestingAdherenceAttributes(NodeAttributes):
 
     """
 
-    def __init__(self, **attributes):
+    def __init__(self, attributes):
         self.confirmatory_PCR_result_was_positive: Optional[bool] = None
         self.node_will_take_up_lfa_testing = None
 
@@ -70,7 +70,7 @@ class ReturningTravellerAttributes(NodeAttributes):
 
     """
 
-    def __init__(self, **attributes):
+    def __init__(self, attributes):
         self.pseudo_symptom_onset_time = None
 
         # Update instance variables with anything in attributes
@@ -82,7 +82,7 @@ class TracingAttributes(NodeAttributes):
 
     """
 
-    def __init__(self, **attributes):
+    def __init__(self, attributes):
         self.contact_traced = None
         self.has_contact_tracing_app = None
         self.propagated_contact_tracing = False
@@ -103,7 +103,7 @@ class TracingAdherenceAttributes(NodeAttributes):
 
     """
 
-    def __init__(self, **attributes):
+    def __init__(self, attributes):
         self.propensity_imperfect_isolation = None
         self.will_uptake_isolation = None
 

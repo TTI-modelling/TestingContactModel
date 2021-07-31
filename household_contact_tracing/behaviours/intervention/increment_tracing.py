@@ -199,11 +199,11 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
         node.received_result = True
         infectious_age_when_tested = time - node.testing_delay - node.time_infected
         prob_positive_result = self.prob_pcr_positive(infectious_age_when_tested)
-        node.avenue_of_testing = TestType.pcr
+        node.lfd_testing.avenue_of_testing = TestType.pcr
 
         if np.random.binomial(1, prob_positive_result) == 1:
             node.received_positive_test_result = True
-            node.positive_test_time = time
+            node.lfd_testing.positive_test_time = time
         else:
             node.received_positive_test_result = False
 
@@ -367,22 +367,22 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
     def increment_contact_tracing(self, time: int):
         for node in self.network.all_nodes():
             if node.received_positive_test_result:
-                if node.avenue_of_testing == TestType.pcr:
+                if node.lfd_testing.avenue_of_testing == TestType.pcr:
                     if not node.propagated_contact_tracing:
                         self.propagate_contact_tracing(node, time)
 
         if not self.LFA_testing_requires_confirmatory_PCR:
             for node in self.network.all_nodes():
                 if node.received_positive_test_result:
-                    if node.avenue_of_testing == TestType.lfa:
+                    if node.lfd_testing.avenue_of_testing == TestType.lfa:
                         if not node.propagated_contact_tracing:
                             self.propagate_contact_tracing(node, time)
 
         elif self.LFA_testing_requires_confirmatory_PCR:
             for node in self.network.all_nodes():
-                if node.confirmatory_PCR_test_result_time == time:
-                    if node.confirmatory_PCR_result_was_positive:
-                        if node.avenue_of_testing == TestType.lfa:
+                if node.lfd_testing.confirmatory_PCR_test_result_time == time:
+                    if node.lfd_testing_adherence.confirmatory_PCR_result_was_positive:
+                        if node.lfd_testing.avenue_of_testing == TestType.lfa:
                             if not node.propagated_contact_tracing:
                                 self.propagate_contact_tracing(node, time)
 
@@ -410,7 +410,7 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
             # if the infector is not already isolated and the time the node was infected captured
             # by going backwards the node.time_infected is when they had a contact with their
             # infector.
-            if node.avenue_of_testing == TestType.pcr:
+            if node.lfd_testing.avenue_of_testing == TestType.pcr:
 
                 if not infected_by_node.isolated and \
                         node.time_infected >= node.symptom_onset_time - \
@@ -423,12 +423,12 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
                         days_since_contact_occurred=time - node.time_infected,
                         time=time)
 
-            elif node.avenue_of_testing == TestType.lfa:
+            elif node.lfd_testing.avenue_of_testing == TestType.lfa:
 
                 if not self.LFA_testing_requires_confirmatory_PCR:
 
                     if not infected_by_node.isolated and node.time_infected >= \
-                            node.positive_test_time - self.number_of_days_prior_to_LFA_result_to_trace:
+                            node.lfd_testing.positive_test_time - self.number_of_days_prior_to_LFA_result_to_trace:
 
                         # Then attempt to contact trace the household of the node that infected you
                         self.attempt_contact_trace_of_household(
@@ -447,7 +447,7 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
 
             child_node = self.network.node(child_node_id)
 
-            if node.avenue_of_testing == TestType.pcr:
+            if node.lfd_testing.avenue_of_testing == TestType.pcr:
 
                 # If the node was infected 2 days prior to symptom onset, or 7 days post and is
                 # not already isolated
@@ -461,13 +461,13 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
                                     days_since_contact_occurred=time - time_t,
                                     time=time)
 
-            elif node.avenue_of_testing == TestType.lfa:
+            elif node.lfd_testing.avenue_of_testing == TestType.lfa:
 
                 if not self.LFA_testing_requires_confirmatory_PCR:
 
                     # If the node was infected 2 days prior to symptom onset, or 7 days post and
                     # is not already isolated
-                    if time_t >= node.positive_test_time - \
+                    if time_t >= node.lfd_testing.positive_test_time - \
                             self.number_of_days_prior_to_LFA_result_to_trace:
 
                         self.attempt_contact_trace_of_household(

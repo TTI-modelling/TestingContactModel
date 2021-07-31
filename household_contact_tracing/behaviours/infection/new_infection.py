@@ -169,13 +169,19 @@ class NewInfectionHouseholdLevel(NewInfection):
         else:
             node_is_isolated = False
 
+        tracing_adherence_attributes = {'will_uptake_isolation': isolation_uptake,
+                                        'propensity_imperfect_isolation': self.get_propensity_imperfect_isolation()
+                                        }
+        returning_travellers_attributes = {'pseudo_symptom_onset_time': pseudo_symptom_onset_time}
+
         new_node = self.network.add_node(time_infected=time,
-                                         household_id=household.id, isolated=node_is_isolated,
-                                         will_uptake_isolation=isolation_uptake,
-                                         propensity_imperfect_isolation=self.get_propensity_imperfect_isolation(),
-                                         asymptomatic=asymptomatic, contact_traced=household.contact_traced,
+                                         household_id=household.id,
+                                         isolated=node_is_isolated,
+                                         tracing_adherence_attributes=tracing_adherence_attributes,
+                                         returning_travellers_attributes=returning_travellers_attributes,
+                                         asymptomatic=asymptomatic,
+                                         contact_traced=household.contact_traced,
                                          symptom_onset_time=symptom_onset_time,
-                                         pseudo_symptom_onset_time=pseudo_symptom_onset_time,
                                          recovery_time=recovery_time,
                                          will_report_infection=will_report_infection,
                                          time_of_reporting=time_of_reporting,
@@ -271,15 +277,20 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
         else:
             node_is_isolated = False
 
+        tracing_adherence_attributes = {
+            'will_uptake_isolation': isolation_uptake,
+            'propensity_imperfect_isolation': self.get_propensity_imperfect_isolation()
+        }
+        returning_travellers_attributes = {'pseudo_symptom_onset_time': pseudo_symptom_onset_time}
+
         new_node = self.network.add_node(time_infected=time,
                                          household_id=household.id,
                                          isolated=node_is_isolated,
-                                         will_uptake_isolation=isolation_uptake,
-                                         propensity_imperfect_isolation=self.get_propensity_imperfect_isolation(),
+                                         tracing_adherence_attributes=tracing_adherence_attributes,
+                                         returning_travellers_attributes=returning_travellers_attributes,
                                          asymptomatic=asymptomatic,
                                          contact_traced=household.contact_traced,
                                          symptom_onset_time=symptom_onset_time,
-                                         pseudo_symptom_onset_time=pseudo_symptom_onset_time,
                                          recovery_time=recovery_time,
                                          will_report_infection=will_report_infection,
                                          time_of_reporting=time_of_reporting,
