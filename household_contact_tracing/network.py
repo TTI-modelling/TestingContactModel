@@ -257,7 +257,7 @@ class Node(Parameterised):
 
 
     """
-    def __init__(self, node_id: int, time_infected: int, household: Household, isolated: bool,
+    def __init__(self, node_id: int, household: Household, time_infected: int,  isolated: bool,
                  will_uptake_isolation: bool, propensity_imperfect_isolation: bool,
                  asymptomatic: bool, symptom_onset_time: float, pseudo_symptom_onset_time: int,
                  recovery_time: int, will_report_infection: bool, time_of_reporting: int,
