@@ -224,20 +224,8 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
             time_started_lfa_testing = float('Inf')
 
         additional_attributes = {
-            'being_lateral_flow_tested': node_being_lateral_flow_tested,
-            'time_started_lfa_testing': time_started_lfa_testing,
             'received_positive_test_result': False,
             'received_result': None,
-            'avenue_of_testing': None,
-            'positive_test_time': None,
-            'node_will_take_up_lfa_testing': node_will_take_up_lfa_testing,
-            'confirmatory_PCR_result_was_positive': None,
-            'taken_confirmatory_PCR_test': False,
-            'confirmatory_PCR_test_time': None,
-            'confirmatory_PCR_test_result_time': None,
-            'propensity_risky_behaviour_lfa_testing':
-                self.will_engage_in_risky_behaviour_while_being_lfa_tested(),
-            'propensity_to_miss_lfa_tests': self.propensity_to_miss_lfa_tests()
         }
 
         asymptomatic = self.is_asymptomatic_infection()
@@ -277,17 +265,35 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
         else:
             node_is_isolated = False
 
+        lfd_testing_adherence_attributes = {
+            'node_will_take_up_lfa_testing': node_will_take_up_lfa_testing,
+            'confirmatory_PCR_result_was_positive': None,
+        }
+
         tracing_adherence_attributes = {
             'will_uptake_isolation': isolation_uptake,
             'propensity_imperfect_isolation': self.get_propensity_imperfect_isolation()
         }
         returning_travellers_attributes = {'pseudo_symptom_onset_time': pseudo_symptom_onset_time}
+        lfd_testing_attributes = {
+            'avenue_of_testing': None,
+            'being_lateral_flow_tested': node_being_lateral_flow_tested,
+            'time_started_lfa_testing': time_started_lfa_testing,
+            'positive_test_time': None,
+            'taken_confirmatory_PCR_test': False,
+            'confirmatory_PCR_test_time': None,
+            'confirmatory_PCR_test_result_time': None,
+            'propensity_risky_behaviour_lfa_testing': self.will_engage_in_risky_behaviour_while_being_lfa_tested(),
+            'propensity_to_miss_lfa_tests': self.propensity_to_miss_lfa_tests()
+        }
 
         new_node = self.network.add_node(time_infected=time,
                                          household_id=household.id,
                                          isolated=node_is_isolated,
                                          tracing_adherence_attributes=tracing_adherence_attributes,
                                          returning_travellers_attributes=returning_travellers_attributes,
+                                         lfd_testing_attributes=lfd_testing_attributes,
+                                         lfd_testing_adherence_attributes=lfd_testing_adherence_attributes,
                                          asymptomatic=asymptomatic,
                                          contact_traced=household.contact_traced,
                                          symptom_onset_time=symptom_onset_time,

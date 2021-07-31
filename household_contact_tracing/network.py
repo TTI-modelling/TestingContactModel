@@ -290,14 +290,15 @@ class Node(Parameterised):
         self.received_result = False
         self.received_positive_test_result = False
 
+        # Update instance variables with anything in `additional_attributes`
+        self.update_params(attributes)
+
         # Update node attribute classes
         self.lfd_testing_adherence = LFDTestingAdherenceAttributes(attributes['lfd_testing_adherence_attributes'])
         self.tracing_adherence = TracingAdherenceAttributes(attributes['tracing_adherence_attributes'])
         self.returning_travellers = ReturningTravellerAttributes(attributes['returning_travellers_attributes'])
         self.lfd_testing = LFDTestingAttributes(attributes['lfd_testing_attributes'])
 
-        # Update instance variables with anything in `additional_attributes`
-        self.update_params(attributes)
         self.update_params(attributes['additional_attributes'])
 
     def time_relative_to_symptom_onset(self, time: int) -> int:
@@ -548,7 +549,7 @@ class Household:
         for node in self.nodes:
             if node.lfd_testing_adherence.node_will_take_up_lfa_testing:
                 if not node.received_positive_test_result:
-                    if not node.being_lateral_flow_tested:
+                    if not node.lfd_testing.being_lateral_flow_tested:
                         node.lfd_testing.being_lateral_flow_tested = True
                         node.lfd_testing.time_started_lfa_testing = time
 

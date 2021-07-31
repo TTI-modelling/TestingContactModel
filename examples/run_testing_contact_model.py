@@ -6,10 +6,10 @@ from household_contact_tracing.branching_process_models import IndividualTracing
 
 
 def main():
-    example_1()
-    example_2()
+    #example_1()
+    #example_2()
     example_3()
-    #example_4()
+    example_4()
 
 
 def example_1():
