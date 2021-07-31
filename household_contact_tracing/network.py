@@ -6,6 +6,7 @@ import numpy
 from dataclasses import dataclass
 
 from household_contact_tracing.parameterised import Parameterised
+from household_contact_tracing.node_attributes import NodeAttributes
 
 
 class EdgeType(Enum):
