@@ -101,4 +101,4 @@ and Ann Gledson and Peter Crowther from the [Research IT](https://research-it.ma
 group at the [University of Manchester](https://www.manchester.ac.uk/).
 
 (c) 2020-2021 The London School of Hygiene & Tropical Medicine and the University of Manchester.
-Licensed under the MIT license, see the file LICENSE (or https://www.mit.edu/~amini/LICENSE.md) for details.
+Licensed under the MIT license, see the LICENSE file for details.

@@ -90,15 +90,15 @@ class BranchingProcessController:
         self.graph_pyvis_view.set_display(display)
         self.timeline_view.set_display(display)
 
-    def run_simulation(self, max_time: int = 20, max_active_infections: int = 5000):
+    def run_simulation(self, state_criteria: dict):
         """
         Run the simulation until it stops (e.g times out, too many infectious nodes or goes extinct)
 
             Parameters:
-                max_time (int): The maximum number of iterations (eg. days) to be run (simulation stops if reached)
-                max_active_infections (int): The maximum number of infectious nodes (simulation stops if reached)
+                state_criteria: Named variables which are evaluated each step of the model to determine
+                  whether the state of the model will change.
 
             Returns:
                 None
         """
-        self._model.run_simulation(max_time, max_active_infections)
+        self._model.run_simulation(state_criteria)
