@@ -396,7 +396,7 @@ class DeterministicQueueVariantSequencing(QueueController):
             self,
             days_to_simulate: int,
             demand: List[int],
-            demand_variant: list[int],
+            demand_variant: List[int],
             capacity: List[int],
             max_time_in_queue: int,
             processing_delay_dist: Callable,
