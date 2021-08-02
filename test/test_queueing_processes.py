@@ -24,8 +24,8 @@ def empty_applicant_df_fixture():
     return pd.read_pickle('./test/fixtures/queueing_processes/empty_applicant_df.pickle')
 
 
-def test_Queue_init_applicant_df(simple_queue, empty_applicant_df_fixture):
-    return pd.testing.assert_frame_equal(empty_applicant_df_fixture, simple_queue.applicant_df)
+def test_Queue_init_applicant_df(simple_Queue, empty_applicant_df_fixture):
+    return pd.testing.assert_frame_equal(empty_applicant_df_fixture, simple_Queue.applicant_df)
 
 
 @pytest.fixture
@@ -36,8 +36,8 @@ def empty_queue_df_fixture():
     return pd.read_pickle('./test/fixtures/queueing_processes/empty_queue_df.pickle')
 
 
-def test_Queue_init_queue_df(simple_queue, empty_queue_df_fixture):
-    return pd.testing.assert_frame_equal(empty_queue_df_fixture, simple_queue.queue_df)
+def test_Queue_init_queue_df(simple_Queue, empty_queue_df_fixture):
+    return pd.testing.assert_frame_equal(empty_queue_df_fixture, simple_Queue.queue_df)
 
 
 @pytest.fixture
@@ -48,10 +48,14 @@ def Queue_new_applicants_fixture():
     return pd.read_pickle('./test/fixtures/queueing_processes/Queue_new_applicants_fixture.pickle')
 
 
-def test_Queue_new_applicants(simple_queue, Queue_new_applicants_fixture):
-    simple_queue.add_new_applicants(['A', 'B', 'C'], [1,2,3], 6)
+def test_Queue_new_applicants(simple_Queue, Queue_new_applicants_fixture):
+    simple_Queue.add_new_applicants(
+        ids = ['A', 'B', 'C'],
+        time = [1,2,3],
+        symptom_onset_times = [6, 6, 6],
+        queue_leaving_times=[11,12,13])
 
-    return pd.testing.assert_frame_equal(Queue_new_applicants_fixture, simple_queue.applicant_df)
+    return pd.testing.assert_frame_equal(Queue_new_applicants_fixture, simple_Queue.applicant_df)
 
 
 @pytest.fixture
@@ -60,23 +64,35 @@ def Queue_swab_applicants_fixture():
     """
     return pd.read_pickle('./test/fixtures/queueing_processes/Queue_swab_applicants.pickle')
 
-def test_Queue_swab_applicants(simple_queue, Queue_swab_applicants_fixture):
+def test_Queue_swab_applicants(simple_Queue, Queue_swab_applicants_fixture):
     """Adds some applicants, processes some of the and checks the applicant df
     """
-    simple_queue.add_new_applicants(['A', 'B', 'C'], [1,2,3], 6)
-    simple_queue.swab_applicants([1, 2], [1,2])
+    simple_Queue.add_new_applicants(
+        ids = ['A', 'B', 'C'],
+        time = [1,2,3],
+        symptom_onset_times = [6, 6, 6],
+        queue_leaving_times=[11,12,13])
+    simple_Queue.swab_applicants(
+        to_be_processed=[1, 2],
+        processing_delays=[1, 2])
 
-    return pd.testing.assert_frame_equal(Queue_swab_applicants_fixture, simple_queue.applicant_df)
+    return pd.testing.assert_frame_equal(Queue_swab_applicants_fixture, simple_Queue.applicant_df)
 
 
-def test_Queue_current_applicants(simple_queue):
+def test_Queue_current_applicants(simple_Queue):
     """Checks that the waiting to be processed indexes are returned.
 
     Add 3 people to the queue, process 2
     """
-    simple_queue.add_new_applicants(['A', 'B', 'C'], [1,2,3], 6)
-    simple_queue.swab_applicants([1, 2], [1,2])
-    assert simple_queue.current_applicants == [0]
+    simple_Queue.add_new_applicants(
+        ids = ['A', 'B', 'C'],
+        time = [1,2,3],
+        symptom_onset_times = [6, 6, 6],
+        queue_leaving_times=[11,12,13])
+    simple_Queue.swab_applicants(
+        to_be_processed=[1, 2],
+        processing_delays=[1, 2])
+    assert simple_Queue.current_applicants == [0]
 
 
 def test_Queue_todays_capacity():
@@ -110,8 +126,9 @@ def test_DeterministicQueue_add_new_test_seekers(DeterministicQueue_add_new_test
         demand                      = [10]*10,
         capacity                    = [10]*10,
         max_time_in_queue           = 10,
-        processing_delay_dist  = processing_delay_dist,
-        symptom_onset_delay_dist    = symptom_onset_delay_dist
+        processing_delay_dist       = processing_delay_dist,
+        symptom_onset_delay_dist    = symptom_onset_delay_dist,
+        selection_method            = 'uniform'
     )
 
     my_det_queue.add_new_test_seekers()
