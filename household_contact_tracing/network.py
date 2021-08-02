@@ -134,7 +134,7 @@ class Network:
     def active_infections(self):
         """Returns a list of nodes who have not yet recovered.
 
-         Nodes can still infect unless they have been isolated.
+           Nodes can still infect unless they have been isolated.
 
         Returns:
             list: list of nodes able to infect
@@ -279,8 +279,8 @@ class Node(Parameterised):
         return time - self.returning_travellers.pseudo_symptom_onset_time
 
     def locally_infected(self) -> bool:
-        if self.infection.infecting_node:
-            return self.infection.infecting_node.household == self.household
+        if self.infection.infecting_node_id:
+            return self.infection.infecting_node_id.household == self.household
         else:
             return False
 

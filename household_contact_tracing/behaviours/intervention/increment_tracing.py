@@ -264,7 +264,7 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
 
         # Contact tracing attempted for the household that infected the household currently
         # propagating the infection
-        infected_by_node = node.infection.infecting_node
+        infected_by_node = node.infection.infecting_node_id
 
         # If the node was globally infected, we are backwards tracing and the infecting node is
         # not None
@@ -401,7 +401,7 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
 
         # Contact tracing attempted for the household that infected the household currently
         # propagating the infection
-        infected_by_node = node.infection.infecting_node
+        infected_by_node = node.infection.infecting_node_id
 
         # If the node was globally infected, we are backwards tracing and the infecting node
         # is not None

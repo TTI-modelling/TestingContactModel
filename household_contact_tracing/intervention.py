@@ -77,7 +77,7 @@ class Intervention(Parameterised):
             # (if they do not self-report they will not isolate; if contact traced, they will be
             # quarantining for the quarantine duration)
             # if node.household_id == node.infected_by_node().household_id:
-            if node.infection.infecting_node:
+            if node.infection.infecting_node_id:
                 if (node.infection_status(time) == InfectionStatus.unknown_infection) & node.infection.isolated:
                     if node.locally_infected():
 

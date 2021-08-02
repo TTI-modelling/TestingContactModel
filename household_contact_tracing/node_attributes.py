@@ -28,7 +28,7 @@ class InfectionAttributes(Parameterised):
 
     def __init__(self, attributes):
         self.asymptomatic = None
-        self.infecting_node = None
+        self.infecting_node_id = None
         self.isolated = None
         self.outside_house_contacts_made = 0
         self.recovered = False
