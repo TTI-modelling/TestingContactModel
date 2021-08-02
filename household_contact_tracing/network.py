@@ -280,7 +280,8 @@ class Node(Parameterised):
 
     def locally_infected(self) -> bool:
         if self.infection.infecting_node_id:
-            return self.infection.infecting_node_id.household == self.household
+            #return self.infection.infecting_node_id.household == self.household
+            return self.household.network.node(self.infection.infecting_node_id).household == self.household
         else:
             return False
 

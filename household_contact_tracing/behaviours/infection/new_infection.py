@@ -183,10 +183,13 @@ class NewInfectionHouseholdLevel(NewInfection):
             'will_report_infection': will_report_infection,
         }
 
+        infecting_node_id = None
+        if infecting_node:
+            infecting_node_id = infecting_node.id
         infection_attributes = {
             'time_infected': time,
             'asymptomatic': asymptomatic,
-            'infecting_node': infecting_node,
+            'infecting_node': infecting_node_id,
             'isolated': node_is_isolated,
             'recovery_time': recovery_time,
         }
@@ -305,10 +308,14 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
             'will_report_infection': will_report_infection,
         }
 
+        infecting_node_id = None
+        if infecting_node:
+            infecting_node_id = infecting_node.id
+
         infection_attributes = {
             'time_infected': time,
             'asymptomatic': asymptomatic,
-            'infecting_node': infecting_node,
+            'infecting_node': infecting_node_id,
             'isolated': node_is_isolated,
             'recovery_time': recovery_time,
         }

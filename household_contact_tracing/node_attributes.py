@@ -13,7 +13,7 @@ class InfectionAttributes(Parameterised):
         Attributes
         ----------
             asymptomatic (boolean)
-            infecting_node (Node)
+            infecting_node_id (int)
             isolated (boolean)
             outside_house_contacts_made (int)
             recovered (boolean)
