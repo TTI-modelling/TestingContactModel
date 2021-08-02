@@ -2,7 +2,6 @@ import pandas as pd
 import pytest
 from household_contact_tracing.queueing_processes import Queue, DeterministicQueue
 
-
 # Testing the Queue object
 
 @pytest.fixture
