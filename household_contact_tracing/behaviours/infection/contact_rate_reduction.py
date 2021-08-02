@@ -58,9 +58,9 @@ class ContactRateReductionHouseholdLevelTracing(ContactRateReduction):
         intervention parameters
         """
 
-        if node.isolated and node.tracing_adherence.propensity_imperfect_isolation:
+        if node.infection.isolated and node.tracing_adherence.propensity_imperfect_isolation:
             return self.global_contact_reduction_imperfect_quarantine
-        elif node.isolated and not node.tracing_adherence.propensity_imperfect_isolation:
+        elif node.infection.isolated and not node.tracing_adherence.propensity_imperfect_isolation:
             # return 1 means 100% of contacts are stopped
             return 1
         else:
@@ -81,11 +81,11 @@ class ContactRateReductionIndividualTracingDaily(ContactRateReduction):
         """
         # the isolated status should never apply to an individual who will not uptake intervention
 
-        if node.isolated and not node.tracing_adherence.propensity_imperfect_isolation:
+        if node.infection.isolated and not node.tracing_adherence.propensity_imperfect_isolation:
             # perfect intervention
             return 1
 
-        elif node.isolated and node.tracing_adherence.propensity_imperfect_isolation:
+        elif node.infection.isolated and node.tracing_adherence.propensity_imperfect_isolation:
             # imperfect intervention
             return self.global_contact_reduction_imperfect_quarantine
 

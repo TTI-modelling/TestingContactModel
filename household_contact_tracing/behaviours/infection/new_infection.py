@@ -174,20 +174,30 @@ class NewInfectionHouseholdLevel(NewInfection):
                                         }
         returning_travellers_attributes = {'pseudo_symptom_onset_time': pseudo_symptom_onset_time}
 
-        new_node = self.network.add_node(time_infected=time,
+        tracing_attributes = {
+            'contact_traced': household.contact_traced,
+            'has_contact_tracing_app': has_trace_app,
+            'symptom_onset_time': symptom_onset_time,
+            'testing_delay': self.testing_delay(),
+            'time_of_reporting': time_of_reporting,
+            'will_report_infection': will_report_infection,
+        }
+
+        infection_attributes = {
+            'time_infected': time,
+            'asymptomatic': asymptomatic,
+            'infecting_node': infecting_node,
+            'isolated': node_is_isolated,
+            'recovery_time': recovery_time,
+        }
+
+        new_node = self.network.add_node(
                                          household_id=household.id,
-                                         isolated=node_is_isolated,
+                                         infection_attributes=infection_attributes,
                                          tracing_adherence_attributes=tracing_adherence_attributes,
                                          returning_travellers_attributes=returning_travellers_attributes,
-                                         asymptomatic=asymptomatic,
-                                         contact_traced=household.contact_traced,
-                                         symptom_onset_time=symptom_onset_time,
-                                         recovery_time=recovery_time,
-                                         will_report_infection=will_report_infection,
-                                         time_of_reporting=time_of_reporting,
-                                         has_contact_tracing_app=has_trace_app,
-                                         testing_delay=self.testing_delay(),
-                                         infecting_node=infecting_node)
+                                         tracing_attributes=tracing_attributes
+                                         )
 
         # Each house now stores the ID's of which nodes are stored inside the house,
         # so that quarantining can be done at the household level
@@ -222,11 +232,6 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
         else:
             node_being_lateral_flow_tested = False
             time_started_lfa_testing = float('Inf')
-
-        additional_attributes = {
-            'received_positive_test_result': False,
-            'received_result': None,
-        }
 
         asymptomatic = self.is_asymptomatic_infection()
 
@@ -274,7 +279,9 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
             'will_uptake_isolation': isolation_uptake,
             'propensity_imperfect_isolation': self.get_propensity_imperfect_isolation()
         }
+
         returning_travellers_attributes = {'pseudo_symptom_onset_time': pseudo_symptom_onset_time}
+
         lfd_testing_attributes = {
             'avenue_of_testing': None,
             'being_lateral_flow_tested': node_being_lateral_flow_tested,
@@ -287,23 +294,34 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
             'propensity_to_miss_lfa_tests': self.propensity_to_miss_lfa_tests()
         }
 
-        new_node = self.network.add_node(time_infected=time,
+        tracing_attributes = {
+            'received_positive_test_result': False,
+            'received_result': None,
+            'contact_traced': household.contact_traced,
+            'has_contact_tracing_app': has_trace_app,
+            'symptom_onset_time': symptom_onset_time,
+            'testing_delay': self.testing_delay(),
+            'time_of_reporting': time_of_reporting,
+            'will_report_infection': will_report_infection,
+        }
+
+        infection_attributes = {
+            'time_infected': time,
+            'asymptomatic': asymptomatic,
+            'infecting_node': infecting_node,
+            'isolated': node_is_isolated,
+            'recovery_time': recovery_time,
+        }
+
+        new_node = self.network.add_node(
                                          household_id=household.id,
-                                         isolated=node_is_isolated,
+                                         infection_attributes=infection_attributes,
                                          tracing_adherence_attributes=tracing_adherence_attributes,
                                          returning_travellers_attributes=returning_travellers_attributes,
                                          lfd_testing_attributes=lfd_testing_attributes,
                                          lfd_testing_adherence_attributes=lfd_testing_adherence_attributes,
-                                         asymptomatic=asymptomatic,
-                                         contact_traced=household.contact_traced,
-                                         symptom_onset_time=symptom_onset_time,
-                                         recovery_time=recovery_time,
-                                         will_report_infection=will_report_infection,
-                                         time_of_reporting=time_of_reporting,
-                                         has_contact_tracing_app=has_trace_app,
-                                         testing_delay=self.testing_delay(),
-                                         additional_attributes=additional_attributes,
-                                         infecting_node=infecting_node)
+                                         tracing_attributes=tracing_attributes
+                                         )
 
         # Each house now stores the ID's of which nodes are stored inside the house,
         # so that quarantining can be done at the household level

@@ -95,7 +95,7 @@ class Infection(Parameterised):
             household = node.household
 
             # Extracting useful parameters from the node
-            days_since_infected = time - node.time_infected
+            days_since_infected = time - node.infection.time_infected
 
             outside_household_contacts = -1
             local_contacts = -1
@@ -122,7 +122,7 @@ class Infection(Parameterised):
             # will be thinned again
             local_infection_probs = self.get_infection_prob(local=True,
                                                             infectious_age=days_since_infected,
-                                                            asymptomatic=node.asymptomatic)
+                                                            asymptomatic=node.infection.asymptomatic)
 
             local_infective_contacts = npr.binomial(local_contacts, local_infection_probs)
 
@@ -145,12 +145,12 @@ class Infection(Parameterised):
                     self.new_within_household_infection(time=time, infecting_node=node)
 
             # Update how many contacts the node made
-            node.outside_house_contacts_made += outside_household_contacts
+            node.infection.outside_house_contacts_made += outside_household_contacts
 
             # How many outside household contacts cause new infections
             global_infection_probs = self.get_infection_prob(local=False,
                                                              infectious_age=days_since_infected,
-                                                             asymptomatic=node.asymptomatic)
+                                                             asymptomatic=node.infection.asymptomatic)
             outside_household_new_infections = npr.binomial(
                 outside_household_contacts,
                 global_infection_probs
@@ -160,7 +160,7 @@ class Infection(Parameterised):
                 self.new_outside_household_infection(time=time, infecting_node=node)
                 node_time_tuple = (self.network.node_count, time)
 
-                node.spread_to_global_node_time_tuples.append(node_time_tuple)
+                node.infection.spread_to_global_node_time_tuples.append(node_time_tuple)
 
     def contacts_made_today(self, household_size) -> int:
         """Generates the number of contacts made today by a node, given the house size of the node.
@@ -269,5 +269,5 @@ class Infection(Parameterised):
         recovered state
         """
         for node in self.network.all_nodes():
-            if node.recovery_time == time:
-                node.recovered = True
+            if node.infection.recovery_time == time:
+                node.infection.recovered = True

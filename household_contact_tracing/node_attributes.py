@@ -1,17 +1,28 @@
-from typing import Optional, Iterator, List, Tuple, Dict, Callable
+from typing import Optional
 
 from household_contact_tracing.parameterised import Parameterised
 
+# Todo: @Martyn Please check
 
-class NodeAttributes(Parameterised):
+
+class InfectionAttributes(Parameterised):
     """
+        A class used to store Node attributes relating to infection
+        Inherits from Parameterised to handle validation and updating of large number of parameters
 
-    """
-    pass
+        Attributes
+        ----------
+            asymptomatic (boolean)
+            infecting_node (Node)
+            isolated (boolean)
+            outside_house_contacts_made (int)
+            recovered (boolean)
+            recovery_time (float)
+            spread_to_global_node_time_tuples (list)
+            time_infected (int)
 
-
-class InfectionAttributes(NodeAttributes):
-    """
+        Methods
+        -------
 
     """
 
@@ -20,7 +31,7 @@ class InfectionAttributes(NodeAttributes):
         self.infecting_node = None
         self.isolated = None
         self.outside_house_contacts_made = 0
-        self.recovered = None
+        self.recovered = False
         self.recovery_time = None
         self.spread_to_global_node_time_tuples = []
         self.time_infected = None
@@ -29,8 +40,28 @@ class InfectionAttributes(NodeAttributes):
         self.update_params(attributes)
 
 
-class LFDTestingAttributes(NodeAttributes):
+class LFDTestingAttributes(Parameterised):
     """
+        A class used to store Node attributes relating to LFD Testing
+        Inherits from Parameterised to handle validation and updating of large number of parameters
+
+        Attributes
+        ----------
+            avenue_of_testing (int)
+            being_lateral_flow_tested (boolean)
+            positive_test_time (int)
+            taken_confirmatory_PCR_test (boolean)
+            time_started_lfa_testing (int)
+
+            # Todo @Martyn:  Ann estimated placing these here - CHECK
+            propensity_risky_behaviour_lfa_testing (float)
+            propensity_to_miss_lfa_tests (float)
+            confirmatory_PCR_test_result_time (float)
+            completed_lateral_flow_testing_time (boolean)
+            lateral_flow_testing_duration (float)
+
+        Methods
+        -------
 
     """
 
@@ -41,7 +72,7 @@ class LFDTestingAttributes(NodeAttributes):
         self.taken_confirmatory_PCR_test = None
         self.time_started_lfa_testing = None
 
-        # Todo Ann estimated location - CHECK
+        # Todo Ann estimated placing these here - CHECK
         self.propensity_risky_behaviour_lfa_testing = None
         self.propensity_to_miss_lfa_tests = None
         self.confirmatory_PCR_test_result_time = None
@@ -52,8 +83,19 @@ class LFDTestingAttributes(NodeAttributes):
         self.update_params(attributes)
 
 
-class LFDTestingAdherenceAttributes(NodeAttributes):
+class LFDTestingAdherenceAttributes(Parameterised):
     """
+        A class used to store Node attributes relating to LFD Testing Adherence
+        Inherits from Parameterised to handle validation and updating of large number of parameters
+
+        Attributes
+        ----------
+            confirmatory_PCR_result_was_positive (boolean)
+            node_will_take_up_lfa_testing (boolean)
+
+
+        Methods
+        -------
 
     """
 
@@ -65,9 +107,17 @@ class LFDTestingAdherenceAttributes(NodeAttributes):
         self.update_params(attributes)
 
 
-class ReturningTravellerAttributes(NodeAttributes):
+class ReturningTravellerAttributes(Parameterised):
     """
+        A class used to store Node attributes relating to Returning Travellers
+        Inherits from Parameterised to handle validation and updating of large number of parameters
 
+        Attributes
+        ----------
+            pseudo_symptom_onset_time (float)
+
+        Methods
+        -------
     """
 
     def __init__(self, attributes):
@@ -77,9 +127,26 @@ class ReturningTravellerAttributes(NodeAttributes):
         self.update_params(attributes)
 
 
-class TracingAttributes(NodeAttributes):
+class TracingAttributes(Parameterised):
     """
+        A class used to store Node attributes relating to Contact Tracing
+        Inherits from Parameterised to handle validation and updating of large number of parameters
 
+        Attributes
+        ----------
+            contact_traced (boolean)
+            has_contact_tracing_app (boolean)
+            propagated_contact_tracing (boolean)
+            received_positive_test_result (boolean)
+            received_result (boolean)
+            symptom_onset_time (float)
+            testing_delay (float)
+            time_of_reporting (int)
+            will_report_infection (boolean)
+            completed_isolation (boolean)
+
+        Methods
+        -------
     """
 
     def __init__(self, attributes):
@@ -98,8 +165,18 @@ class TracingAttributes(NodeAttributes):
         self.update_params(attributes)
 
 
-class TracingAdherenceAttributes(NodeAttributes):
+class TracingAdherenceAttributes(Parameterised):
     """
+        A class used to store Node attributes relating to Contact Tracing Adherence
+        Inherits from Parameterised to handle validation and updating of large number of parameters
+
+        Attributes
+        ----------
+        propensity_imperfect_isolation (float)
+        will_uptake_isolation (boolean)
+
+        Methods
+        -------
 
     """
 

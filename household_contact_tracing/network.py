@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from household_contact_tracing.parameterised import Parameterised
 from household_contact_tracing.node_attributes import LFDTestingAdherenceAttributes, TracingAdherenceAttributes, \
-    ReturningTravellerAttributes, LFDTestingAttributes
+    ReturningTravellerAttributes, LFDTestingAttributes, TracingAttributes, InfectionAttributes
 
 
 class EdgeType(Enum):
@@ -139,7 +139,7 @@ class Network:
         Returns:
             list: list of nodes able to infect
         """
-        return [node for node in self.all_nodes() if not node.recovered]
+        return [node for node in self.all_nodes() if not node.infection.recovered]
 
     def is_isomorphic(self, network: Network) -> bool:
         """ Determine whether graphs have identical network structures."""
@@ -179,7 +179,7 @@ class Network:
 
     def count_non_recovered_nodes(self) -> int:
         """Returns the number of nodes not in the recovered state."""
-        return len([node for node in self.all_nodes() if not node.recovered])
+        return len([node for node in self.all_nodes() if not node.infection.recovered])
 
     def get_edge_between_household(self, house1: Household, house2: Household) -> Tuple[int, int]:
         """Get the id's of the two nodes that connect households."""
@@ -190,16 +190,14 @@ class Network:
 
     def is_edge_app_traced(self, edge: Tuple[int, int]) -> bool:
         """Returns whether two nodes have the contract tracing app."""
-        node_1_app = self.node(edge[0]).has_contact_tracing_app
-        node_2_app = self.node(edge[1]).has_contact_tracing_app
+        node_1_app = self.node(edge[0]).tracing.has_contact_tracing_app
+        node_2_app = self.node(edge[1]).tracing.has_contact_tracing_app
         return node_1_app and node_2_app
 
-    def add_node(self, time_infected, household_id, isolated, asymptomatic, symptom_onset_time,
-                 recovery_time, will_report_infection,
-                 time_of_reporting, has_contact_tracing_app, contact_traced, testing_delay=0,
-                 additional_attributes: Optional[dict] = None,
-                 infecting_node: Optional[Node] = None, completed_isolation=False,
+    def add_node(self, household_id,
+                 infection_attributes: Optional[dict] = None,
                  lfd_testing_adherence_attributes: Optional[dict] = None,
+                 tracing_attributes: Optional[dict] = None,
                  tracing_adherence_attributes: Optional[dict] = None,
                  returning_travellers_attributes: Optional[dict] = None,
                  lfd_testing_attributes: Optional[dict] = None
@@ -208,24 +206,13 @@ class Network:
         self.graph.add_node(new_node_id)
         new_node_household = self.household(household_id)
         node = Node(node_id=new_node_id,
-                    time_infected=time_infected,
                     household=new_node_household,
-                    isolated=isolated,
-                    asymptomatic=asymptomatic,
-                    symptom_onset_time=symptom_onset_time,
-                    recovery_time=recovery_time,
-                    will_report_infection=will_report_infection,
-                    time_of_reporting=time_of_reporting,
-                    has_contact_tracing_app=has_contact_tracing_app,
-                    contact_traced=contact_traced,
-                    testing_delay=testing_delay,
-                    additional_attributes=additional_attributes,
+                    infection_attributes=infection_attributes,
                     lfd_testing_adherence_attributes=lfd_testing_adherence_attributes,
+                    tracing_attributes=tracing_attributes,
                     tracing_adherence_attributes=tracing_adherence_attributes,
                     returning_travellers_attributes=returning_travellers_attributes,
-                    lfd_testing_attributes=lfd_testing_attributes,
-                    infecting_node=infecting_node,
-                    completed_isolation=completed_isolation)
+                    lfd_testing_attributes=lfd_testing_attributes)
         self.graph.nodes[new_node_id]['node_obj'] = node
         return node
 
@@ -266,40 +253,24 @@ class Node(Parameterised):
 
 
     """
-    def __init__(self, node_id: int, household: Household, **attributes):
+    def __init__(self, node_id: int, household: Household,
+                 infection_attributes=None,
+                 lfd_testing_adherence_attributes=None,
+                 tracing_attributes=None,
+                 tracing_adherence_attributes=None,
+                 returning_travellers_attributes=None,
+                 lfd_testing_attributes=None):
 
         self.id = node_id
         self.household = household
 
-        self.time_infected = None
-        self.isolated = None
-        self.asymptomatic = None
-        self.symptom_onset_time = None
-        self.recovery_time = None
-        self.will_report_infection = None
-        self.time_of_reporting = None
-        self.has_contact_tracing_app = None
-        self.testing_delay = 0
-        self.contact_traced = None
-        self.outside_house_contacts_made = 0
-        self.spread_to_global_node_time_tuples = []
-        self.recovered = False
-        self.propagated_contact_tracing = False
-        self.infecting_node = None
-        self.completed_isolation = False
-        self.received_result = False
-        self.received_positive_test_result = False
-
-        # Update instance variables with anything in `additional_attributes`
-        self.update_params(attributes)
-
         # Update node attribute classes
-        self.lfd_testing_adherence = LFDTestingAdherenceAttributes(attributes['lfd_testing_adherence_attributes'])
-        self.tracing_adherence = TracingAdherenceAttributes(attributes['tracing_adherence_attributes'])
-        self.returning_travellers = ReturningTravellerAttributes(attributes['returning_travellers_attributes'])
-        self.lfd_testing = LFDTestingAttributes(attributes['lfd_testing_attributes'])
-
-        self.update_params(attributes['additional_attributes'])
+        self.infection = InfectionAttributes(infection_attributes)
+        self.lfd_testing_adherence = LFDTestingAdherenceAttributes(lfd_testing_adherence_attributes)
+        self.tracing = TracingAttributes(tracing_attributes)
+        self.tracing_adherence = TracingAdherenceAttributes(tracing_adherence_attributes)
+        self.returning_travellers = ReturningTravellerAttributes(returning_travellers_attributes)
+        self.lfd_testing = LFDTestingAttributes(lfd_testing_attributes)
 
     def time_relative_to_symptom_onset(self, time: int) -> int:
         # asymptomatics do not have a symptom onset time
@@ -308,22 +279,22 @@ class Node(Parameterised):
         return time - self.returning_travellers.pseudo_symptom_onset_time
 
     def locally_infected(self) -> bool:
-        if self.infecting_node:
-            return self.infecting_node.household == self.household
+        if self.infection.infecting_node:
+            return self.infection.infecting_node.household == self.household
         else:
             return False
 
     def infection_status(self, time_now: int) -> InfectionStatus:
-        if self.contact_traced:
-            if self.symptom_onset_time + self.testing_delay <= time_now:
+        if self.tracing.contact_traced:
+            if self.tracing.symptom_onset_time + self.tracing.testing_delay <= time_now:
                 return InfectionStatus.known_infection
-            if self.symptom_onset_time <= time_now:
+            if self.tracing.symptom_onset_time <= time_now:
                 return InfectionStatus.self_recognised_infection
         else:
-            if self.will_report_infection:
-                if self.time_of_reporting + self.testing_delay <= time_now:
+            if self.tracing.will_report_infection:
+                if self.tracing.time_of_reporting + self.tracing.testing_delay <= time_now:
                     return InfectionStatus.known_infection
-                if self.time_of_reporting <= time_now:
+                if self.tracing.time_of_reporting <= time_now:
                     return InfectionStatus.self_recognised_infection
         return InfectionStatus.unknown_infection
 
@@ -334,23 +305,23 @@ class Node(Parameterised):
                 time (int): The current increment / step number (e.g. day number) of the simulation
         """
         if self.lfd_testing.being_lateral_flow_tested:
-            if self.isolated:
+            if self.infection.isolated:
                 return NodeType.being_lateral_flow_tested_isolated
             else:
                 return NodeType.being_lateral_flow_tested_not_isolated
-        elif self.isolated:
+        elif self.infection.isolated:
             return NodeType.isolated
-        elif not self.asymptomatic:
-            if self.will_report_infection:
+        elif not self.infection.asymptomatic:
+            if self.tracing.will_report_infection:
                 return NodeType.symptomatic_will_report_infection
             else:
                 return NodeType.symptomatic_will_not_report_infection
-        elif self.received_positive_test_result:
-            if self.avenue_of_testing == TestType.pcr:
+        elif self.tracing.received_positive_test_result:
+            if self.lfd_testing.avenue_of_testing == TestType.pcr:
                 return NodeType.received_pos_test_pcr
             else:
                 return NodeType.received_pos_test_lfa
-        elif self.received_result and self.avenue_of_testing == TestType.pcr:
+        elif self.tracing.received_result and self.lfd_testing.avenue_of_testing == TestType.pcr:
             return NodeType.received_neg_test_pcr
         elif self.lfd_testing.taken_confirmatory_PCR_test:
             if time and time >= self.confirmatory_PCR_test_result_time:
@@ -358,7 +329,7 @@ class Node(Parameterised):
                     return NodeType.confirmatory_pos_pcr_test
                 else:
                     return NodeType.confirmatory_neg_pcr_test
-        elif self.asymptomatic:
+        elif self.infection.asymptomatic:
             return NodeType.asymptomatic
         else:
             return NodeType.default
@@ -366,9 +337,9 @@ class Node(Parameterised):
     def take_confirmatory_pcr_test(self, time: int, prob_pcr_positive: Callable):
         """Given a the time relative to a nodes symptom onset, will that node test positive."""
 
-        infectious_age_when_tested = time - self.time_infected
+        infectious_age_when_tested = time - self.infection.time_infected
 
-        self.confirmatory_PCR_test_result_time = time + self.testing_delay
+        self.confirmatory_PCR_test_result_time = time + self.tracing.testing_delay
         self.lfd_testing.taken_confirmatory_PCR_test = True
 
         if numpy.random.binomial(1, prob_pcr_positive(infectious_age_when_tested)) == 1:
@@ -389,7 +360,7 @@ class Node(Parameterised):
 
     def lfa_test_node(self, time: int, prob_lfa_positive: Callable):
         """Given a the time relative to a nodes symptom onset, will that node test positive"""
-        infectious_age = time - self.time_infected
+        infectious_age = time - self.infection.time_infected
 
         prob_positive_result = prob_lfa_positive(infectious_age)
 
@@ -467,7 +438,7 @@ class Household:
             infection_status = household_node.infection_status(model_time)
             if infection_status in [InfectionStatus.known_infection,
                                     InfectionStatus.self_recognised_infection]:
-                recognised_symptom_onsets.append(household_node.symptom_onset_time)
+                recognised_symptom_onsets.append(household_node.tracing.symptom_onset_time)
         return recognised_symptom_onsets
 
     def get_positive_test_times(self, model_time: int) -> List[int]:
@@ -475,7 +446,7 @@ class Household:
 
         for node in self.nodes:
             if node.infection_status(model_time) == InfectionStatus.known_infection:
-                if node.received_positive_test_result:
+                if node.tracing.received_positive_test_result:
                     positive_test_times.append(node.lfd_testing.positive_test_time)
         return positive_test_times
 
@@ -514,9 +485,9 @@ class Household:
 
         # Update isolated and contact traced status for Nodes in Household
         for node in self.nodes:
-            node.contact_traced = True
+            node.tracing.contact_traced = True
             if node.tracing_adherence.will_uptake_isolation:
-                node.isolated = True
+                node.infection.isolated = True
 
         self._update_edges_on_isolation()
 
@@ -548,7 +519,7 @@ class Household:
 
         for node in self.nodes:
             if node.lfd_testing_adherence.node_will_take_up_lfa_testing:
-                if not node.received_positive_test_result:
+                if not node.tracing.received_positive_test_result:
                     if not node.lfd_testing.being_lateral_flow_tested:
                         node.lfd_testing.being_lateral_flow_tested = True
                         node.lfd_testing.time_started_lfa_testing = time
@@ -566,13 +537,13 @@ class Household:
 
         for node in self.nodes:
             if node.lfd_testing_adherence.node_will_take_up_lfa_testing:
-                if not node.received_positive_test_result:
-                    if not node.being_lateral_flow_tested:
+                if not node.tracing.received_positive_test_result:
+                    if not node.lfd_testing.being_lateral_flow_tested:
                         node.lfd_testing.being_lateral_flow_tested = True
                         node.lfd_testing.time_started_lfa_testing = time
 
             if node.tracing_adherence.will_uptake_isolation:
-                node.isolated = True
+                node.infection.isolated = True
 
     def apply_positive_policy(self, time: int, household_positive_policy: str):
         """Depending on the positive policy, different interventions are made to the household
@@ -613,7 +584,7 @@ class Household:
 
         # Update the nodes to the contact traced status
         for node in self.nodes:
-            node.contact_traced = True
+            node.tracing.contact_traced = True
 
         # Colour the edges within household
         self.network.label_edges_inside_household(self, EdgeType.within_house)
@@ -621,7 +592,7 @@ class Household:
     def isolate_if_symptomatic_nodes(self, time: int):
         """If there are any symptomatic nodes in the household then isolate the household."""
         for node in self.nodes:
-            if node.symptom_onset_time <= time and not node.completed_isolation:
+            if node.tracing.symptom_onset_time <= time and not node.tracing.completed_isolation:
                 self.isolate_household(time)
                 break
 
@@ -629,5 +600,5 @@ class Household:
         traced_node = self.find_traced_node()
 
         # the traced node should go into quarantine
-        if not traced_node.isolated and traced_node.tracing_adherence.will_uptake_isolation:
-            traced_node.isolated = True
+        if not traced_node.infection.isolated and traced_node.tracing_adherence.will_uptake_isolation:
+            traced_node.infection.isolated = True

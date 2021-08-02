@@ -267,10 +267,10 @@ def test_isolate_positive_lateral_flow_tests(simple_model_high_test_prob: Indivi
     # but they are lfa testing
     model.infection.new_within_household_infection(time=model.time, infecting_node=model.network.node(1))
 
-    assert model.network.node(1).isolated
+    assert model.network.node(1).infection.isolated
     assert model.network.household(1).applied_household_positive_policy
-    assert model.network.node(1).received_positive_test_result
-    assert not model.network.node(2).isolated
+    assert model.network.node(1).tracing.received_positive_test_result
+    assert not model.network.node(2).infection.isolated
     assert model.network.node(2).lfd_testing.being_lateral_flow_tested
 
 
@@ -325,10 +325,10 @@ def test_start_lateral_flow_testing_household_and_quarantine(
     model.infection.new_within_household_infection(time=model.time,
                                                    infecting_node=model.network.node(1))
 
-    assert model.network.node(1).isolated
+    assert model.network.node(1).infection.isolated
     assert model.network.household(1).applied_household_positive_policy
-    assert model.network.node(1).received_positive_test_result
-    assert model.network.node(2).isolated
+    assert model.network.node(1).tracing.received_positive_test_result
+    assert model.network.node(2).infection.isolated
     assert model.network.node(2).lfd_testing.being_lateral_flow_tested
 
 
@@ -385,10 +385,10 @@ def test_household_contacts_quarantine_only(
     model.infection.new_within_household_infection(time=model.time,
                                                    infecting_node=model.network.node(1))
 
-    assert model.network.node(1).isolated
+    assert model.network.node(1).infection.isolated
     assert model.network.household(1).applied_household_positive_policy
-    assert model.network.node(1).received_positive_test_result
-    assert model.network.node(2).isolated
+    assert model.network.node(1).tracing.received_positive_test_result
+    assert model.network.node(2).infection.isolated
     assert model.network.node(2).lfd_testing.being_lateral_flow_tested
 
 
@@ -475,5 +475,5 @@ def test_lfa_tested_nodes_make_more_contacts_if_risky(
         model.simulate_one_step()
 
     # node 1 does not engage in risky behaviour and should not make any global contacts
-    assert model.network.node(1).outside_house_contacts_made == 0
-    assert model.network.node(2).outside_house_contacts_made != 0
+    assert model.network.node(1).infection.outside_house_contacts_made == 0
+    assert model.network.node(2).infection.outside_house_contacts_made != 0
