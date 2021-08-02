@@ -7,6 +7,9 @@ from household_contact_tracing.views.branching_process_view import BranchingProc
 from household_contact_tracing.branching_process_models import BranchingProcessModel
 
 class PositiveTestRecord(BranchingProcessView):
+    """This view records the number of individuals at each time step who have tested postivie for 
+    for the first time during that timestep.
+    """
 
     def __init__(self, model: BranchingProcessModel):
         
@@ -75,5 +78,20 @@ class PositiveTestRecord(BranchingProcessView):
         """
         
 
-    def print_my_name(self):
-        print('science bitch')
+    def positive_tests_over_time(self):
+        """Returns a list of the number of positive tests received at each timestep.
+        """
+
+        positive_test_times = [
+            node.positive_test_time 
+            for node in self._model.network.all_nodes() 
+            if node.positive_test_time is not None
+        ]
+
+        return [
+            positive_test_times.count(time)
+            for time in range(self._model.time)
+        ]
+
+    def active_infections(self):
+        pass
