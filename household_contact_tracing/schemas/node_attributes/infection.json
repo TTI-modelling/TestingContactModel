@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Node infection attribute schema",
+  "description": "A schema for validating the infection attributes of nodes in a household branching process model",
+  "type": "object",
+  "anyOf": [
+    {"required": ["asymptomatic"]},
+    {"required": ["infecting_node"]},
+    {"required": ["isolated"]},
+    {"required": ["outside_house_contacts_made"]},
+    {"required": ["recovered"]},
+    {"required": ["recovery_time"]},
+    {"required": ["spread_to_global_node_time_tuples"]},
+    {"required": ["time_infected"]}
+  ],
+  "properties": {
+    "asymptomatic": {
+      "description": "Is the node asymptomatic?",
+      "type": "boolean"
+    },
+    "infecting_node": {
+      "description": "The node that infected this node [CHECK]",
+      "type": ["integer", "null"]
+    },
+    "isolated": {
+      "description": "Has the node isolated?",
+      "type": "boolean"
+    },
+    "outside_house_contacts_made": {
+      "description": "Has the node made outside contacts?",
+      "type": "boolean"
+    },
+    "recovered": {
+      "description": "Has the node recovered?",
+      "type": "boolean"
+    },
+    "recovery_time": {
+      "description": "The time taken for the node to recover",
+      "type": ["number", "null"]
+    },
+    "spread_to_global_node_time_tuples": {
+      "description": "List of node/times where spread to global.",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "type": "number"
+        }
+      }
+    },
+    "time_infected": {
+      "description": "The time that the node was infected.",
+      "type": ["number", "null"]
+    }
+  }
+}
+

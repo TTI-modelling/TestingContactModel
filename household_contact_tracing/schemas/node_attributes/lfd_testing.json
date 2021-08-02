@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Node infection attribute schema",
+  "description": "A schema for validating the attributes of nodes in a household branching process model",
+  "type": "object",
+  "anyOf": [
+    {"required": ["avenue_of_testing"]},
+    {"required": ["being_lateral_flow_tested"]},
+    {"required": ["positive_test_time"]},
+    {"required": ["taken_confirmatory_pcr_test"]},
+    {"required": ["time_started_LFA_testing"]}
+  ],
+  "properties": {
+    "avenue_of_testing": {
+      "description": "What was the avenue of testing? 0=PCR, 1=LFA",
+      "type": ["integer", "null"]
+    },
+    "being_lateral_flow_tested": {
+      "description": "Is the node being lateral flow tested?",
+      "type": "boolean"
+    },
+    "positive_test_time": {
+      "description": "The time taken to receive a positive test result",
+      "type": ["number", "null"]
+    },
+    "taken_confirmatory_pcr_test": {
+      "description": "Has the node taken a confirmatory PCR test?",
+      "type": "boolean"
+    },
+    "time_started_LFA_testing": {
+      "description": "The time that the node started LFA testing",
+      "type": ["number", "null"]
+    }
+  }
+}
+

@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Node returning travellers attribute schema",
+  "description": "A schema for validating the attributes of returning traveller nodes in a household branching process model",
+  "type": "object",
+  "anyOf": [
+    {"required": ["pseudo_symptom_onset_time"]}
+  ],
+  "properties": {
+    "pseudo_symptom_onset_time": {
+      "description": "Pseudo time of onset of symptoms",
+      "type": ["number", "null"]
+    }
+  }
+}
+

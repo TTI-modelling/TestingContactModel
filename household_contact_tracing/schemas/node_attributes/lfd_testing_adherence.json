@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Node infection attribute schema",
+  "description": "A schema for validating the attributes of nodes in a household branching process model",
+  "type": "object",
+  "anyOf": [
+    {"required": ["confirmatory_PCR_result_was_positive"]},
+    {"required": ["node_will_take_up_LFA_testing"]}
+  ],
+  "properties": {
+    "confirmatory_PCR_result_was_positive": {
+      "description": "Was the confirmatory PCR test positive?",
+      "type": "boolean"
+    },
+    "node_will_take_up_LFA_testing": {
+      "description": "Will the node take up LFA testing?",
+      "type": "boolean"
+    }
+  }
+}
+
