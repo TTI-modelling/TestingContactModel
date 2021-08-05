@@ -99,7 +99,8 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
             household_pairwise_survival_prob: float,
             outside_household_infectivity_scaling: float,
             max_time: int = 20,
-            max_active_infections: int = 1e5) -> float:
+            max_active_infections: int = 1e5,
+            verbose: bool = True) -> float:
         """Sets up a model, runs it, and returns the evaluated growth rate.
 
         Args:
@@ -124,7 +125,7 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
         controller_hh_sar.run_hh_sar_simulation()
 
         return {
-            'growth_rate': controller.statistics_view.get_growth_rate(),
+            'growth_rate': controller.statistics_view.get_growth_rate(verbose = verbose),
             'hh_sar': controller_hh_sar.statistics_view.get_hh_sar()
         }
 
@@ -132,11 +133,13 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
     def evaluate_fit(
             self,
             household_pairwise_survival_prob,
-            outside_household_infectivity_scaling) -> float:
+            outside_household_infectivity_scaling,
+            verbose: bool = True) -> float:
         
         metrics = self.eval_metrics(
             household_pairwise_survival_prob,
-            outside_household_infectivity_scaling
+            outside_household_infectivity_scaling,
+            verbose=verbose
         )
 
         return abs(self.desired_growth_rate - metrics['growth_rate']) + abs(self.desired_hh_sar - metrics['hh_sar'])
@@ -170,6 +173,7 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
             evaluation_function = lambda pars: self.evaluate_fit(
                 household_pairwise_survival_prob = pars["household_pairwise_survival_prob"],
                 outside_household_infectivity_scaling = pars["outside_household_infectivity_scaling"],
+                verbose = False
                 ),
             minimize            = True,
             total_trials        = total_trials
@@ -198,8 +202,9 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
             return [
                 self.eval_metrics(
                     household_pairwise_survival_prob = self.best_parameters['household_pairwise_survival_prob'],
-                    outside_household_infectivity_scaling = self.best_parameters['outside_household_infectivity_scaling'])
-                for _ in range(20)
+                    outside_household_infectivity_scaling = self.best_parameters['outside_household_infectivity_scaling'],
+                    verbose = False)
+                for _ in range(n_obs)
             ]
 
         else:

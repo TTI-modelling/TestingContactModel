@@ -175,7 +175,7 @@ class HouseholdLevelTracing(BranchingProcessModel):
         self._state.switch(RunningState)
 
         while type(self.state) is RunningState:
-            prev_network = deepcopy(self.network)
+            #prev_network = deepcopy(self.network)
 
             # This chunk of code executes a days worth of infections and recoveries, but no tracing
             self.infection.increment(self.time)
@@ -190,8 +190,8 @@ class HouseholdLevelTracing(BranchingProcessModel):
             self.time += 1
 
             # If graph changed, tell parent
-            if not prev_network == self.network:
-                BranchingProcessModel.graph_changed(self)
+            #if not prev_network == self.network:
+            #    BranchingProcessModel.graph_changed(self)
 
             # Call parent completed step
             super()._completed_step_increment()
