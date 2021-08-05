@@ -155,6 +155,58 @@ class HouseholdLevelTracing(BranchingProcessModel):
         super()._simulation_stopped()
 
 
+    def run_hh_sar_simulation(self) -> None:
+        """ Runs the simulation only for the first generation of the household epidemic:
+                Sets model state,
+                Announces start/stopped and step increments to observers
+
+        This simulation method with only simulate the infection process for households in the first
+        generation of the epidemic, and will continue until all nodes in the initial households of the 
+        epidemic are recovered. This is primarily useful when we are estimating the household secondary
+        attack rate. If we simulated onwards transmission, and examined households where the local
+        epidemic was completed, we would end up with a biased sample - the longer local epidemics would
+        be less likely to be included in the sample.
+
+        Returns:
+            None
+        """
+
+        # Switch model to RunningState
+        self._state.switch(RunningState)
+
+        while type(self.state) is RunningState:
+            prev_network = deepcopy(self.network)
+
+            # This chunk of code executes a days worth of infections and recoveries, but no tracing
+            self.infection.increment(self.time)
+            self.infection.perform_recoveries(self.time)
+
+            # if an infection is in a second generation household, set them to recovered so that
+            # they do not infect. This is mainly for computational ease
+            for node in self.network.all_nodes():
+                if node.household.id not in self.infection.starting_households:
+                    node.recovered = True
+
+            self.time += 1
+
+            # If graph changed, tell parent
+            if not prev_network == self.network:
+                BranchingProcessModel.graph_changed(self)
+
+            # Call parent completed step
+            super()._completed_step_increment()
+
+            # the simulation ends when all nodes in the initial generation have recovered
+            if self.network.count_non_recovered_nodes() == 0:
+                # Simulation ends if no more infectious nodes
+                self.state.switch(ExtinctState,
+                                  total_increments=self.time,
+                                  non_recovered_nodes=0,
+                                  total_nodes=self.network.node_count)
+
+        # Tell parent simulation stopped
+        super()._simulation_stopped()
+
 class IndividualLevelTracing(HouseholdLevelTracing):
     """
         A class used to represent a simulation of contact tracing of households along with

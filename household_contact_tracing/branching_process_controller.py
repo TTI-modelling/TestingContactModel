@@ -94,3 +94,17 @@ class BranchingProcessController:
                 None
         """
         self._model.run_simulation(max_time, max_active_infections)
+
+    def run_hh_sar_simulation(self):
+        """ 
+        This simulation method with only simulate the infection process for households in the first
+        generation of the epidemic, and will continue until all nodes in the initial households of the 
+        epidemic are recovered. This is primarily useful when we are estimating the household secondary
+        attack rate. If we simulated onwards transmission, and examined households where the local
+        epidemic was completed, we would end up with a biased sample - the longer local epidemics would
+        be less likely to be included in the sample.
+
+            Returns:
+                None
+        """
+        self._model.run_hh_sar_simulation()
