@@ -176,8 +176,8 @@ class StatisticsView(BranchingProcessView):
         doubling_time       = np.log(2) / np.log(1 + growth_rate)
         doubling_time_ci    = np.log(2) / np.log(1 + np.array(growth_rate_ci))
 
-        print('GLM regression summary:')
-        print(self.glm_poisson.summary())
+        #print('GLM regression summary:')
+        #print(self.glm_poisson.summary())
         print(f'{num_eligible_dates} time periods were used to estimate the growth rate.')
         print(f'The estimated growth rate was {round(growth_rate*100, 2)}% ({100*(1-alpha)}% CI: {round(growth_rate_ci[0]*100,2)}-{round(growth_rate_ci[1]*100,2)}%) per day.')
         print(f'The estimated doubling time is {round(doubling_time, 2)} ({100*(1-alpha)}% CI: {round(doubling_time_ci[1],2)}-{round(doubling_time_ci[0],2)}) days.')
@@ -223,7 +223,7 @@ class StatisticsView(BranchingProcessView):
         self.household_sar_ci = ss.beta.interval(alpha = 0.95, a = self.total_infected + 0.5, b = self.total_exposed - self.total_infected + 0.5)
 
     def get_hh_sar(self):
-        self._estimate_household_secondary_attack_rate()
+        self._estimate_household_secondary_attack_rate(use_first_generation_only=True)
         return self.household_sar
 
     def household_secondary_attack_rate_summary(self, use_first_generation_only: bool = False, alpha: float = 0.95) -> None:
@@ -236,10 +236,10 @@ class StatisticsView(BranchingProcessView):
 
 
         print('Household secondary attack rate summary:')
-        print(f'{self.n_households_with_completed_local_epidemics} were eligible to be included.')
+        print(f'{self.n_households_with_completed_local_epidemics} local household epidemics were eligible to be included.')
         if use_first_generation_only:
             print('Only the first generation of the household epidemic was included in this calculation.')
         else:
             print('All households with completed local epidemics were included. This may lead to a biased sample, as it is possible that local epidemics with a long duration were not included.')
         print(f'There were {self.total_exposed} non-index susceptible individuals exposed, of which {self.total_infected} were infected.')
-        print(f'This yields a household secondary attack rate of {round(self.household_sar*100)}% ({alpha * 100}% CI: ({round(self.household_sar_ci[0]*100)}, {round(self.household_sar_ci[1]*100)})')
+        print(f'This yields a household secondary attack rate of {round(self.household_sar*100)}% ({int(alpha * 100)}% CI: {round(self.household_sar_ci[0]*100)}-{round(self.household_sar_ci[1]*100)}%).')
