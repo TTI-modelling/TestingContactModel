@@ -3,6 +3,7 @@ from household_contact_tracing.views.branching_process_view import BranchingProc
 from household_contact_tracing.branching_process_model import BranchingProcessModel
 from household_contact_tracing.branching_process_state import MaxNodesInfectiousState, ReadyState, RunningState, ExtinctState
 from household_contact_tracing.exceptions import Error, ModelStateError
+import scipy.stats as ss
 import statsmodels.api as sm
 import numpy as np
 
@@ -144,7 +145,6 @@ class StatisticsView(BranchingProcessView):
             glm_poisson = sm.GLM(y, X, family=sm.families.Poisson())
             self.glm_poisson = glm_poisson.fit()
 
-
     def get_growth_rate(self, discard_first_n_days: int = 10, verbose: bool = True):
         """Returns the growth rate of the simulated epidemic, estimated using poisson regression.
 
@@ -181,5 +181,61 @@ class StatisticsView(BranchingProcessView):
         print(f'{num_eligible_dates} time periods were used to estimate the growth rate.')
         print(f'The estimated growth rate was {round(growth_rate*100, 2)}% ({100*(1-alpha)}% CI: {round(growth_rate_ci[0]*100,2)}-{round(growth_rate_ci[1]*100,2)}%) per day.')
         print(f'The estimated doubling time is {round(doubling_time, 2)} ({100*(1-alpha)}% CI: {round(doubling_time_ci[1],2)}-{round(doubling_time_ci[0],2)}) days.')
-        
 
+    def _estimate_household_secondary_attack_rate(self, use_first_generation_only: bool = False) -> None:
+        if isinstance(self._model.state, ReadyState):
+            raise ModelStateError(self._model.state, 'Simulation has not started yet. Cannot estimate growth rate.')
+
+        if use_first_generation_only:
+            households_with_completed_local_epidemics = [
+                household 
+                for household 
+                in self._model.network.all_households
+                if household.local_epidemic_completed
+                and household.id in self._model.infection.starting_households
+            ]
+        else:
+            households_with_completed_local_epidemics = [
+                household 
+                for household 
+                in self._model.network.all_households
+                if household.local_epidemic_completed
+            ]
+
+        # size of household - number of remaining susceptibles = final size.
+        # we subtract 1, to work out the number of non-index secondary infections
+        self.total_infected = sum([
+            household.size - household.susceptibles - 1 
+            for household 
+            in households_with_completed_local_epidemics
+        ])
+
+        # we subtract 1, to work out the number of non-index exposed individuals
+        self.total_exposed = sum([
+            household.size - 1 for household in households_with_completed_local_epidemics 
+        ])
+
+        self.n_households_with_completed_local_epidemics = len(households_with_completed_local_epidemics)
+
+        self.household_sar = self.total_infected / self.total_exposed
+        
+        # calculating some confidence intervals using the good ol' Jefferys interval
+        self.household_sar_ci = ss.beta.interval(alpha = 0.95, a = self.total_infected + 0.5, b = self.total_exposed - self.total_infected + 0.5)
+
+    def household_secondary_attack_rate_summary(self, use_first_generation_only: bool = False, alpha: float = 0.95) -> None:
+        """Estimates the household secondary attack rate, and prints and interpretable output.
+
+        Args:
+            use_first_generation_only (bool, optional): Use the first generation of the household epidemic only to estimate the household secondary attack. Defaults to False.
+        """
+        self._estimate_household_secondary_attack_rate(use_first_generation_only)
+
+
+        print('Household secondary attack rate summary:')
+        print(f'{self.n_households_with_completed_local_epidemics} were eligible to be included.')
+        if use_first_generation_only:
+            print('Only the first generation of the household epidemic was included in this calculation.')
+        else:
+            print('All households with completed local epidemics were included. This may lead to a biased sample, as it is possible that local epidemics with a long duration were not included.')
+        print(f'There were {self.total_exposed} non-index susceptible individuals exposed, of which {self.total_infected} were infected.')
+        print(f'This yields a household secondary attack rate of {round(self.household_sar*100)}% ({alpha * 100}% CI: ({round(self.household_sar_ci[0]*100)}, {round(self.household_sar_ci[1]*100)})')
