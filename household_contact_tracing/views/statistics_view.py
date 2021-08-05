@@ -222,6 +222,10 @@ class StatisticsView(BranchingProcessView):
         # calculating some confidence intervals using the good ol' Jefferys interval
         self.household_sar_ci = ss.beta.interval(alpha = 0.95, a = self.total_infected + 0.5, b = self.total_exposed - self.total_infected + 0.5)
 
+    def get_hh_sar(self):
+        self._estimate_household_secondary_attack_rate()
+        return self.household_sar
+
     def household_secondary_attack_rate_summary(self, use_first_generation_only: bool = False, alpha: float = 0.95) -> None:
         """Estimates the household secondary attack rate, and prints and interpretable output.
 
