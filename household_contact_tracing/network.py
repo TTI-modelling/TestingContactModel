@@ -642,3 +642,10 @@ class Household:
         which is defined as being 10
         """
         return all([node.recovered for node in self.nodes])
+
+    @property
+    def household_epidemic_size(self):
+        """Returns the current size of the household epidemic, i.e: the number of household members
+        that are, or were, infected.
+        """
+        return self.size - self.susceptibles
