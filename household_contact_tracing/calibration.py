@@ -47,11 +47,13 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
             self,
             #household_pairwise_survival_prob: float,
             desired_growth_rate: float,
+            desired_hh_sar: float,
             asymptomatic_prob: float,
             asymptomatic_relative_infectivity: float,
             infection_reporting_prob: float,
             reduce_contacts_by: float,
-            starting_infections: int = 100
+            starting_infections: int = 100,
+            starting_infections_hh_sar: int = 1000
             ):
 
         # initialise non-infection parameters that are held constant between simulations
@@ -87,11 +89,14 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
         self.fixed_params['starting_infections']                = starting_infections
 
         self.desired_growth_rate = desired_growth_rate
+        self.desired_hh_sar      = desired_hh_sar
+        self.starting_infections_hh_sar = starting_infections_hh_sar
 
         self.optimisation_complete = False
 
     def eval_metrics(
-            self, 
+            self,
+            household_pairwise_survival_prob: float,
             outside_household_infectivity_scaling: float,
             max_time: int = 20,
             max_active_infections: int = 1e5) -> float:
@@ -105,27 +110,40 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
 
         params = copy(self.fixed_params)
         params['outside_household_infectivity_scaling'] = outside_household_infectivity_scaling
+        params['household_pairwise_survival_prob']      = household_pairwise_survival_prob
         
+        # run a simulation to get the growth rate of the epidemic
         controller = BranchingProcessController(HouseholdLevelTracing(params))
-
         controller.csv_view.set_display(False)
         controller.run_simulation(max_time, max_active_infections)
 
-        return controller.growth_rate_view.get_growth_rate()
+        # use a different simulation method to get the household secondary attack rate of the epidemic
+        params['starting_infections'] = self.starting_infections_hh_sar # use a higher number of starting infections
+        controller_hh_sar = BranchingProcessController(HouseholdLevelTracing(params))
+        controller_hh_sar.csv_view.set_display(False)
+        controller_hh_sar.run_hh_sar_simulation()
 
-    def evaluate_household_secondary_attack_rate(self) -> float:
-        """[summary]
+        return {
+            'growth_rate': controller.statistics_view.get_growth_rate(),
+            'hh_sar': controller_hh_sar.statistics_view.get_hh_sar()
+        }
 
-        Returns:
-            float: [description]
-        """
 
-    def evaluate_fit(self, outside_household_infectivity_scaling) -> float:
+    def evaluate_fit(
+            self,
+            household_pairwise_survival_prob,
+            outside_household_infectivity_scaling) -> float:
         
-        return abs(self.desired_growth_rate - self.eval_growth_rate(outside_household_infectivity_scaling))
+        metrics = self.eval_metrics(
+            household_pairwise_survival_prob,
+            outside_household_infectivity_scaling
+        )
+
+        return abs(self.desired_growth_rate - metrics['growth_rate']) + abs(self.desired_hh_sar - metrics['hh_sar'])
 
     def optimise(self, 
             outside_household_infectivity_scaling_range: list[float],
+            household_pairwise_survival_prob_range: list[float],
             total_trials: int = 20):
         """Performs the hyperparameter optimization step with proposals from the specified ranges.
 
@@ -141,9 +159,18 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
                     "type": "range",
                     "bounds": outside_household_infectivity_scaling_range,
                     "value_type": "float"
+                },
+                {
+                    "name": "household_pairwise_survival_prob",
+                    "type": "range",
+                    "bounds": household_pairwise_survival_prob_range,
+                    "value_type": "float"
                 }
             ],
-            evaluation_function = lambda p: self.evaluate_fit(p["outside_household_infectivity_scaling"]),
+            evaluation_function = lambda pars: self.evaluate_fit(
+                household_pairwise_survival_prob = pars["household_pairwise_survival_prob"],
+                outside_household_infectivity_scaling = pars["outside_household_infectivity_scaling"],
+                ),
             minimize            = True,
             total_trials        = total_trials
         )
@@ -152,7 +179,7 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
 
         return self.best_parameters, self.values
 
-    def get_fitted_growth_rate_samples(
+    def get_fitted_model_metric_samples(
         self,
         n_obs: int = 10) -> list[float]:
         """If optimisation has been completed, this method generates sample of the growth rate using
@@ -169,7 +196,9 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
         if self.optimisation_complete:      
 
             return [
-                self.eval_growth_rate(self.best_parameters['outside_household_infectivity_scaling'])
+                self.eval_metrics(
+                    household_pairwise_survival_prob = self.best_parameters['household_pairwise_survival_prob'],
+                    outside_household_infectivity_scaling = self.best_parameters['outside_household_infectivity_scaling'])
                 for _ in range(20)
             ]
 
