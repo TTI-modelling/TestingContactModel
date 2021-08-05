@@ -90,7 +90,7 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
 
         self.optimisation_complete = False
 
-    def eval_growth_rate(
+    def eval_metrics(
             self, 
             outside_household_infectivity_scaling: float,
             max_time: int = 20,
@@ -112,6 +112,13 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
         controller.run_simulation(max_time, max_active_infections)
 
         return controller.growth_rate_view.get_growth_rate()
+
+    def evaluate_household_secondary_attack_rate(self) -> float:
+        """[summary]
+
+        Returns:
+            float: [description]
+        """
 
     def evaluate_fit(self, outside_household_infectivity_scaling) -> float:
         

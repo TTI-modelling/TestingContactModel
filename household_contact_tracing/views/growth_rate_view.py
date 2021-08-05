@@ -6,7 +6,7 @@ from household_contact_tracing.exceptions import Error, ModelStateError
 import statsmodels.api as sm
 import numpy as np
 
-class GrowthRateView(BranchingProcessView):
+class StatisticsView(BranchingProcessView):
 
     """
     View that estimates the growth rate of a completed simulation
