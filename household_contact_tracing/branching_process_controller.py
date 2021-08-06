@@ -104,7 +104,7 @@ class BranchingProcessController:
 
         self._model.run_simulation(state_criteria)
 
-    def run_hh_sar_simulation(self):
+    def run_hh_sar_simulation(self, state_criteria: dict = {}):
         """ 
         This simulation method with only simulate the infection process for households in the first
         generation of the epidemic, and will continue until all nodes in the initial households of the 
@@ -116,6 +116,6 @@ class BranchingProcessController:
             Returns:
                 None
         """
-        self._model.run_hh_sar_simulation()
+        self._model.run_hh_sar_simulation(state_criteria = state_criteria)
 
         

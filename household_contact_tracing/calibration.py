@@ -9,7 +9,7 @@ from household_contact_tracing.branching_process_models import HouseholdLevelTra
 from household_contact_tracing.branching_process_controller import BranchingProcessController
 from ax import optimize
 from copy import Error, copy
-
+import math
 
 class Calibration(ABC):
     """
@@ -98,8 +98,7 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
             self,
             household_pairwise_survival_prob: float,
             outside_household_infectivity_scaling: float,
-            max_time: int = 20,
-            max_active_infections: int = 1e5,
+            state_criteria: dict = {},
             verbose: bool = True) -> float:
         """Sets up a model, runs it, and returns the evaluated growth rate.
 
@@ -116,13 +115,18 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
         # run a simulation to get the growth rate of the epidemic
         controller = BranchingProcessController(HouseholdLevelTracing(params))
         controller.csv_view.set_display(False)
-        controller.run_simulation(max_time, max_active_infections)
+        controller.run_simulation(state_criteria)
 
         # use a different simulation method to get the household secondary attack rate of the epidemic
         params['starting_infections'] = self.starting_infections_hh_sar # use a higher number of starting infections
         controller_hh_sar = BranchingProcessController(HouseholdLevelTracing(params))
         controller_hh_sar.csv_view.set_display(False)
-        controller_hh_sar.run_hh_sar_simulation()
+        controller_hh_sar.run_hh_sar_simulation(
+            state_criteria = {
+                'infection_threshold': math.inf,
+                'max_time': math.inf
+                }
+        )
 
         return {
             'growth_rate': controller.statistics_view.get_growth_rate(verbose = verbose),
@@ -134,12 +138,14 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
             self,
             household_pairwise_survival_prob,
             outside_household_infectivity_scaling,
-            verbose: bool = True) -> float:
+            verbose: bool = True,
+            state_criteria: dict = {}) -> float:
         
         metrics = self.eval_metrics(
             household_pairwise_survival_prob,
             outside_household_infectivity_scaling,
-            verbose=verbose
+            state_criteria,
+            verbose
         )
 
         return abs(self.desired_growth_rate - metrics['growth_rate']) + abs(self.desired_hh_sar - metrics['hh_sar'])
@@ -147,7 +153,8 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
     def optimise(self, 
             outside_household_infectivity_scaling_range: list[float],
             household_pairwise_survival_prob_range: list[float],
-            total_trials: int = 20):
+            total_trials: int = 20,
+            state_criteria: dict = {}):
         """Performs the hyperparameter optimization step with proposals from the specified ranges.
 
         Args:
@@ -173,7 +180,8 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
             evaluation_function = lambda pars: self.evaluate_fit(
                 household_pairwise_survival_prob = pars["household_pairwise_survival_prob"],
                 outside_household_infectivity_scaling = pars["outside_household_infectivity_scaling"],
-                verbose = False
+                verbose = False,
+                state_criteria = state_criteria
                 ),
             minimize            = True,
             total_trials        = total_trials
@@ -185,7 +193,8 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
 
     def get_fitted_model_metric_samples(
         self,
-        n_obs: int = 10) -> list[float]:
+        n_obs: int = 10,
+        state_criteria: dict = {}) -> list[dict]:
         """If optimisation has been completed, this method generates sample of the growth rate using
         the results from the optimisation step.
 
@@ -203,6 +212,7 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
                 self.eval_metrics(
                     household_pairwise_survival_prob = self.best_parameters['household_pairwise_survival_prob'],
                     outside_household_infectivity_scaling = self.best_parameters['outside_household_infectivity_scaling'],
+                    state_criteria = state_criteria,
                     verbose = False)
                 for _ in range(n_obs)
             ]
