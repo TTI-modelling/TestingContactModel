@@ -354,8 +354,6 @@ class Node(Parameterised):
         elif self.received_result and self.avenue_of_testing == TestType.pcr:
             return NodeType.received_neg_test_pcr
         elif self.taken_confirmatory_PCR_test:
-            # Todo: This may need more correcting, added time=None parameter to get it running.
-            #       Was self.time but network/nodes should not need to know about time
             if time and time >= self.confirmatory_PCR_test_result_time:
                 if self.confirmatory_PCR_result_was_positive:
                     return NodeType.confirmatory_pos_pcr_test

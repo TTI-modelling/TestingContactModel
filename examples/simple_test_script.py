@@ -1,9 +1,10 @@
 import sys
 import os
-sys.path.append("../") # REPLACE WITH PATH TO THE 'household_contact_tracing' PACKAGE.
 
 import household_contact_tracing.branching_process_models as bpm
 from household_contact_tracing.branching_process_controller import BranchingProcessController
+
+sys.path.append("../")  # REPLACE WITH PATH TO THE 'household_contact_tracing' PACKAGE.
 
 params = {'outside_household_infectivity_scaling': 0.7,
           'contact_tracing_success_prob': 0.0,  # doesn't matter, no tracing
@@ -33,7 +34,7 @@ params = {'outside_household_infectivity_scaling': 0.7,
 
 # Create controller and add model, then run
 controller = BranchingProcessController(bpm.HouseholdLevelTracing(params))
-controller.run_simulation(10)
+controller.run_simulation({"max_time": 10})
 
 # Update parameters
 params['infection_reporting_prob'] = 0.5
@@ -41,7 +42,7 @@ params['self_isolation_duration'] = 10
 
 # Re initialise with new parameters and Re-run
 controller.model = bpm.HouseholdLevelTracing(params)
-controller.run_simulation(10)
+controller.run_simulation({"max_time": 10})
 
 # Add further parameters
 
@@ -55,14 +56,16 @@ controller.model = bpm.IndividualLevelTracing(params)
 # Switch on a view (e.g. the timeline graph views)
 controller.timeline_view.set_display(True)
 controller.graph_view.set_display(True)
-controller.run_simulation(10)
+controller.run_simulation({"max_time": 10})
 
 
 # Repeat runs and output to a named CSV file
 save_path = os.path.join('..', 'temp', 'my_test.csv')
+controller.timeline_view.set_display(False)
+controller.graph_view.set_display(False)
 for idx in range(0, 10):
     controller.model = bpm.IndividualLevelTracing(params)
     controller.csv_view.filename = save_path
     controller.csv_view.display_params = ['number_of_days_to_trace_backwards',
                                           'number_of_days_to_trace_forwards']
-    controller.run_simulation(5)
+    controller.run_simulation({"max_time": 5})

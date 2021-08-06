@@ -1,3 +1,5 @@
+from typing import List, Optional
+from household_contact_tracing.views.branching_process_view import BranchingProcessView
 from household_contact_tracing.views.statistics_view import StatisticsView
 from household_contact_tracing.branching_process_model import BranchingProcessModel
 from household_contact_tracing.views.shell_view import ShellView
@@ -33,7 +35,7 @@ class BranchingProcessController:
 
     """
 
-    def __init__(self, model: BranchingProcessModel):
+    def __init__(self, model: BranchingProcessModel, additional_views: Optional[List[BranchingProcessView]] = []):
         """
         Constructor for BranchingProcessController
 
@@ -50,6 +52,12 @@ class BranchingProcessController:
         self.shell_view = ShellView(model)
         self.csv_view = CSVFileView(model)
         self.statistics_view = StatisticsView(model)
+
+        # initialise any views that are required, but included as defaults
+        for view in additional_views:
+            
+            initialised_view = view(model)
+            setattr(self, initialised_view.view_name, initialised_view)
 
         self.set_graphic_displays(False)
 
@@ -82,18 +90,19 @@ class BranchingProcessController:
         self.graph_pyvis_view.set_display(display)
         self.timeline_view.set_display(display)
 
-    def run_simulation(self, max_time: int = 20, max_active_infections: int = 5000):
+    def run_simulation(self, state_criteria: dict):
         """
         Run the simulation until it stops (e.g times out, too many infectious nodes or goes extinct)
 
             Parameters:
-                max_time (int): The maximum number of iterations (eg. days) to be run (simulation stops if reached)
-                max_active_infections (int): The maximum number of infectious nodes (simulation stops if reached)
+                state_criteria: Named variables which are evaluated each step of the model to determine
+                  whether the state of the model will change.
 
             Returns:
                 None
         """
-        self._model.run_simulation(max_time, max_active_infections)
+
+        self._model.run_simulation(state_criteria)
 
     def run_hh_sar_simulation(self):
         """ 
@@ -108,3 +117,5 @@ class BranchingProcessController:
                 None
         """
         self._model.run_hh_sar_simulation()
+
+        

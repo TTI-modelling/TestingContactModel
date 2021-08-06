@@ -131,6 +131,19 @@ class IndividualIsolation(HouseholdIsolation):
 
 
 class DailyTestingIsolation(HouseholdIsolation):
+
+    def __init__(self, network: Network, params: dict):
+        super().__init__(network, params)
+        self._prob_pcr_positive = None
+
+    @property
+    def prob_pcr_positive(self) -> Callable[[int], float]:
+        return self._prob_pcr_positive
+
+    @prob_pcr_positive.setter
+    def prob_pcr_positive(self, fn: Callable[[int], float]):
+        self._prob_pcr_positive = fn
+
     def update_households_contact_traced(self, time: int):
         """Update the contact traced status for all households that have had the
          contact tracing process get there."""
@@ -151,8 +164,7 @@ class DailyTestingIsolation(HouseholdIsolation):
                 if node.avenue_of_testing == TestType.pcr:
                     if node.received_positive_test_result:
                         if not node.household.applied_household_positive_policy:
-                            node.household.apply_positive_policy(time,
-                                                                 self.household_positive_policy)
+                            node.household.apply_positive_policy(time, self.household_positive_policy)
 
     def act_on_confirmatory_pcr_results(self, time: int):
         """Once on a individual receives a positive pcr result we need to act on it.
@@ -186,20 +198,17 @@ class DailyTestingIsolation(HouseholdIsolation):
                     not self.LFA_testing_requires_confirmatory_PCR:
                 node.household.apply_positive_policy(time, self.household_positive_policy)
 
-    def act_on_positive_LFA_tests(self, time: int, prob_pcr_positive: Callable,
-                                  positive_nodes: List[Node]):
+    def act_on_positive_LFA_tests(self, time: int, positive_nodes: List[Node]):
         """For nodes who test positive on their LFA test, take the appropriate action depending
         on the policy
         """
         self.isolate_positive_lateral_flow_tests(time, positive_nodes)
 
         if self.LFA_testing_requires_confirmatory_PCR:
-            self.confirmatory_pcr_test_LFA_nodes(time, positive_nodes, prob_pcr_positive)
+            self.confirmatory_pcr_test_LFA_nodes(time, positive_nodes)
 
-    @staticmethod
-    def confirmatory_pcr_test_LFA_nodes(time: int, positive_nodes: List[Node],
-                                        prob_pcr_positive: Callable):
+    def confirmatory_pcr_test_LFA_nodes(self, time: int, positive_nodes: List[Node]):
         """Nodes who receive a positive LFA result will be tested using a PCR test."""
         for node in positive_nodes:
             if not node.taken_confirmatory_PCR_test:
-                node.take_confirmatory_pcr_test(time, prob_pcr_positive)
+                node.take_confirmatory_pcr_test(time, self.prob_pcr_positive)

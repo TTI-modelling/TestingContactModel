@@ -42,6 +42,7 @@ class BranchingProcessModel(ABC, Parameterised):
 
         # Set state
         self._state = ReadyState(self)
+        self.state_criteria = []
 
     @property
     def state(self) -> BranchingProcessState:
@@ -74,13 +75,13 @@ class BranchingProcessModel(ABC, Parameterised):
         return self.__ROOT_DIR
 
     @abstractmethod
-    def run_simulation(self, max_time: int, max_active_infections: int) -> None:
+    def run_simulation(self, state_criteria: dict) -> None:
         """
         Run the simulation until it stops (e.g times out, too many infectious nodes or goes extinct)
 
             Parameters:
-                max_time (int): The maximum number of iterations (eg. days) to be run (simulation stops if reached)
-                max_active_infections (int): The maximum number of infectious nodes (simulation stops if reached)
+                state_criteria: Named variables which are evaluated each step of the model to determine
+                  whether the state of the model will change.
 
             Returns:
                 None
@@ -105,10 +106,10 @@ class BranchingProcessModel(ABC, Parameterised):
         """
 
     def copy_observers(self, model: BranchingProcessModel):
-        self._observers_graph_change = list(model._observers_graph_change)
-        self._observers_step_increment = list(model._observers_step_increment)
-        self._observers_state_change = list(model._observers_state_change)
-        self._observers_simulation_stopped = list(model._observers_simulation_stopped)
+        self._observers_graph_change = model._observers_graph_change
+        self._observers_step_increment = model._observers_step_increment
+        self._observers_state_change = model._observers_state_change
+        self._observers_simulation_stopped = model._observers_simulation_stopped
 
     def _simulation_stopped(self):
         """ Procedures to be performed when simulation has stopped running """
