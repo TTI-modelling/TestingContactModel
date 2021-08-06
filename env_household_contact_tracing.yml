@@ -13,3 +13,6 @@ dependencies:
   - pandas
   - pyvis
   - beautifulsoup4
+  - statsmodels
+  - torch
+  - ax

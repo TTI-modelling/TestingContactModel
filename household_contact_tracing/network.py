@@ -603,3 +603,18 @@ class Household:
         # the traced node should go into quarantine
         if not traced_node.infection.isolated and traced_node.tracing_adherence.will_uptake_isolation:
             traced_node.infection.isolated = True
+
+    @property
+    def local_epidemic_completed(self):
+        """
+        Returns true if all infections in the household have recovered,
+        which is defined as being 10
+        """
+        return all([node.recovered for node in self.nodes])
+
+    @property
+    def household_epidemic_size(self):
+        """Returns the current size of the household epidemic, i.e: the number of household members
+        that are, or were, infected.
+        """
+        return self.size - self.susceptibles

@@ -1,9 +1,13 @@
+from typing import List, Optional
+from household_contact_tracing.views.branching_process_view import BranchingProcessView
+from household_contact_tracing.views.statistics_view import StatisticsView
 from household_contact_tracing.branching_process_model import BranchingProcessModel
 from household_contact_tracing.views.shell_view import ShellView
 from household_contact_tracing.views.csv_file_view import CSVFileView
 from household_contact_tracing.views.graph_view import GraphView
 from household_contact_tracing.views.graph_pyvis_view import GraphPyvisView
 from household_contact_tracing.views.timeline_graph_view import TimelineGraphView
+from household_contact_tracing.views.statistics_view import StatisticsView
 
 
 class BranchingProcessController:
@@ -26,12 +30,12 @@ class BranchingProcessController:
             set_graphic_displays(self, display: bool)
                 choose whether to show the graphical outputs
 
-            run_simulation(self, max_time: int = 20, infection_threshold: int = 5000)
+            run_simulation(self, max_time: int = 20, max_active_infections: int = 5000)
                 runs the simulation
 
     """
 
-    def __init__(self, model: BranchingProcessModel):
+    def __init__(self, model: BranchingProcessModel, additional_views: Optional[List[BranchingProcessView]] = []):
         """
         Constructor for BranchingProcessController
 
@@ -47,6 +51,13 @@ class BranchingProcessController:
         self.timeline_view = TimelineGraphView(model)
         self.shell_view = ShellView(model)
         self.csv_view = CSVFileView(model)
+        self.statistics_view = StatisticsView(model)
+
+        # initialise any views that are required, but included as defaults
+        for view in additional_views:
+            
+            initialised_view = view(model)
+            setattr(self, initialised_view.view_name, initialised_view)
 
         self.set_graphic_displays(False)
 
@@ -79,15 +90,32 @@ class BranchingProcessController:
         self.graph_pyvis_view.set_display(display)
         self.timeline_view.set_display(display)
 
-    def run_simulation(self, max_time: int = 20, infection_threshold: int = 5000):
+    def run_simulation(self, state_criteria: dict):
         """
         Run the simulation until it stops (e.g times out, too many infectious nodes or goes extinct)
 
             Parameters:
-                max_time (int): The maximum number of iterations (eg. days) to be run (simulation stops if reached)
-                infection_threshold (int): The maximum number of infectious nodes (simulation stops if reached)
+                state_criteria: Named variables which are evaluated each step of the model to determine
+                  whether the state of the model will change.
 
             Returns:
                 None
         """
-        self._model.run_simulation(max_time, infection_threshold)
+
+        self._model.run_simulation(state_criteria)
+
+    def run_hh_sar_simulation(self, state_criteria: dict = {}):
+        """ 
+        This simulation method with only simulate the infection process for households in the first
+        generation of the epidemic, and will continue until all nodes in the initial households of the 
+        epidemic are recovered. This is primarily useful when we are estimating the household secondary
+        attack rate. If we simulated onwards transmission, and examined households where the local
+        epidemic was completed, we would end up with a biased sample - the longer local epidemics would
+        be less likely to be included in the sample.
+
+            Returns:
+                None
+        """
+        self._model.run_hh_sar_simulation(state_criteria = state_criteria)
+
+        

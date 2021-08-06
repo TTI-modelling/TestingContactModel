@@ -89,6 +89,9 @@ class Infection(Parameterised):
             new_household = self.new_household.new_household(0, None)
             self.new_infection.new_infection(0, new_household)
 
+        # store the set of starting households
+        self.starting_households = [household.id for household in self.network.all_households]
+
     def increment(self, time):
         """Create a new days worth of infections."""
         for node in self.network.active_infections:

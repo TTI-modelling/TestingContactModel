@@ -51,7 +51,7 @@ class TestSimpleHousehold:
         model."""
         controller = BranchingProcessController(bpm.HouseholdLevelTracing(params))
         controller.set_graphic_displays(False)
-        controller.run_simulation(days)
+        controller.run_simulation({"max_time": days})
 
         return controller.model
 
@@ -300,7 +300,7 @@ class TestIndividualTracing:
         model."""
         controller = BranchingProcessController(bpm.IndividualLevelTracing(params))
         controller.set_graphic_displays(False)
-        controller.run_simulation(days)
+        controller.run_simulation({"max_time": days})
 
         return controller.model
 
@@ -350,7 +350,7 @@ class TestIndividualTracingDailyTesting:
         return the model."""
         controller = BranchingProcessController(bpm.IndividualTracingDailyTesting(params))
         controller.set_graphic_displays(False)
-        controller.run_simulation(days)
+        controller.run_simulation({"max_time": days})
 
         return controller.model
 

@@ -20,7 +20,7 @@ class BranchingProcessModel(ABC, Parameterised):
 
     Methods
     -------
-        run_simulation(self, max_time: int, infection_threshold: int) -> None:
+        run_simulation(self, max_time: int, max_active_infections: int) -> None:
             runs the simulation
 
     """
@@ -42,6 +42,7 @@ class BranchingProcessModel(ABC, Parameterised):
 
         # Set state
         self._state = ReadyState(self)
+        self.state_criteria = []
 
     @property
     def state(self) -> BranchingProcessState:
@@ -74,13 +75,31 @@ class BranchingProcessModel(ABC, Parameterised):
         return self.__ROOT_DIR
 
     @abstractmethod
-    def run_simulation(self, max_time: int, infection_threshold: int) -> None:
+    def run_simulation(self, state_criteria: dict) -> None:
         """
         Run the simulation until it stops (e.g times out, too many infectious nodes or goes extinct)
 
             Parameters:
+                state_criteria: Named variables which are evaluated each step of the model to determine
+                  whether the state of the model will change.
+
+            Returns:
+                None
+        """
+
+    @abstractmethod
+    def run_hh_sar_simulation(self) -> None:
+        """
+        This simulation method with only simulate the infection process for households in the first
+        generation of the epidemic, and will continue until all nodes in the initial households of the 
+        epidemic are recovered. This is primarily useful when we are estimating the household secondary
+        attack rate. If we simulated onwards transmission, and examined households where the local
+        epidemic was completed, we would end up with a biased sample - the longer local epidemics would
+        be less likely to be included in the sample.
+
+            Parameters:
                 max_time (int): The maximum number of iterations (eg. days) to be run (simulation stops if reached)
-                infection_threshold (int): The maximum number of infectious nodes (simulation stops if reached)
+                max_active_infections (int): The maximum number of infectious nodes (simulation stops if reached)
 
             Returns:
                 None

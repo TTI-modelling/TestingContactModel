@@ -46,9 +46,9 @@ def example_1():
     controller.timeline_view.set_display(True)
     controller.graph_pyvis_view.open_in_browser = True
     controller.graph_view.set_display(True)
-    controller.run_simulation(15)
+    controller.run_simulation({"max_time": 15})
     controller.graph_pyvis_view.set_display(False)
-    controller.run_simulation(20)
+    controller.run_simulation({"max_time": 20})
 
 
 
@@ -94,7 +94,7 @@ def example_2():
     controller.shell_view.set_display(False)
     controller.timeline_view.set_display(True)
     controller.graph_view.set_display(True)
-    controller.run_simulation(2)
+    controller.run_simulation({"max_time": 2})
 
     # Re-initialise and re-run model multiple times and save result to specified file
     # instead of default ('/temp/sumulation_ouput_[todays date].csv')
@@ -104,7 +104,7 @@ def example_2():
     for idx in range(0, 10):
         controller.model = IndividualTracingDailyTesting(params)
         controller.csv_view.display_params = ["household_pairwise_survival_prob", "asymptomatic_relative_infectivity"]
-        controller.run_simulation(20)
+        controller.run_simulation({"max_time": 20})
 
 
 # define some easy to look at test sensitivity functions
@@ -153,7 +153,7 @@ def example_3():
 
     controller.graph_view.set_display(True)
     controller.timeline_view.set_display(True)
-    controller.run_simulation(16)
+    controller.run_simulation({"max_time": 16})
 
 def example_4():
     params = {"outside_household_infectivity_scaling": 0.3,
