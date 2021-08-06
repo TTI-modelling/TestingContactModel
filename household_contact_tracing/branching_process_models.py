@@ -80,6 +80,44 @@ class HouseholdLevelTracing(BranchingProcessModel):
                             increment.IncrementTracingHouseholdLevel,
                             self.params)
 
+    def evaluate_model_state(self, ):
+        """Determine whether the state of the model has changed by evaluating the data from the last simulation step
+        against criteria which trigger a change of state."""
+
+        if self.time >= self.state_criteria["max_time"]:
+            # Simulation ends if max_time is reached
+            self.state.switch(TimedOutState, {"total_increments": self.time,
+                                              "non_recovered_nodes": self.network.count_non_recovered_nodes(),
+                                              "total_nodes": self.network.node_count})
+        elif self.network.count_non_recovered_nodes() == self.state_criteria["min_non_recovered_nodes"]:
+            # Simulation ends if no more infectious nodes
+            self.state.switch(ExtinctState, {"total_increments": self.time,
+                                             "non_recovered_nodes": self.network.count_non_recovered_nodes(),
+                                             "total_nodes": self.network.node_count})
+        elif self.network.count_non_recovered_nodes() > self.state_criteria["infection_threshold"]:
+            # Simulation ends if number of infectious nodes > threshold
+            self.state.switch(MaxNodesInfectiousState, {"total_increments": self.time,
+                                                        "non_recovered_nodes": 0,
+                                                        "total_nodes": self.network.node_count})
+
+    def set_default_state_criteria(self):
+        """Set default values for the state criteria if they have not yet been set."""
+        valid_state_criteria = ["max_time", "min_non_recovered_nodes", "infection_threshold"]
+
+        for criterion in self.state_criteria:
+            if criterion not in valid_state_criteria:
+                raise ParameterError(f"Criterion '{criterion}', is not a valid state criterion.\n"
+                                     f"Valid state criteria are: {valid_state_criteria}.")
+
+        if "infection_threshold" not in self.state_criteria:
+            self.state_criteria["infection_threshold"] = 10000
+
+        if "max_time" not in self.state_criteria:
+            self.state_criteria["max_time"] = 40
+
+        if "min_non_recovered_nodes" not in self.state_criteria:
+            self.state_criteria["min_non_recovered_nodes"] = 0
+
     def simulate_one_step(self):
         """Simulates one day of the infection and contact tracing."""
 
@@ -139,46 +177,7 @@ class HouseholdLevelTracing(BranchingProcessModel):
         # Tell parent simulation stopped
         super()._simulation_stopped()
 
-    def evaluate_model_state(self, ):
-        """Determine whether the state of the model has changed by evaluating the data from the last simulation step
-        against criteria which trigger a change of state."""
-
-        if self.time >= self.state_criteria["max_time"]:
-            # Simulation ends if max_time is reached
-            self.state.switch(TimedOutState, {"total_increments": self.time,
-                                              "non_recovered_nodes": self.network.count_non_recovered_nodes(),
-                                              "total_nodes": self.network.node_count})
-        elif self.network.count_non_recovered_nodes() == self.state_criteria["min_non_recovered_nodes"]:
-            # Simulation ends if no more infectious nodes
-            self.state.switch(ExtinctState, {"total_increments": self.time,
-                                             "non_recovered_nodes": self.network.count_non_recovered_nodes(),
-                                             "total_nodes": self.network.node_count})
-        elif self.network.count_non_recovered_nodes() > self.state_criteria["infection_threshold"]:
-            # Simulation ends if number of infectious nodes > threshold
-            self.state.switch(MaxNodesInfectiousState, {"total_increments": self.time,
-                                                        "non_recovered_nodes": 0,
-                                                        "total_nodes": self.network.node_count})
-
-    def set_default_state_criteria(self):
-        """Set default values for the state criteria if they have not yet been set."""
-        valid_state_criteria = ["max_time", "min_non_recovered_nodes", "infection_threshold"]
-
-        for criterion in self.state_criteria:
-            if criterion not in valid_state_criteria:
-                raise ParameterError(f"Criterion '{criterion}', is not a valid state criterion.\n"
-                                     f"Valid state criteria are: {valid_state_criteria}.")
-
-        if "infection_threshold" not in self.state_criteria:
-            self.state_criteria["infection_threshold"] = 10000
-
-        if "max_time" not in self.state_criteria:
-            self.state_criteria["max_time"] = 40
-
-        if "min_non_recovered_nodes" not in self.state_criteria:
-            self.state_criteria["min_non_recovered_nodes"] = 0
-
-
-    def run_hh_sar_simulation(self) -> None:
+    def run_hh_sar_simulation(self, state_criteria: dict) -> None:
         """ Runs the simulation only for the first generation of the household epidemic:
                 Sets model state,
                 Announces start/stopped and step increments to observers
@@ -193,9 +192,12 @@ class HouseholdLevelTracing(BranchingProcessModel):
         Returns:
             None
         """
+        self.state_criteria = state_criteria
+
+        self.set_default_state_criteria()
 
         # Switch model to RunningState
-        self._state.switch(RunningState)
+        self._state.switch(RunningState, self.state_criteria)
 
         while type(self.state) is RunningState:
             #prev_network = deepcopy(self.network)
@@ -220,12 +222,7 @@ class HouseholdLevelTracing(BranchingProcessModel):
             super()._completed_step_increment()
 
             # the simulation ends when all nodes in the initial generation have recovered
-            if self.network.count_non_recovered_nodes() == 0:
-                # Simulation ends if no more infectious nodes
-                self.state.switch(ExtinctState,
-                                  total_increments=self.time,
-                                  non_recovered_nodes=0,
-                                  total_nodes=self.network.node_count)
+            self.evaluate_model_state()
 
         # Tell parent simulation stopped
         super()._simulation_stopped()
