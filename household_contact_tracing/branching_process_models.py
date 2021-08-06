@@ -172,7 +172,7 @@ class HouseholdLevelTracing(BranchingProcessModel):
             self.state_criteria["infection_threshold"] = 10000
 
         if "max_time" not in self.state_criteria:
-            self.state_criteria["max_time"] = math.inf
+            self.state_criteria["max_time"] = 40
 
         if "min_non_recovered_nodes" not in self.state_criteria:
             self.state_criteria["min_non_recovered_nodes"] = 0
