@@ -89,7 +89,7 @@ class ContactRateReductionIndividualTracingDaily(ContactRateReduction):
             # imperfect intervention
             return self.global_contact_reduction_imperfect_quarantine
 
-        elif node.lfd_testing.being_lateral_flow_tested and node.lfd_testing.propensity_risky_behaviour_lfa_testing:
+        elif node.lfd_testing.being_lateral_flow_tested and node.lfd_testing_adherence.propensity_risky_behaviour_lfa_testing:
             # engaging in risky behaviour while testing negative
             return self.global_contact_reduction_risky_behaviour
 

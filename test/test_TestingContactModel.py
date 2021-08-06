@@ -396,7 +396,7 @@ def test_risky_behaviour_attributes_default(simple_model: simple_model):
     """Tests that the default behaviour is no more risky behaviour
     """
 
-    assert not simple_model.network.node(1).lfd_testing.propensity_risky_behaviour_lfa_testing
+    assert not simple_model.network.node(1).lfd_testing_adherence.propensity_risky_behaviour_lfa_testing
 
 
 def test_risky_behaviour_attributes(simple_model_risky_behaviour: simple_model_risky_behaviour):
@@ -404,7 +404,7 @@ def test_risky_behaviour_attributes(simple_model_risky_behaviour: simple_model_r
     being tested.
     """
 
-    assert simple_model_risky_behaviour.network.node(1).lfd_testing.propensity_risky_behaviour_lfa_testing
+    assert simple_model_risky_behaviour.network.node(1).lfd_testing_adherence.propensity_risky_behaviour_lfa_testing
 
 
 @pytest.fixture
@@ -458,7 +458,7 @@ def test_lfa_tested_nodes_make_more_contacts_if_risky(
 
     model = simple_model_risky_behaviour_2_infections
 
-    model.network.node(1).lfd_testing.propensity_risky_behaviour_lfa_testing = False
+    model.network.node(1).lfd_testing_adherence.propensity_risky_behaviour_lfa_testing = False
 
     # stop there being any within household infections
     # not sure if this is strictly necessary
