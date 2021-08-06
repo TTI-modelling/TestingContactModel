@@ -1,9 +1,5 @@
 from typing import Optional
-
 from household_contact_tracing.parameterised import Parameterised
-
-# Todo: @Martyn Please check
-
 
 class InfectionAttributes(Parameterised):
     """
@@ -52,10 +48,6 @@ class LFDTestingAttributes(Parameterised):
             positive_test_time (int)
             taken_confirmatory_PCR_test (boolean)
             time_started_lfa_testing (int)
-
-            # Todo @Martyn:  Ann estimated placing these here - CHECK
-            propensity_risky_behaviour_lfa_testing (float)
-            propensity_to_miss_lfa_tests (float)
             confirmatory_PCR_test_result_time (float)
             completed_lateral_flow_testing_time (boolean)
             lateral_flow_testing_duration (float)
@@ -71,10 +63,6 @@ class LFDTestingAttributes(Parameterised):
         self.positive_test_time = None
         self.taken_confirmatory_PCR_test = None
         self.time_started_lfa_testing = None
-
-        # Todo Ann estimated placing these here - CHECK
-        self.propensity_risky_behaviour_lfa_testing = None
-        self.propensity_to_miss_lfa_tests = None
         self.confirmatory_PCR_test_result_time = None
         self.completed_lateral_flow_testing_time = None
         self.lateral_flow_testing_duration = 0
@@ -102,6 +90,8 @@ class LFDTestingAdherenceAttributes(Parameterised):
     def __init__(self, attributes):
         self.confirmatory_PCR_result_was_positive: Optional[bool] = None
         self.node_will_take_up_lfa_testing = None
+        self.propensity_risky_behaviour_lfa_testing = None
+        self.propensity_to_miss_lfa_tests = None
 
         # Update instance variables with anything in attributes
         self.update_params(attributes)
