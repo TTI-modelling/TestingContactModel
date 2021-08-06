@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Node infection attribute schema",
+  "description": "A schema for validating the contact tracing attributes of nodes in a household branching process model",
+  "type": "object",
+  "anyOf": [
+    {"required": ["contact_traced"]},
+    {"required": ["has_contact_tracing_app"]},
+    {"required": ["propagated_contact_tracing"]},
+    {"required": ["received_positive_test_result"]},
+    {"required": ["received_result"]},
+    {"required": ["symptom_onset_time"]},
+    {"required": ["testing_delay"]},
+    {"required": ["time_of_reporting"]},
+    {"required": ["will_report_infection"]},
+    {"required": ["completed_isolation"]}
+  ],
+  "properties": {
+    "contact_traced": {
+      "description": "Has the node been contact traced?",
+      "type": "boolean"
+    },
+    "has_contact_tracing_app": {
+      "description": "Does this node have the contact tracing app?",
+      "type": "boolean"
+    },
+    "propagated_contact_tracing": {
+      "description": "Has the node propagated contact tracing?",
+      "type": "boolean"
+    },
+    "received_positive_test_result": {
+      "description": "Has the node received a positive test result?",
+      "type": "boolean"
+    },
+    "received_result": {
+      "description": "Has the node received any test result?",
+      "type": "boolean"
+    },
+    "symptom_onset_time": {
+      "description": "The time taken for symptom onset for this node",
+      "type": ["number", "null"]
+    },
+    "testing_delay": {
+      "description": "The delay time before node was tested.",
+      "type": ["number", "null"]
+    },
+    "time_of_reporting": {
+      "description": "The time that the node reported symptoms [CHECK].",
+      "type": ["number", "null"]
+    },
+    "will_report_infection": {
+      "description": "Will the node report an infection?",
+      "type": "boolean"
+    },
+    "completed_isolation": {
+      "description": "Has the node completed isolation?",
+      "type": "boolean"
+    }
+  }
+}
+

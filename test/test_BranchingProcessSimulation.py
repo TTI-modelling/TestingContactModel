@@ -25,10 +25,10 @@ def test_asymptomatic_nodes_attributes():
 
     lfa_test_node = test_model.network.node(1)
 
-    assert lfa_test_node.asymptomatic is True
+    assert lfa_test_node.infection.asymptomatic is True
     # Symptom onset time is infinite
-    assert lfa_test_node.symptom_onset_time > 10000
-    assert lfa_test_node.will_report_infection is False
+    assert lfa_test_node.tracing.symptom_onset_time > 10000
+    assert lfa_test_node.tracing.will_report_infection is False
 
 
 def test_symptomatic_nodes_attributes():
@@ -42,9 +42,9 @@ def test_symptomatic_nodes_attributes():
 
     lfa_test_node = test_model.network.node(1)
 
-    assert lfa_test_node.asymptomatic is False
-    assert lfa_test_node.symptom_onset_time == 5
-    assert lfa_test_node.will_report_infection is True
+    assert lfa_test_node.infection.asymptomatic is False
+    assert lfa_test_node.tracing.symptom_onset_time == 5
+    assert lfa_test_node.tracing.will_report_infection is True
 
 
 @pytest.fixture

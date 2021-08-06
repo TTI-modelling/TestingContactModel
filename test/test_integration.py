@@ -61,7 +61,7 @@ class TestSimpleHousehold:
         isolating_correctly = []
         for node in network.all_nodes():
             if node.household.isolated:
-                if node.isolated:
+                if node.infection.isolated:
                     isolating_correctly.append(True)
                 else:
                     isolating_correctly.append(False)
@@ -171,7 +171,7 @@ class TestSimpleHousehold:
         numpy.random.seed(42)
         network = self.run_simulation(household_params).network
 
-        assert network.node(1).testing_delay != 0
+        assert network.node(1).tracing.testing_delay != 0
 
         # No intervention should expire by day 10 so all whose household is isolated should
         # be isolating.
@@ -242,7 +242,7 @@ class TestSimpleHousehold:
         numpy.random.seed(42)
         model = self.run_simulation(household_params)
         network = model.network
-        node_imperfect = [node.propensity_imperfect_isolation for node in network.all_nodes()]
+        node_imperfect = [node.tracing_adherence.propensity_imperfect_isolation for node in network.all_nodes()]
         assert any(node_imperfect)
         node_contact_rate_reduction = \
             [model.infection.contact_rate_reduction.get_contact_rate_reduction(node) for node in network.all_nodes()]
