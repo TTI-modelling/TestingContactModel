@@ -5,7 +5,9 @@
   "type": "object",
   "anyOf": [
     {"required": ["confirmatory_PCR_result_was_positive"]},
-    {"required": ["node_will_take_up_LFA_testing"]}
+    {"required": ["node_will_take_up_LFA_testing"]},
+    {"required": ["propensity_to_miss_lfa_tests"]},
+    {"required": ["propensity_risky_behaviour_lfa_testing"]}
   ],
   "properties": {
     "confirmatory_PCR_result_was_positive": {
@@ -15,6 +17,14 @@
     "node_will_take_up_LFA_testing": {
       "description": "Will the node take up LFA testing?",
       "type": "boolean"
+    },
+    "propensity_to_miss_lfa_tests": {
+      "description": "Propensity of node to miss LFA tests",
+      "type": ["number", "null"]
+    },
+    "propensity_risky_behaviour_lfa_testing": {
+      "description": "Propensity of node to engage in risky behaviour during LFA testing",
+      "type": ["number", "null"]
     }
   }
 }

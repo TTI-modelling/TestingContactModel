@@ -351,7 +351,7 @@ class Node(Parameterised):
 
     def will_lfa_test_today(self, daily_prob_lfa_test: float) -> bool:
         """Determine whether a node will do an LFT test today."""
-        if not self.lfd_testing.propensity_to_miss_lfa_tests:
+        if not self.lfd_testing_adherence.propensity_to_miss_lfa_tests:
             return True
 
         if numpy.random.binomial(1, daily_prob_lfa_test) == 1:

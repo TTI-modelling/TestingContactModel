@@ -169,11 +169,6 @@ class NewInfectionHouseholdLevel(NewInfection):
         else:
             node_is_isolated = False
 
-        tracing_adherence_attributes = {'will_uptake_isolation': isolation_uptake,
-                                        'propensity_imperfect_isolation': self.get_propensity_imperfect_isolation()
-                                        }
-        returning_travellers_attributes = {'pseudo_symptom_onset_time': pseudo_symptom_onset_time}
-
         tracing_attributes = {
             'contact_traced': household.contact_traced,
             'has_contact_tracing_app': has_trace_app,
@@ -182,6 +177,12 @@ class NewInfectionHouseholdLevel(NewInfection):
             'time_of_reporting': time_of_reporting,
             'will_report_infection': will_report_infection,
         }
+
+        tracing_adherence_attributes = {'will_uptake_isolation': isolation_uptake,
+                                        'propensity_imperfect_isolation': self.get_propensity_imperfect_isolation()
+                                        }
+
+        returning_travellers_attributes = {'pseudo_symptom_onset_time': pseudo_symptom_onset_time}
 
         infecting_node_id = None
         if infecting_node:
@@ -273,18 +274,6 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
         else:
             node_is_isolated = False
 
-        lfd_testing_adherence_attributes = {
-            'node_will_take_up_lfa_testing': node_will_take_up_lfa_testing,
-            'confirmatory_PCR_result_was_positive': None,
-        }
-
-        tracing_adherence_attributes = {
-            'will_uptake_isolation': isolation_uptake,
-            'propensity_imperfect_isolation': self.get_propensity_imperfect_isolation()
-        }
-
-        returning_travellers_attributes = {'pseudo_symptom_onset_time': pseudo_symptom_onset_time}
-
         lfd_testing_attributes = {
             'avenue_of_testing': None,
             'being_lateral_flow_tested': node_being_lateral_flow_tested,
@@ -292,7 +281,12 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
             'positive_test_time': None,
             'taken_confirmatory_PCR_test': False,
             'confirmatory_PCR_test_time': None,
-            'confirmatory_PCR_test_result_time': None,
+            'confirmatory_PCR_test_result_time': None
+        }
+
+        lfd_testing_adherence_attributes = {
+            'node_will_take_up_lfa_testing': node_will_take_up_lfa_testing,
+            'confirmatory_PCR_result_was_positive': None,
             'propensity_risky_behaviour_lfa_testing': self.will_engage_in_risky_behaviour_while_being_lfa_tested(),
             'propensity_to_miss_lfa_tests': self.propensity_to_miss_lfa_tests()
         }
@@ -307,6 +301,13 @@ class NewInfectionIndividualTracingDailyTesting(NewInfection):
             'time_of_reporting': time_of_reporting,
             'will_report_infection': will_report_infection,
         }
+
+        tracing_adherence_attributes = {
+            'will_uptake_isolation': isolation_uptake,
+            'propensity_imperfect_isolation': self.get_propensity_imperfect_isolation()
+        }
+
+        returning_travellers_attributes = {'pseudo_symptom_onset_time': pseudo_symptom_onset_time}
 
         infecting_node_id = None
         if infecting_node:
