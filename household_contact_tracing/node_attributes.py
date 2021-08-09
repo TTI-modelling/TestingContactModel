@@ -98,7 +98,7 @@ class ReturningTravellerAttributes(Parameterised):
     """
 
     def __init__(self, attributes: dict):
-        self.pseudo_symptom_onset_time: Optional[float] = None
+        self.pseudo_symptom_onset_time: Optional[int] = None
 
         # Update instance variables with anything in attributes
         self.update_params(attributes)

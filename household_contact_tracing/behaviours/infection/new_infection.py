@@ -20,7 +20,7 @@ class NewInfection(ABC, Parameterised):
 
         Attributes
         ----------
-        Todo: fill in descriptions of each attribute
+        # Todo: fill in descriptions of each attribute
         network: ContactTracingNetwork
             The store of Nodes and households used in the simulation
         symptom_reporting_delay
@@ -42,10 +42,6 @@ class NewInfection(ABC, Parameterised):
         -------
 
         new_infection(self, time: int, household: Household, infecting_node: Optional[Node] = None)
-            Add a new infected Node to the model.
-            :param time: The current simulation time.
-            :param household: The Household to create the new infection in.
-            :param infecting_node: The source of the new infection.
 
     """
 

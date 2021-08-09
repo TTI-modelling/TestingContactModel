@@ -608,7 +608,7 @@ class Household:
         Returns true if all infections in the household have recovered,
         which is defined as being 10
         """
-        return all([node.recovered for node in self.nodes])
+        return all([node.infection.recovered for node in self.nodes])
 
     @property
     def household_epidemic_size(self):

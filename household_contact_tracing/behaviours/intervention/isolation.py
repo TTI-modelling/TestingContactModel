@@ -198,16 +198,16 @@ class DailyTestingIsolation(HouseholdIsolation):
                     not self.LFA_testing_requires_confirmatory_PCR:
                 node.household.apply_positive_policy(time, self.household_positive_policy)
 
-    def act_on_positive_LFA_tests(self, time: int, positive_nodes: List[Node]):
+    def act_on_positive_lfa_tests(self, time: int, positive_nodes: List[Node]):
         """For nodes who test positive on their LFA test, take the appropriate action depending
         on the policy
         """
         self.isolate_positive_lateral_flow_tests(time, positive_nodes)
 
         if self.LFA_testing_requires_confirmatory_PCR:
-            self.confirmatory_pcr_test_LFA_nodes(time, positive_nodes)
+            self.confirmatory_pcr_test_lfa_nodes(time, positive_nodes)
 
-    def confirmatory_pcr_test_LFA_nodes(self, time: int, positive_nodes: List[Node]):
+    def confirmatory_pcr_test_lfa_nodes(self, time: int, positive_nodes: List[Node]):
         """Nodes who receive a positive LFA result will be tested using a PCR test."""
         for node in positive_nodes:
             if not node.lfd_testing.taken_confirmatory_PCR_test:

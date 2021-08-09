@@ -51,8 +51,6 @@ class Infection(Parameterised):
         self.household_pairwise_survival_prob = 0.2
         self.update_params(params)
 
-        # Perform initial set-up calculations
-
         # Precomputing the cdf's for generating the overdispersed contact data
         household_size = len(self.total_contact_means)
         self.cdf_dict = {i + 1: compute_negbin_cdf(self.total_contact_means[i], self.overdispersion)
@@ -79,6 +77,8 @@ class Infection(Parameterised):
         self.new_household = new_household(self.network, params, self.local_contact_probs, self.total_contact_means)
         self.new_infection = new_infection(self.network, params)
         self.contact_rate_reduction = contact_rate_reduction(params)
+
+        self.starting_households = []
 
         # Initialise starting infections of simulation
         self.initialise()
@@ -177,7 +177,8 @@ class Infection(Parameterised):
         obs = sum([int(cdf[i] < random) for i in range(100)])
         return obs
 
-    def compute_hh_infection_probs(self, pairwise_survival_prob: float) -> np.ndarray:
+    @staticmethod
+    def compute_hh_infection_probs(pairwise_survival_prob: float) -> np.ndarray:
         # Precomputing the infection probabilities for the within household epidemics.
         contact_prob = 0.8
         day_0_infection_prob = current_hazard_rate(0, pairwise_survival_prob) / contact_prob
