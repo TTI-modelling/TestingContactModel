@@ -2,6 +2,8 @@ name: household-contact-tracing
 channels:
   - defaults
 dependencies:
+  - pip
+  - pip3
   - matplotlib
   - numpy
   - scipy
@@ -11,8 +13,10 @@ dependencies:
   - jupyter
   - pyyaml
   - pandas
-  - pyvis
   - beautifulsoup4
   - statsmodels
-  - torch
-  - ax
+  - pip:
+    - pyvis
+    - torch
+  - pip3:
+    - ax-platform
