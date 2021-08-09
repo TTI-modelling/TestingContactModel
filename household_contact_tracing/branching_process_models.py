@@ -344,7 +344,7 @@ class IndividualTracingDailyTesting(IndividualLevelTracing):
         self.intervention.isolation.update_isolation(self.time)
         # isolate self reporting nodes
         positive_nodes = self.intervention.lft_nodes(self.time, self.prob_lfa_positive)
-        self.intervention.isolation.act_on_positive_LFA_tests(self.time, positive_nodes)
+        self.intervention.isolation.act_on_positive_lfa_tests(self.time, positive_nodes)
         # if we require PCR tests, to confirm infection we act on those
         if self.intervention.increment_tracing.LFA_testing_requires_confirmatory_PCR:
             self.intervention.increment_tracing.act_on_confirmatory_pcr_results(self.time)

@@ -5,7 +5,6 @@ from enum import Enum
 import numpy
 from dataclasses import dataclass
 
-from household_contact_tracing.parameterised import Parameterised
 from household_contact_tracing.node_attributes import LFDTestingAdherenceAttributes, TracingAdherenceAttributes, \
     ReturningTravellerAttributes, LFDTestingAttributes, TracingAttributes, InfectionAttributes
 
@@ -235,7 +234,7 @@ class Network:
             self.graph.edges[edge[0], edge[1]].update({"edge_type": new_edge_type})
 
 
-class Node(Parameterised):
+class Node:
     """
         A class used to store contact tracing node data.
         Uses networkx as storage tool.
@@ -254,17 +253,17 @@ class Node(Parameterised):
 
     """
     def __init__(self, node_id: int, household: Household,
-                 infection_attributes=None,
-                 lfd_testing_adherence_attributes=None,
-                 tracing_attributes=None,
-                 tracing_adherence_attributes=None,
-                 returning_travellers_attributes=None,
-                 lfd_testing_attributes=None):
+                 infection_attributes: dict = None,
+                 lfd_testing_adherence_attributes: dict = None,
+                 tracing_attributes: dict = None,
+                 tracing_adherence_attributes: dict = None,
+                 returning_travellers_attributes: dict = None,
+                 lfd_testing_attributes: dict = None):
 
         self.id = node_id
         self.household = household
 
-        # Update node attribute classes
+        # Instantiate attribute classes
         self.infection = InfectionAttributes(infection_attributes)
         self.lfd_testing_adherence = LFDTestingAdherenceAttributes(lfd_testing_adherence_attributes)
         self.tracing = TracingAttributes(tracing_attributes)
@@ -280,7 +279,6 @@ class Node(Parameterised):
 
     def locally_infected(self) -> bool:
         if self.infection.infecting_node_id:
-            #return self.infection.infecting_node_id.household == self.household
             return self.household.network.node(self.infection.infecting_node_id).household == self.household
         else:
             return False
@@ -325,7 +323,7 @@ class Node(Parameterised):
         elif self.tracing.received_result and self.lfd_testing.avenue_of_testing == TestType.pcr:
             return NodeType.received_neg_test_pcr
         elif self.lfd_testing.taken_confirmatory_PCR_test:
-            if time and time >= self.confirmatory_PCR_test_result_time:
+            if time and time >= self.lfd_testing.confirmatory_PCR_test_result_time:
                 if self.lfd_testing_adherence.confirmatory_PCR_result_was_positive:
                     return NodeType.confirmatory_pos_pcr_test
                 else:
@@ -340,7 +338,7 @@ class Node(Parameterised):
 
         infectious_age_when_tested = time - self.infection.time_infected
 
-        self.confirmatory_PCR_test_result_time = time + self.tracing.testing_delay
+        self.lfd_testing.confirmatory_PCR_test_result_time = time + self.tracing.testing_delay
         self.lfd_testing.taken_confirmatory_PCR_test = True
 
         if numpy.random.binomial(1, prob_pcr_positive(infectious_age_when_tested)) == 1:
@@ -610,7 +608,7 @@ class Household:
         Returns true if all infections in the household have recovered,
         which is defined as being 10
         """
-        return all([node.recovered for node in self.nodes])
+        return all([node.infection.recovered for node in self.nodes])
 
     @property
     def household_epidemic_size(self):

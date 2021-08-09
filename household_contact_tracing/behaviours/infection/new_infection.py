@@ -20,7 +20,7 @@ class NewInfection(ABC, Parameterised):
 
         Attributes
         ----------
-        Todo: fill in descriptions of each attribute
+        # Todo: fill in descriptions of each attribute
         network: ContactTracingNetwork
             The store of Nodes and households used in the simulation
         symptom_reporting_delay
@@ -42,10 +42,6 @@ class NewInfection(ABC, Parameterised):
         -------
 
         new_infection(self, time: int, household: Household, infecting_node: Optional[Node] = None)
-            Add a new infected Node to the model.
-            :param time: The current simulation time.
-            :param household: The Household to create the new infection in.
-            :param infecting_node: The source of the new infection.
 
     """
 
@@ -137,12 +133,6 @@ class NewInfectionHouseholdLevel(NewInfection):
         # Symptom onset time
         symptom_onset_time = time + self.incubation_period(asymptomatic)
 
-        # If the node is asymptomatic, we need to generate a pseudo symptom onset time
-        if asymptomatic:
-            pseudo_symptom_onset_time = self.incubation_period(asymptomatic=False)
-        else:
-            pseudo_symptom_onset_time = symptom_onset_time
-
         # When a node reports its infection
         if not asymptomatic and np.random.binomial(1, self.infection_reporting_prob) == 1:
             will_report_infection = True
@@ -151,23 +141,12 @@ class NewInfectionHouseholdLevel(NewInfection):
             will_report_infection = False
             time_of_reporting = float('Inf')
 
-        # We assign each node a recovery period of 21 days, after 21 days the probability of
-        # causing a new infections is 0, due to the generation time distribution
-        recovery_time = time + 14
-
         # If the household has the propensity to use the contact tracing app, decide
         # if the node uses the app.
         if household.propensity_trace_app:
             has_trace_app = self.has_contact_tracing_app()
         else:
             has_trace_app = False
-
-        isolation_uptake = self.will_uptake_isolation()
-
-        if household.isolated and isolation_uptake:
-            node_is_isolated = True
-        else:
-            node_is_isolated = False
 
         tracing_attributes = {
             'contact_traced': household.contact_traced,
@@ -178,15 +157,33 @@ class NewInfectionHouseholdLevel(NewInfection):
             'will_report_infection': will_report_infection,
         }
 
+        isolation_uptake = self.will_uptake_isolation()
+
         tracing_adherence_attributes = {'will_uptake_isolation': isolation_uptake,
                                         'propensity_imperfect_isolation': self.get_propensity_imperfect_isolation()
                                         }
 
+        # If the node is asymptomatic, we need to generate a pseudo symptom onset time
+        if asymptomatic:
+            pseudo_symptom_onset_time = self.incubation_period(asymptomatic=False)
+        else:
+            pseudo_symptom_onset_time = symptom_onset_time
+
         returning_travellers_attributes = {'pseudo_symptom_onset_time': pseudo_symptom_onset_time}
 
-        infecting_node_id = None
         if infecting_node:
             infecting_node_id = infecting_node.id
+        else:
+            infecting_node_id = None
+
+        if household.isolated and isolation_uptake:
+            node_is_isolated = True
+        else:
+            node_is_isolated = False
+
+        # Each node has a recovery period after which the node recovers and cannot cause a new infection
+        recovery_time = time + 14
+
         infection_attributes = {
             'time_infected': time,
             'asymptomatic': asymptomatic,
@@ -195,15 +192,14 @@ class NewInfectionHouseholdLevel(NewInfection):
             'recovery_time': recovery_time,
         }
 
-        new_node = self.network.add_node(
-                                         household_id=household.id,
+        new_node = self.network.add_node(household_id=household.id,
                                          infection_attributes=infection_attributes,
                                          tracing_adherence_attributes=tracing_adherence_attributes,
                                          returning_travellers_attributes=returning_travellers_attributes,
                                          tracing_attributes=tracing_attributes
                                          )
 
-        # Each house now stores the ID's of which nodes are stored inside the house,
+        # Each house stores the IDs of which nodes are stored inside the house,
         # so that quarantining can be done at the household level
         household.nodes.append(new_node)
 

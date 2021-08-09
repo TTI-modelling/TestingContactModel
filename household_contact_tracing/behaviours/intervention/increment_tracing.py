@@ -275,11 +275,11 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
             # if the infector is not already isolated and the time the node was infected captured
             # by going backwards
             # the node.infection.time_infected is when they had a contact with their infector.
-            if not infected_by_node.isolated and node.infection.time_infected >= node.tracing.symptom_onset_time - \
+            if not infected_by_node.infection.isolated and node.infection.time_infected >= node.tracing.symptom_onset_time - \
                     self.number_of_days_to_trace_backwards:
 
                 # Then attempt to contact trace the household of the node that infected you
-                self.attempt_contact_trace_of_household(
+                self.contact_trace_household(
                     house_to=infected_by_node.household,
                     house_from=node.household,
                     time=time,
@@ -301,19 +301,19 @@ class IncrementTracingIndividualLevel(IncrementTracingHouseholdLevel):
                     time_t <= node.tracing.symptom_onset_time + self.number_of_days_to_trace_forwards and \
                     not child_node.infection.isolated:
 
-                self.attempt_contact_trace_of_household(
+                self.contact_trace_household(
                     house_to=child_node.household,
                     house_from=node.household,
                     days_since_contact_occurred=time - time_t,
                     time=time
                     )
 
-    def attempt_contact_trace_of_household(self,
-                                           house_to: Household,
-                                           house_from: Household,
-                                           days_since_contact_occurred: int,
-                                           time: int,
-                                           contact_trace_delay: int = 0):
+    def contact_trace_household(self,
+                                house_to: Household,
+                                house_from: Household,
+                                days_since_contact_occurred: int,
+                                time: int,
+                                contact_trace_delay: int = 0):
         # Decide if the edge was traced by the app
         app_traced = self.network.is_edge_app_traced(self.network.get_edge_between_household(house_from, house_to))
 
@@ -419,10 +419,10 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
 
                 if not infected_by_node.infection.isolated and \
                         node.infection.time_infected >= node.tracing.symptom_onset_time - \
-                            self.number_of_days_to_trace_backwards:
+                        self.number_of_days_to_trace_backwards:
 
                     # Then attempt to contact trace the household of the node that infected you
-                    self.attempt_contact_trace_of_household(
+                    self.contact_trace_household(
                         house_to=infected_by_node.household,
                         house_from=node.household,
                         days_since_contact_occurred=time - node.infection.time_infected,
@@ -432,15 +432,15 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
 
                 if not self.LFA_testing_requires_confirmatory_PCR:
 
-                    if not infected_by_node.isolated and node.infection.time_infected >= \
+                    if not infected_by_node.tracing.isolated and node.infection.time_infected >= \
                             node.lfd_testing.positive_test_time - self.number_of_days_prior_to_LFA_result_to_trace:
 
                         # Then attempt to contact trace the household of the node that infected you
-                        self.attempt_contact_trace_of_household(
+                        self.contact_trace_household(
                             house_to=infected_by_node.household,
                             house_from=node.household,
                             days_since_contact_occurred=time - node.infection.time_infected,
-                            time=time )
+                            time=time)
 
         # spread_to_global_node_time_tuples stores a list of tuples, where the first element is
         # the node_id of a node who was globally infected by the node, and the second element is
@@ -457,14 +457,14 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
                 # If the node was infected 2 days prior to symptom onset, or 7 days post and is
                 # not already isolated
                 if time_t >= node.tracing.symptom_onset_time - self.number_of_days_to_trace_backwards:
-                        if time_t <= node.tracing.symptom_onset_time + self.number_of_days_to_trace_forwards:
-                            if not child_node.infection.isolated:
+                    if time_t <= node.tracing.symptom_onset_time + self.number_of_days_to_trace_forwards:
+                        if not child_node.infection.isolated:
 
-                                self.attempt_contact_trace_of_household(
-                                    house_to=child_node.household,
-                                    house_from=node.household,
-                                    days_since_contact_occurred=time - time_t,
-                                    time=time)
+                            self.contact_trace_household(
+                                house_to=child_node.household,
+                                house_from=node.household,
+                                days_since_contact_occurred=time - time_t,
+                                time=time)
 
             elif node.lfd_testing.avenue_of_testing == TestType.lfa:
 
@@ -475,7 +475,7 @@ class IncrementTracingIndividualDailyTesting(IncrementTracingIndividualLevel):
                     if time_t >= node.lfd_testing.positive_test_time - \
                             self.number_of_days_prior_to_LFA_result_to_trace:
 
-                        self.attempt_contact_trace_of_household(
+                        self.contact_trace_household(
                             house_to=child_node.household,
                             house_from=node.household,
                             days_since_contact_occurred=time - time_t,
