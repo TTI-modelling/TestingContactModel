@@ -9,12 +9,13 @@ import numpy as np
 
 class StatisticsView(BranchingProcessView):
 
-    """
-    View that estimates the growth rate of a completed simulation
-    """
-
     def __init__(self, model: BranchingProcessModel):
+        """View that performs statistical analysis of a simulated epidemic.
+        For example, by estimating the growth rate of an epidemic, or estimating the household secondary attack rate.
         
+        Args:
+            model (BranchingProcessModel): Input branching process epidemic to be analysed.
+        """
         self._model = model
         self.show = False
 
