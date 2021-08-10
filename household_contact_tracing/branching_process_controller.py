@@ -8,7 +8,7 @@ from household_contact_tracing.views.graph_view import GraphView
 from household_contact_tracing.views.graph_pyvis_view import GraphPyvisView
 from household_contact_tracing.views.timeline_graph_view import TimelineGraphView
 from household_contact_tracing.views.statistics_view import StatisticsView
-
+from household_contact_tracing.views.resource_demand_view import ResourceDemandView
 
 class BranchingProcessController:
     """
@@ -52,6 +52,7 @@ class BranchingProcessController:
         self.shell_view = ShellView(model)
         self.csv_view = CSVFileView(model)
         self.statistics_view = StatisticsView(model)
+        self.resource_demand_view = ResourceDemandView(model)
 
         # initialise any views that are required, but included as defaults
         for view in additional_views:
