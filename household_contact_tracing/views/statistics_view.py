@@ -86,7 +86,7 @@ class StatisticsView(BranchingProcessView):
         """
         Returns a list containing the times at which each node was infected
         """
-        return [node.time_infected for node in self._model.network.all_nodes()]
+        return [node.infection.time_infected for node in self._model.network.all_nodes()]
 
     def get_daily_incidence(self):
         """Returns a list of the new infections at each time point.
