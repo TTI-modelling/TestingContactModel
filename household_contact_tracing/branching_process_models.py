@@ -1,7 +1,7 @@
 import math
 import os
 from typing import Callable
-from copy import deepcopy
+from copy import copy
 
 from household_contact_tracing.infection import Infection
 from household_contact_tracing.intervention import Intervention
@@ -160,13 +160,15 @@ class HouseholdLevelTracing(BranchingProcessModel):
         self._state.switch(RunningState, self.state_criteria)
 
         while type(self.state) is RunningState:
-            prev_network = deepcopy(self.network)
+
+            initial_node_count = copy(self.network.node_count)
 
             # This chunk of code executes one step (a days worth of infections and contact tracings)
             self.simulate_one_step()
 
             # If graph changed, tell parent
-            if not prev_network == self.network:
+            # a graph change is typically equivalent to nodes being added to the network
+            if initial_node_count == self.network.node_count:
                 BranchingProcessModel.graph_changed(self)
 
             # Call parent completed step
@@ -210,7 +212,7 @@ class HouseholdLevelTracing(BranchingProcessModel):
             # they do not infect. This is mainly for computational ease
             for node in self.network.all_nodes():
                 if node.household.id not in self.infection.starting_households:
-                    node.recovered = True
+                    node.infection.recovered = True
 
             self.time += 1
 
