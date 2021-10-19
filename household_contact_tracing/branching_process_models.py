@@ -94,7 +94,7 @@ class HouseholdLevelTracing(BranchingProcessModel):
             self.state.switch(ExtinctState, {"total_increments": self.time,
                                              "non_recovered_nodes": self.network.count_non_recovered_nodes(),
                                              "total_nodes": self.network.node_count})
-        elif self.network.count_non_recovered_nodes() > self.state_criteria["infection_threshold"]:
+        elif self.network.count_non_recovered_nodes() > self.state_criteria["max_active_infections"]:
             # Simulation ends if number of infectious nodes > threshold
             self.state.switch(MaxNodesInfectiousState, {"total_increments": self.time,
                                                         "non_recovered_nodes": 0,
@@ -102,15 +102,15 @@ class HouseholdLevelTracing(BranchingProcessModel):
 
     def set_default_state_criteria(self):
         """Set default values for the state criteria if they have not yet been set."""
-        valid_state_criteria = ["max_time", "min_non_recovered_nodes", "infection_threshold"]
+        valid_state_criteria = ["max_time", "min_non_recovered_nodes", "max_active_infections"]
 
         for criterion in self.state_criteria:
             if criterion not in valid_state_criteria:
                 raise ParameterError(f"Criterion '{criterion}', is not a valid state criterion.\n"
                                      f"Valid state criteria are: {valid_state_criteria}.")
 
-        if "infection_threshold" not in self.state_criteria:
-            self.state_criteria["infection_threshold"] = 10000
+        if "max_active_infections" not in self.state_criteria:
+            self.state_criteria["max_active_infections"] = 10000
 
         if "max_time" not in self.state_criteria:
             self.state_criteria["max_time"] = 40

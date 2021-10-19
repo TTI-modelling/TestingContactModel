@@ -123,7 +123,7 @@ class StandardCalibrationHouseholdLevelTracing(Calibration):
         controller_hh_sar.csv_view.set_display(False)
         controller_hh_sar.run_hh_sar_simulation(
             state_criteria = {
-                'infection_threshold': math.inf,
+                'max_active_infections': math.inf,
                 'max_time': math.inf
                 }
         )
