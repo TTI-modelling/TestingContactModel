@@ -15,7 +15,7 @@ def set_up_logger():
     logger.remove()
     logger.add(sys.stderr, format="{level} - {message}", level="INFO")
     logger.add("simulation.log", format="{time:YYYY-MM-DD HH:mm:ss}: {level} - {message}",
-               level="DEBUG", delay=True)
+               level="DEBUG", delay=True, enqueue = True)
 
 
 set_up_logger()
